@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Panel del encargado para gestionar una sesión de asistencia"
+    >
+
+    <title>Panel del encargado</title>
+
+    <link rel="stylesheet" href="css/anfitrion.css">
+</head>
+
+<body>
+
+    <header class="site-header">
+        <div class="container header-content">
+
+            <div>
+                <p class="header-label">
+                    Sistema de asistencia
+                </p>
+
+                <h1>
+                    Panel del encargado
+                </h1>
+            </div>
+
+           <button
+                type="button"
+                class="secondary-button"
+                data-action="logout"
+            >
+                Cerrar sesión
+            </button>
+
+        </div>
+    </header>
+
+
+    <main class="container">
+
+        <section class="session-card">
+
+            <div class="session-info">
+
+                <p class="event-label">
+                    Sesión activa
+                </p>
+
+                <h2>
+                    Seminario de Informática
+                </h2>
+
+                <p class="session-date">
+                    23 de septiembre de 2026
+                </p>
+
+            </div>
+
+
+            <div class="qr-section">
+
+                <h3>
+                    Código de asistencia
+                </h3>
+
+                <p>
+                    Los asistentes deben escanear este código
+                    para registrar su asistencia.
+                </p>
+
+                <div
+                    class="qr-placeholder"
+                    aria-label="Código QR de asistencia"
+                >
+                    QR
+                </div>
+
+                <p id="session-status" class="session-status">
+                    Sesión abierta
+                </p>
+
+            </div>
+
+
+            <div class="session-actions">
+
+               <button
+                    type="button"
+                    class="primary-button"
+                    data-action="close-session"
+                >
+                    Cerrar sesión
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <section class="attendance-section">
+
+            <header class="section-header">
+
+                <div>
+                    <p class="event-label">
+                        Asistencia
+                    </p>
+
+                    <h2>
+                        Asistentes registrados
+                    </h2>
+                </div>
+
+                <span id="attendance-count" class="attendance-count">
+                    0 asistentes
+                </span>
+
+            </header>
+
+            <div id="attendance-list" class="attendance-list"></div>
+
+        </section>
+        <section
+            id="signature-section"
+            class="signature-section"
+            hidden
+        >
+
+            <header class="section-header">
+
+                <div>
+                    <p class="event-label">
+                        Firma
+                    </p>
+
+                    <h2>
+                        Firma del asistente
+                    </h2>
+                </div>
+
+            </header>
+
+
+            <div class="signature-info">
+
+                <strong id="signature-attendee-name">
+                    Nombre del asistente
+                </strong>
+
+                <span id="signature-attendee-rut">
+                    RUT del asistente
+                </span>
+
+            </div>
+
+
+            <div class="signature-pad-container">
+
+                <canvas
+                    id="signature-pad"
+                    aria-label="Área para realizar la firma"
+                ></canvas>
+
+            </div>
+
+
+            <div class="signature-actions">
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    id="clear-signature"
+                >
+                    Limpiar
+                </button>
+
+                <button
+                    type="button"
+                    class="primary-button"
+                    id="confirm-signature"
+                >
+                    Confirmar firma
+                </button>
+
+            </div>
+
+        </section>
+    </main>
+
+
+    <footer class="site-footer">
+
+        <div class="container">
+
+            <p>
+                Sistema de Registro de Asistencia
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <script src="js/anfitrion.js"></script>
+
+</body>
+</html>

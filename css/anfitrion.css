@@ -1,0 +1,493 @@
+```css
+/* =========================
+   Base
+========================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    line-height: 1.5;
+
+    background: #f4f4f4;
+    color: #222;
+}
+
+button {
+    font: inherit;
+    cursor: pointer;
+}
+
+.container {
+    width: min(100% - 2rem, 1200px);
+    margin-inline: auto;
+}
+
+
+/* =========================
+   Header
+========================= */
+
+.site-header {
+    padding: 1rem 0;
+
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 1rem;
+}
+
+.header-label {
+    margin: 0 0 0.2rem;
+
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    color: #666;
+}
+
+.header-content h1 {
+    margin: 0;
+
+    font-size: 1.25rem;
+}
+
+
+/* =========================
+   Main
+========================= */
+
+main {
+    padding-block: 1rem;
+}
+
+
+/* =========================
+   Buttons
+========================= */
+
+.primary-button,
+.secondary-button {
+    min-height: 3rem;
+    padding: 0.7rem 1rem;
+
+    border-radius: 0.4rem;
+
+    font-weight: 600;
+}
+
+.primary-button {
+    width: 100%;
+
+    border: 0;
+
+    background: #222;
+    color: #fff;
+}
+
+.secondary-button {
+    border: 1px solid #bbb;
+
+    background: #fff;
+    color: #222;
+}
+
+.primary-button:active,
+.secondary-button:active {
+    transform: translateY(1px);
+}
+
+
+/* =========================
+   Session card
+========================= */
+
+.session-card {
+    margin-bottom: 1rem;
+    padding: 1.25rem;
+
+    background: #fff;
+
+    border: 1px solid #ddd;
+    border-radius: 0.75rem;
+}
+
+.session-info {
+    margin-bottom: 1.5rem;
+}
+
+.event-label {
+    margin: 0 0 0.25rem;
+
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    color: #666;
+}
+
+.session-info h2 {
+    margin: 0;
+
+    font-size: 1.4rem;
+    line-height: 1.3;
+}
+
+.session-date {
+    margin: 0.5rem 0 0;
+
+    color: #666;
+}
+
+
+/* =========================
+   QR section
+========================= */
+
+.qr-section {
+    padding: 1.25rem 0;
+
+    text-align: center;
+
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+.qr-section h3 {
+    margin: 0 0 0.4rem;
+}
+
+.qr-section p {
+    max-width: 400px;
+
+    margin: 0 auto;
+
+    color: #666;
+}
+
+.qr-placeholder {
+    display: grid;
+    place-items: center;
+
+    width: min(70vw, 280px);
+    aspect-ratio: 1;
+
+    margin: 1.5rem auto;
+
+    background: #eee;
+
+    border: 1px solid #bbb;
+    border-radius: 0.5rem;
+
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.session-status {
+    margin: 0 !important;
+
+    font-weight: 600;
+
+    color: #222 !important;
+}
+
+
+/* =========================
+   Session actions
+========================= */
+
+.session-actions {
+    padding-top: 1.25rem;
+}
+
+
+/* =========================
+   Attendance section
+========================= */
+
+.attendance-section {
+    margin-bottom: 1rem;
+}
+
+.section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: 1rem;
+
+    margin-bottom: 0.75rem;
+}
+
+.section-header h2 {
+    margin: 0;
+
+    font-size: 1.2rem;
+}
+
+.attendance-count {
+    flex-shrink: 0;
+
+    font-size: 0.85rem;
+
+    color: #666;
+}
+
+
+/* =========================
+   Attendance list
+========================= */
+
+.attendance-list {
+    display: flex;
+    flex-direction: column;
+
+    background: #fff;
+
+    border: 1px solid #ddd;
+    border-radius: 0.75rem;
+
+    overflow: hidden;
+}
+
+.attendee {
+    display: flex;
+    flex-direction: column;
+
+    gap: 0.75rem;
+
+    padding: 1rem;
+
+    border-bottom: 1px solid #eee;
+}
+
+.attendee:last-child {
+    border-bottom: 0;
+}
+
+.attendee-info {
+    display: flex;
+    flex-direction: column;
+
+    gap: 0.15rem;
+}
+
+.attendee-info strong {
+    font-size: 1rem;
+}
+
+.attendee-info span {
+    font-size: 0.9rem;
+
+    color: #666;
+}
+
+
+/* =========================
+   Attendance status
+========================= */
+
+.attendance-status {
+    width: fit-content;
+
+    padding: 0.35rem 0.6rem;
+
+    border-radius: 0.3rem;
+
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.attendance-status.pending {
+    background: #eee;
+    color: #444;
+}
+
+.attendance-status.signed {
+    background: #ddd;
+    color: #222;
+}
+
+
+/* =========================
+   Footer
+========================= */
+
+.site-footer {
+    padding: 1.5rem 0;
+
+    text-align: center;
+
+    font-size: 0.85rem;
+
+    color: #666;
+}
+
+
+/* =========================
+   Tablet
+========================= */
+
+@media (min-width: 600px) {
+
+    .session-card {
+        padding: 2rem;
+    }
+
+    .qr-placeholder {
+        width: 300px;
+    }
+
+    .attendee {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+}
+
+
+/* =========================
+   Desktop
+========================= */
+
+@media (min-width: 900px) {
+
+    main {
+        padding-block: 2rem;
+    }
+
+    .session-card {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+
+        gap: 2rem;
+    }
+
+    .session-info {
+        margin-bottom: 0;
+    }
+
+    .qr-section {
+        grid-row: span 2;
+
+        padding: 0;
+
+        border-top: 0;
+        border-bottom: 0;
+        border-left: 1px solid #eee;
+    }
+
+    .session-actions {
+        align-self: end;
+
+        padding-top: 0;
+    }
+
+}
+
+/* =========================
+   Signature
+========================= */
+
+.signature-section {
+    margin-bottom: 1rem;
+    padding: 1.25rem;
+
+    background: #fff;
+
+    border: 1px solid #ddd;
+    border-radius: 0.75rem;
+}
+
+.signature-info {
+    display: flex;
+    flex-direction: column;
+
+    gap: 0.15rem;
+
+    margin-bottom: 1rem;
+}
+
+.signature-info span {
+    color: #666;
+}
+
+.signature-pad-container {
+    width: 100%;
+    height: 250px;
+
+    background: #fff;
+
+    border: 1px solid #aaa;
+    border-radius: 0.5rem;
+
+    overflow: hidden;
+}
+
+#signature-pad {
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    background: #fff;
+
+    touch-action: none;
+    cursor: crosshair;
+}
+
+.signature-actions {
+    display: flex;
+    flex-direction: column;
+
+    gap: 0.75rem;
+
+    margin-top: 1rem;
+}
+
+.signature-actions button {
+    width: 100%;
+}
+
+@media (min-width: 600px) {
+
+    .signature-section {
+        padding: 2rem;
+    }
+
+    .signature-actions {
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+
+    .signature-actions button {
+        width: auto;
+        min-width: 150px;
+    }
+
+}
