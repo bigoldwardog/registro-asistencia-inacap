@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Panel de administración del registro de asistencia">
+
+    <title>Panel del administrador</title>
+
+    <link rel="stylesheet" href="css/administrador.css">
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-content">
+            <div>
+                <p class="header-label">Sistema de asistencia</p>
+                <h1>Panel del administrador</h1>
+            </div>
+
+            <button
+                type="button"
+                class="secondary-button"
+                id="logout-button"
+            >
+                Cerrar sesión
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="page-heading">
+            <p class="event-label">Administración</p>
+            <h2>Historial de Sesiones</h2>
+            <p>
+                Consulta las Sesiones realizadas, filtra los resultados
+                y exporta los registros.
+            </p>
+        </section>
+
+        <section class="filter-card" aria-labelledby="filters-title">
+            <div class="section-heading">
+                <h2 id="filters-title">Filtros de búsqueda</h2>
+
+                <button
+                    type="button"
+                    class="text-button"
+                    id="clear-filters"
+                >
+                    Limpiar filtros
+                </button>
+            </div>
+
+            <form id="filters-form">
+                <div class="filters-grid">
+                    <div class="form-group">
+                        <label for="filter-type">Tipo de Sesión</label>
+
+                        <select id="filter-type" name="type">
+                            <option value="">Todos los tipos</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filter-host">Anfitrión</label>
+
+                        <select id="filter-host" name="host">
+                            <option value="">Todos los Anfitriones</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filter-date-from">Desde</label>
+
+                        <input
+                            type="date"
+                            id="filter-date-from"
+                            name="dateFrom"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filter-date-to">Hasta</label>
+
+                        <input
+                            type="date"
+                            id="filter-date-to"
+                            name="dateTo"
+                        >
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="primary-button">
+                        Buscar Sesiones
+                    </button>
+                </div>
+
+                <p
+                    id="filter-error"
+                    class="feedback-message error-message"
+                    role="alert"
+                    hidden
+                ></p>
+            </form>
+        </section>
+
+        <section class="history-section">
+            <div class="section-heading results-heading">
+                <div>
+                    <p class="event-label">Resultados</p>
+                    <h2>Sesiones registradas</h2>
+                </div>
+
+                <span id="results-count" class="results-count">
+                    0 Sesiones
+                </span>
+            </div>
+
+            <div class="export-actions">
+                <button
+                    type="button"
+                    class="secondary-button"
+                    id="export-csv"
+                >
+                    Exportar CSV
+                </button>
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    id="export-xlsx"
+                >
+                    Exportar XLSX
+                </button>
+            </div>
+
+            <p
+                id="export-feedback"
+                class="feedback-message"
+                role="status"
+                aria-live="polite"
+                hidden
+            ></p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sesión</th>
+                            <th>Tipo</th>
+                            <th>Fecha</th>
+                            <th>Anfitrión</th>
+                            <th>Asistencias</th>
+                            <th>Firmadas</th>
+                            <th>Pendientes</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="sessions-table-body"></tbody>
+                </table>
+
+                <p id="empty-message" class="empty-message" hidden>
+                    No se encontraron Sesiones con los filtros seleccionados.
+                </p>
+            </div>
+        </section>
+
+        <p class="demo-notice">
+            Interfaz de demostración: los datos mostrados son ficticios
+            y todavía no están conectados a una base de datos.
+        </p>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>Sistema de Registro de Asistencia</p>
+        </div>
+    </footer>
+
+    <!-- Biblioteca necesaria para generar archivos XLSX -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <script src="js/administrador.js"></script>
+</body>
+</html>
