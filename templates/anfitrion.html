@@ -27,6 +27,55 @@
     </header>
 
     <main class="container">
+        
+<section class="session-card">
+        <div class="session-info">
+            <h2>Crear nueva sesión</h2>
+
+            <form id="create-session-form">
+                <div class="form-group">
+                    <label for="new-session-name">Nombre de la sesión</label>
+                    <input
+                        type="text"
+                        id="new-session-name"
+                        name="nombre"
+                        maxlength="200"
+                        required
+                        placeholder="Ej. Seminario de Informática"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="new-session-template">Plantilla</label>
+                    <select id="new-session-template" required>
+                        <option value="">Cargando plantillas...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="new-session-host">Anfitrión</label>
+                    <select id="new-session-host" required>
+                        <option value="">Cargando anfitriones...</option>
+                    </select>
+                </div>
+
+                <button
+                    type="submit"
+                    id="create-session-button"
+                    class="primary-button"
+                >
+                    Crear sesión
+                </button>
+
+                <p
+                    id="create-session-feedback"
+                    role="status"
+                    aria-live="polite"
+                ></p>
+            </form>
+        </div>
+    </section>
+
         <section class="session-card">
             <div class="session-info">
                 <label for="session-selector">Seleccionar sesión</label>

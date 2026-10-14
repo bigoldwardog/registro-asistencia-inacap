@@ -13,6 +13,12 @@ urlpatterns = [
         name="listar_sesiones",
     ),
 
+    path(
+    "api/sesiones/crear/",
+    views.crear_sesion,
+    name="crear_sesion",
+    ),
+
     # Consultar una sesión mediante su token QR
     path(
         "api/sesiones/<str:token>/",
@@ -60,4 +66,11 @@ urlpatterns = [
     views.historial_sesiones,
     name="historial_sesiones",
     ),
+
+    path(
+    "api/plantillas/",
+    views.opciones_creacion_sesion,
+    name="opciones_creacion_sesion",
+    ),
+    
 ]

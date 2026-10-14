@@ -13,7 +13,17 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.db.models import Count, Q
 
-from .models import Asistencias, Asistentes, Firmas, Sesiones
+import uuid
+
+from .models import (
+    Asistencias,
+    Asistentes,
+    Firmas,
+    Sesiones,
+    PlantillasSesion,
+    CamposPlantilla,
+    Usuarios,
+)
 
 @require_GET
 def historial_sesiones(request):
@@ -266,6 +276,121 @@ def registrar_asistencia(request, token):
         },
         status=201,
     )
+
+
+@require_GET
+def opciones_creacion_sesion(request):
+    plantillas = PlantillasSesion.objects.filter(
+        activa=1
+    ).order_by("nombre")
+
+    anfitriones = Usuarios.objects.filter(
+        activo=1
+    ).order_by("nombre")
+
+    return JsonResponse({
+        "plantillas": [
+            {"id": p.id, "nombre": p.nombre}
+            for p in plantillas
+        ],
+        "anfitriones": [
+            {"id": u.id, "nombre": u.nombre}
+            for u in anfitriones
+        ],
+    })
+
+
+@csrf_exempt
+@require_POST
+def crear_sesion(request):
+    try:
+        datos = json.loads(request.body)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse(
+            {"error": "El cuerpo de la solicitud debe ser JSON válido."},
+            status=400,
+        )
+
+    if not isinstance(datos, dict):
+        return JsonResponse(
+            {"error": "Se esperaba un objeto JSON."},
+            status=400,
+        )
+
+    nombre = datos.get("nombre", "")
+    if not isinstance(nombre, str) or not nombre.strip():
+        return JsonResponse(
+            {"error": "Debes indicar el nombre de la sesión."},
+            status=400,
+        )
+
+    try:
+        plantilla = PlantillasSesion.objects.get(
+            id=int(datos.get("plantilla_id")),
+            activa=1,
+        )
+        anfitrion = Usuarios.objects.get(
+            id=int(datos.get("anfitrion_id")),
+            activo=1,
+        )
+    except (TypeError, ValueError):
+        return JsonResponse(
+            {"error": "Debes seleccionar una plantilla y un anfitrión válidos."},
+            status=400,
+        )
+    except PlantillasSesion.DoesNotExist:
+        return JsonResponse(
+            {"error": "La plantilla no existe o está inactiva."},
+            status=400,
+        )
+    except Usuarios.DoesNotExist:
+        return JsonResponse(
+            {"error": "El anfitrión no existe o está inactivo."},
+            status=400,
+        )
+
+    campos = CamposPlantilla.objects.filter(
+        plantilla_id=plantilla.id
+    ).order_by("orden")
+
+    definicion_campos = [
+        {
+            "nombre": campo.nombre,
+            "etiqueta": campo.etiqueta,
+            "tipo": campo.tipo,
+            "obligatorio": bool(campo.obligatorio),
+        }
+        for campo in campos
+    ]
+
+    ahora = timezone.now().isoformat()
+
+    sesion = Sesiones.objects.create(
+        plantilla_id=plantilla.id,
+        anfitrion_id=anfitrion.id,
+        nombre=nombre.strip(),
+        fecha_inicio=ahora,
+        fecha_cierre=None,
+        estado="ABIERTA",
+        token_qr=uuid.uuid4().hex,
+        campos_definicion_json=json.dumps(
+            definicion_campos,
+            ensure_ascii=False,
+        ),
+        campos_valores_json="{}",
+        fecha_creacion=ahora,
+    )
+
+    return JsonResponse({
+        "mensaje": "Sesión creada correctamente.",
+        "sesion": {
+            "id": sesion.id,
+            "nombre": sesion.nombre,
+            "estado": sesion.estado,
+            "fecha_inicio": sesion.fecha_inicio,
+            "token_qr": sesion.token_qr,
+        },
+    }, status=201)
 
 def pagina_inicio(request):
     return render(request, "index.html")

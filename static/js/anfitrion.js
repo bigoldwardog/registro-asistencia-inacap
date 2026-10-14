@@ -11,6 +11,13 @@ let isDrawing = false;
 
 const sessionQr = document.querySelector("#session-qr");
 
+const createSessionForm = document.querySelector("#create-session-form");
+const newSessionName = document.querySelector("#new-session-name");
+const newSessionTemplate = document.querySelector("#new-session-template");
+const newSessionHost = document.querySelector("#new-session-host");
+const createSessionButton = document.querySelector("#create-session-button");
+const createSessionFeedback = document.querySelector("#create-session-feedback");
+
 const attendanceList = document.querySelector("#attendance-list");
 const attendanceCount = document.querySelector("#attendance-count");
 const sessionStatus = document.querySelector("#session-status");
@@ -102,7 +109,7 @@ async function loadAttendanceList() {
     }
 }
 
-async function loadSessions() {
+async function loadSessions(preferredSessionId = null) {
     sessionSelector.disabled = true;
 
     try {
@@ -151,7 +158,12 @@ async function loadSessions() {
             (session) => session.estado === "ABIERTA"
         );
 
-        const initialSession = firstOpenSession || sessions[0];
+        const preferredSession = sessions.find(
+        (session) => Number(session.id) === Number(preferredSessionId)
+        );
+
+        const initialSession =
+            preferredSession || firstOpenSession || sessions[0];
 
         sessionSelector.disabled = false;
         sessionSelector.value = String(initialSession.id);
@@ -619,4 +631,91 @@ if (logoutButton) {
 }
 
 
+async function loadCreationOptions() {
+    try {
+        const response = await fetch("/api/plantillas/");
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "No se pudieron cargar las opciones.");
+        }
+
+        newSessionTemplate.replaceChildren();
+        newSessionHost.replaceChildren();
+
+        newSessionTemplate.add(new Option("Selecciona una plantilla", ""));
+        newSessionHost.add(new Option("Selecciona un anfitrión", ""));
+
+        data.plantillas.forEach((item) => {
+            newSessionTemplate.add(new Option(item.nombre, item.id));
+        });
+
+        data.anfitriones.forEach((item) => {
+            newSessionHost.add(new Option(item.nombre, item.id));
+        });
+
+        createSessionButton.disabled =
+            data.plantillas.length === 0 ||
+            data.anfitriones.length === 0;
+
+        if (data.plantillas.length === 0 || data.anfitriones.length === 0) {
+            createSessionFeedback.textContent =
+                "Necesitas al menos una plantilla activa y un anfitrión activo.";
+        }
+    } catch (error) {
+        createSessionFeedback.textContent = error.message;
+        createSessionButton.disabled = true;
+    }
+}
+
+createSessionForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    createSessionButton.disabled = true;
+    createSessionFeedback.textContent = "Creando sesión...";
+
+    try {
+        const response = await fetch("/api/sesiones/crear/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                nombre: newSessionName.value.trim(),
+                plantilla_id: newSessionTemplate.value,
+                anfitrion_id: newSessionHost.value
+            })
+        });
+
+        const respuestaTexto = await response.text();
+        console.log("Estado HTTP:", response.status);
+        console.log("Respuesta del servidor:", respuestaTexto);
+
+        let data;
+
+        try {
+            data = JSON.parse(respuestaTexto);
+        } catch {
+            throw new Error(
+                `El servidor devolvió HTML en vez de JSON. Código HTTP: ${response.status}. Revisa la consola y la terminal de Django.`
+            );
+        }
+
+        if (!response.ok) {
+            throw new Error(data.error || "No se pudo crear la sesión.");
+        }
+        
+
+        createSessionFeedback.textContent = "Sesión creada correctamente.";
+        createSessionForm.reset();
+
+        await loadSessions(data.sesion.id);
+    } catch (error) {
+        createSessionFeedback.textContent = error.message;
+    } finally {
+        createSessionButton.disabled = false;
+    }
+});
+
+loadCreationOptions();
 loadSessions();
