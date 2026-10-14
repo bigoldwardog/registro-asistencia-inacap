@@ -1,4 +1,3 @@
-```css
 /* =========================
    Base
 ========================= */
@@ -14,23 +13,30 @@ html {
 body {
     min-height: 100vh;
     margin: 0;
-
     font-family:
         system-ui,
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
         sans-serif;
-
     line-height: 1.5;
-
     background: #f4f4f4;
     color: #222;
 }
 
-button {
+button,
+select {
     font: inherit;
+}
+
+button {
     cursor: pointer;
+}
+
+button:disabled,
+select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 .container {
@@ -38,6 +44,9 @@ button {
     margin-inline: auto;
 }
 
+[hidden] {
+    display: none !important;
+}
 
 /* =========================
    Header
@@ -45,7 +54,6 @@ button {
 
 .site-header {
     padding: 1rem 0;
-
     background: #fff;
     border-bottom: 1px solid #ddd;
 }
@@ -53,28 +61,22 @@ button {
 .header-content {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-
     gap: 1rem;
 }
 
 .header-label {
     margin: 0 0 0.2rem;
-
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-
     color: #666;
 }
 
 .header-content h1 {
     margin: 0;
-
     font-size: 1.25rem;
 }
-
 
 /* =========================
    Main
@@ -84,7 +86,6 @@ main {
     padding-block: 1rem;
 }
 
-
 /* =========================
    Buttons
 ========================= */
@@ -93,76 +94,85 @@ main {
 .secondary-button {
     min-height: 3rem;
     padding: 0.7rem 1rem;
-
     border-radius: 0.4rem;
-
     font-weight: 600;
 }
 
 .primary-button {
     width: 100%;
-
     border: 0;
-
     background: #222;
     color: #fff;
 }
 
 .secondary-button {
     border: 1px solid #bbb;
-
     background: #fff;
     color: #222;
 }
 
-.primary-button:active,
-.secondary-button:active {
+.primary-button:not(:disabled):active,
+.secondary-button:not(:disabled):active {
     transform: translateY(1px);
 }
-
 
 /* =========================
    Session card
 ========================= */
 
 .session-card {
-    margin-bottom: 1rem;
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
     padding: 1.25rem;
-
     background: #fff;
-
     border: 1px solid #ddd;
     border-radius: 0.75rem;
 }
 
 .session-info {
-    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.session-info label {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+#session-selector {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #bbb;
+    border-radius: 0.4rem;
+    background: #fff;
+    color: #222;
+}
+
+.session-info h2 {
+    margin: 0.75rem 0 0;
+    font-size: 1.4rem;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.session-date {
+    margin: 0;
+    color: #666;
 }
 
 .event-label {
     margin: 0 0 0.25rem;
-
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-
     color: #666;
 }
-
-.session-info h2 {
-    margin: 0;
-
-    font-size: 1.4rem;
-    line-height: 1.3;
-}
-
-.session-date {
-    margin: 0.5rem 0 0;
-
-    color: #666;
-}
-
 
 /* =========================
    QR section
@@ -170,93 +180,85 @@ main {
 
 .qr-section {
     padding: 1.25rem 0;
-
     text-align: center;
-
     border-top: 1px solid #eee;
     border-bottom: 1px solid #eee;
 }
 
 .qr-section h3 {
-    margin: 0 0 0.4rem;
+    margin: 0 0 0.5rem;
 }
 
 .qr-section p {
     max-width: 400px;
-
     margin: 0 auto;
-
     color: #666;
 }
 
 .qr-placeholder {
     display: grid;
     place-items: center;
-
     width: min(70vw, 280px);
     aspect-ratio: 1;
-
-    margin: 1.5rem auto;
-
-    background: #eee;
-
-    border: 1px solid #bbb;
+    margin: 1.25rem auto;
+    padding: 1rem;
+    background: #f7f7f7;
+    border: 1px dashed #bbb;
     border-radius: 0.5rem;
-
-    font-size: 2rem;
-    font-weight: 700;
+    color: #666;
+    font-size: 1rem;
+    text-align: center;
 }
 
 .session-status {
     margin: 0 !important;
-
     font-weight: 600;
-
-    color: #222 !important;
+    color: #444 !important;
 }
 
+.session-status.is-open {
+    color: #216e39 !important;
+}
+
+.session-status.is-closed {
+    color: #8b2525 !important;
+}
 
 /* =========================
    Session actions
 ========================= */
 
 .session-actions {
-    padding-top: 1.25rem;
+    display: flex;
+    align-items: flex-end;
 }
-
 
 /* =========================
    Attendance section
 ========================= */
 
 .attendance-section {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .section-header {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-
     gap: 1rem;
-
     margin-bottom: 0.75rem;
 }
 
 .section-header h2 {
     margin: 0;
-
     font-size: 1.2rem;
 }
 
 .attendance-count {
     flex-shrink: 0;
-
     font-size: 0.85rem;
-
     color: #666;
 }
-
 
 /* =========================
    Attendance list
@@ -265,149 +267,62 @@ main {
 .attendance-list {
     display: flex;
     flex-direction: column;
-
+    margin: 0;
+    padding: 0;
+    list-style: none;
     background: #fff;
-
     border: 1px solid #ddd;
     border-radius: 0.75rem;
-
     overflow: hidden;
 }
 
-.attendee {
+.attendance-item {
     display: flex;
     flex-direction: column;
-
     gap: 0.75rem;
-
     padding: 1rem;
-
     border-bottom: 1px solid #eee;
 }
 
-.attendee:last-child {
+.attendance-item:last-child {
     border-bottom: 0;
 }
 
-.attendee-info {
+.attendance-info {
     display: flex;
     flex-direction: column;
-
     gap: 0.15rem;
+    min-width: 0;
 }
 
-.attendee-info strong {
+.attendance-info strong {
     font-size: 1rem;
+    overflow-wrap: anywhere;
 }
 
-.attendee-info span {
+.attendance-info span {
     font-size: 0.9rem;
-
     color: #666;
 }
 
-
-/* =========================
-   Attendance status
-========================= */
-
-.attendance-status {
-    width: fit-content;
-
-    padding: 0.35rem 0.6rem;
-
-    border-radius: 0.3rem;
-
-    font-size: 0.8rem;
+.attendance-state {
+    font-size: 0.85rem;
     font-weight: 600;
 }
 
-.attendance-status.pending {
-    background: #eee;
-    color: #444;
-}
-
-.attendance-status.signed {
-    background: #ddd;
+.attendance-item button {
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #bbb;
+    border-radius: 0.4rem;
+    background: #fff;
     color: #222;
+    font-weight: 600;
 }
 
-
-/* =========================
-   Footer
-========================= */
-
-.site-footer {
-    padding: 1.5rem 0;
-
-    text-align: center;
-
-    font-size: 0.85rem;
-
+.empty-attendance {
+    padding: 1.25rem;
     color: #666;
-}
-
-
-/* =========================
-   Tablet
-========================= */
-
-@media (min-width: 600px) {
-
-    .session-card {
-        padding: 2rem;
-    }
-
-    .qr-placeholder {
-        width: 300px;
-    }
-
-    .attendee {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-}
-
-
-/* =========================
-   Desktop
-========================= */
-
-@media (min-width: 900px) {
-
-    main {
-        padding-block: 2rem;
-    }
-
-    .session-card {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-
-        gap: 2rem;
-    }
-
-    .session-info {
-        margin-bottom: 0;
-    }
-
-    .qr-section {
-        grid-row: span 2;
-
-        padding: 0;
-
-        border-top: 0;
-        border-bottom: 0;
-        border-left: 1px solid #eee;
-    }
-
-    .session-actions {
-        align-self: end;
-
-        padding-top: 0;
-    }
-
 }
 
 /* =========================
@@ -415,11 +330,9 @@ main {
 ========================= */
 
 .signature-section {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     padding: 1.25rem;
-
     background: #fff;
-
     border: 1px solid #ddd;
     border-radius: 0.75rem;
 }
@@ -427,9 +340,7 @@ main {
 .signature-info {
     display: flex;
     flex-direction: column;
-
     gap: 0.15rem;
-
     margin-bottom: 1rem;
 }
 
@@ -440,23 +351,17 @@ main {
 .signature-pad-container {
     width: 100%;
     height: 250px;
-
     background: #fff;
-
     border: 1px solid #aaa;
     border-radius: 0.5rem;
-
     overflow: hidden;
 }
 
 #signature-pad {
     display: block;
-
     width: 100%;
     height: 100%;
-
     background: #fff;
-
     touch-action: none;
     cursor: crosshair;
 }
@@ -464,9 +369,7 @@ main {
 .signature-actions {
     display: flex;
     flex-direction: column;
-
     gap: 0.75rem;
-
     margin-top: 1rem;
 }
 
@@ -474,10 +377,35 @@ main {
     width: 100%;
 }
 
-@media (min-width: 600px) {
+/* =========================
+   Footer
+========================= */
 
+.site-footer {
+    padding: 1.5rem 0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* =========================
+   Tablet
+========================= */
+
+@media (min-width: 600px) {
+    .session-card,
     .signature-section {
         padding: 2rem;
+    }
+
+    .qr-placeholder {
+        width: 280px;
+    }
+
+    .attendance-item {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .signature-actions {
@@ -489,5 +417,65 @@ main {
         width: auto;
         min-width: 150px;
     }
+}
 
+/* =========================
+   Desktop
+========================= */
+
+@media (min-width: 900px) {
+    main {
+        padding-block: 2rem;
+    }
+
+    .session-card {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 2rem;
+    }
+
+    .session-info {
+        align-self: start;
+    }
+
+    .qr-section {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        align-self: stretch;
+        padding: 0 0 0 2rem;
+        border-top: 0;
+        border-bottom: 0;
+        border-left: 1px solid #eee;
+    }
+
+    .session-actions {
+        grid-column: 1;
+        grid-row: 2;
+    }
+}
+
+.attendance-item-clickable {
+    cursor: pointer;
+}
+
+.attendance-item-clickable:hover {
+    background-color: #f5f5f5;
+}
+
+#session-qr {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 220px;
+    min-height: 220px;
+    padding: 12px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+#session-qr img,
+#session-qr canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
 }

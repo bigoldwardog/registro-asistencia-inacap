@@ -311,3 +311,20 @@ tbody tr:hover {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
+
+.clickable-session {
+    cursor: pointer;
+}
+
+.clickable-session:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.clickable-session:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+}
+
+#session-detail-section {
+    margin-top: 2rem;
+}

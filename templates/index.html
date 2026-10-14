@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Registro de asistencia a eventos">
+    <title>Registro de asistencia</title>
+    {% load static %}
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<body>
+    <header class="site-header">
+        <div class="container">
+            <h1>Registro de asistencia</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="attendance-card" aria-labelledby="attendance-title">
+            <header class="attendance-card__header">
+                <p class="event-label">Evento</p>
+                <h2 id="attendance-title">Cargando evento...</h2>
+                <p class="event-date" id="event-date"></p>
+            </header>
+
+            <form id="attendance-form">
+                <div class="form-group">
+                    <label for="name">Nombre completo</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="nombre"
+                        autocomplete="name"
+                        placeholder="Nombre y apellidos"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="rut">RUT</label>
+                    <input
+                        type="text"
+                        id="rut"
+                        name="rut"
+                        autocomplete="off"
+                        placeholder="12.345.678-9"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Teléfono</label>
+                    <input
+                        type="tel"
+                        id="phone"
+                        name="telefono"
+                        autocomplete="tel"
+                        inputmode="tel"
+                        placeholder="+56 9 1234 5678"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Correo electrónico</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="correo"
+                        autocomplete="email"
+                        placeholder="correo@ejemplo.com"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="submit-button" id="submit-button">
+                    Registrar asistencia
+                </button>
+
+                <p id="form-message" role="status" aria-live="polite"></p>
+            </form>
+
+            <p class="signature-notice">
+                Después de registrar tus datos, dirígete a la tablet del encargado
+                para realizar tu firma.
+            </p>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>Sistema de Registro de Asistencia</p>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

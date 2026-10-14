@@ -1,13 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Panel de administración del registro de asistencia">
-
     <title>Panel del administrador</title>
-
-    <link rel="stylesheet" href="css/administrador.css">
+    <link rel="stylesheet" href="{% static 'css/administrador.css' %}">
 </head>
 
 <body>
@@ -166,10 +164,42 @@
             </div>
         </section>
 
-        <p class="demo-notice">
-            Interfaz de demostración: los datos mostrados son ficticios
-            y todavía no están conectados a una base de datos.
-        </p>
+        <section id="session-detail-section" class="history-section" hidden>
+            <div class="section-heading results-heading">
+                <div>
+                    <p class="event-label">Detalle</p>
+                    <h2 id="detail-session-title">Asistentes de la sesión</h2>
+                    <p id="detail-session-info"></p>
+                </div>
+
+                <button type="button" class="secondary-button" id="back-to-history">
+                    Volver al historial
+                </button>
+            </div>
+
+            <p id="detail-feedback" class="feedback-message" role="status" hidden></p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>RUT</th>
+                            <th>Teléfono</th>
+                            <th>Correo</th>
+                            <th>Fecha de registro</th>
+                            <th>Estado de firma</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendees-table-body"></tbody>
+                </table>
+
+                <p id="attendees-empty-message" class="empty-message" hidden>
+                    Esta sesión no tiene asistentes registrados.
+                </p>
+            </div>
+        </section>
+
     </main>
 
     <footer class="site-footer">
@@ -181,6 +211,6 @@
     <!-- Biblioteca necesaria para generar archivos XLSX -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <script src="js/administrador.js"></script>
+    <script src="{% static 'js/administrador.js' %}" defer></script>
 </body>
 </html>

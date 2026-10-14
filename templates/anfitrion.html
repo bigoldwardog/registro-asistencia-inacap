@@ -1,0 +1,155 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="description"
+        content="Panel del encargado para gestionar sesiones de asistencia"
+    >
+
+    <title>Panel del encargado</title>
+
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/anfitrion.css' %}">
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-content">
+            <div>
+                <p class="header-label">Sistema de asistencia</p>
+                <h1>Panel del encargado</h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="session-card">
+            <div class="session-info">
+                <label for="session-selector">Seleccionar sesión</label>
+
+                <select id="session-selector" name="session-selector">
+                    <option value="">Cargando sesiones...</option>
+                </select>
+
+                <h2>Sin sesión seleccionada</h2>
+
+                <p class="session-date"></p>
+            </div>
+
+            <div class="qr-section">
+                <h3>Código QR de asistencia</h3>
+
+                <p>
+                    El código QR estará disponible cuando se implemente
+                    su generación.
+                </p>
+
+                <div id="session-qr" class="qr-placeholder"
+                    role="img" aria-label="Código QR de la sesión seleccionada">
+                    Selecciona una sesión
+                </div>
+
+                <p
+                    id="session-status"
+                    class="session-status"
+                    role="status"
+                    aria-live="polite"
+                >
+                    Selecciona una sesión.
+                </p>
+            </div>
+
+            <div class="session-actions">
+                <button
+                    type="button"
+                    id="close-session-button"
+                    class="primary-button"
+                    data-action="close-session"
+                    disabled
+                >
+                    Cerrar sesión
+                </button>
+            </div>
+        </section>
+
+        <section class="attendance-section">
+            <header class="section-header">
+                <div>
+                    <p class="event-label">Asistencia</p>
+                    <h2>Asistentes registrados</h2>
+                </div>
+
+                <span
+                    id="attendance-count"
+                    class="attendance-count"
+                >
+                    0 asistentes
+                </span>
+            </header>
+
+            <ul
+                id="attendance-list"
+                class="attendance-list"
+                aria-live="polite"
+            ></ul>
+        </section>
+
+        <section
+            id="signature-section"
+            class="signature-section"
+            hidden
+        >
+            <header class="section-header">
+                <div>
+                    <p class="event-label">Firma</p>
+                    <h2>Firma del asistente</h2>
+                </div>
+            </header>
+
+            <div class="signature-info">
+                <strong id="signature-attendee-name"></strong>
+                <span id="signature-attendee-rut"></span>
+            </div>
+
+            <div class="signature-pad-container">
+                <canvas
+                    id="signature-pad"
+                    width="800"
+                    height="400"
+                    aria-label="Área para realizar la firma"
+                ></canvas>
+            </div>
+
+            <div class="signature-actions">
+                <button
+                    type="button"
+                    class="secondary-button"
+                    id="clear-signature"
+                >
+                    Limpiar firma
+                </button>
+
+                <button
+                    type="button"
+                    class="primary-button"
+                    id="confirm-signature"
+                >
+                    Confirmar firma
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>Sistema de Registro de Asistencia</p>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="{% static 'js/anfitrion.js' %}" defer></script>
+</html>
