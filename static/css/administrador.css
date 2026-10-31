@@ -328,3 +328,20 @@ tbody tr:hover {
 #session-detail-section {
     margin-top: 2rem;
 }
+.account-nav { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-left: auto; }
+.account-nav a { color: #222; font-size: .9rem; text-underline-offset: .2rem; }
+.account-nav form { margin: 0; }
+#signature-preview-dialog { width: min(95vw, 850px); border: 1px solid #ddd; border-radius: .75rem; padding: 1.5rem; }
+#signature-preview-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+#signature-preview-image { display: block; max-width: 100%; max-height: 60vh; object-fit: contain; background: #fff; margin-bottom: 1rem; }
+.session-audit { background: #fff; border: 1px solid #ddd; border-radius: .75rem; padding: 1rem; margin-block: 1rem; }
+.session-audit button { margin-block: 1rem; }
+.session-audit pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; }
+.session-audit details { margin-top: .75rem; }
+@media (max-width: 760px) { .header-content { flex-wrap: wrap; } .account-nav { width: 100%; margin-left: 0; gap: .75rem; } }
+
+#detail-activity-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-block: 1rem; }
+#detail-activity-fields dt { font-size: .85rem; color: #666; }
+#detail-activity-fields dd { margin: .25rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+#attendees-table-body td { vertical-align: top; }
+#attendees-table-body td p { font-size: .8rem; }

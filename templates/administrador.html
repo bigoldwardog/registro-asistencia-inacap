@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel del administrador</title>
-    <link rel="stylesheet" href="{% static 'css/administrador.css' %}">
+    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=revision-integral-2">
 </head>
 
 <body>
@@ -16,13 +16,7 @@
                 <h1>Panel del administrador</h1>
             </div>
 
-            <button
-                type="button"
-                class="secondary-button"
-                id="logout-button"
-            >
-                Cerrar sesión
-            </button>
+            <nav class="account-nav" aria-label="Cuenta"><a href="{% url 'anfitrion' %}">Panel anfitrión</a><a href="{% url 'usuarios' %}">Usuarios</a><a href="{% url 'mi_cuenta' %}">Mi cuenta</a><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secondary-button" type="submit">Salir</button></form></nav>
         </div>
     </header>
 
@@ -50,6 +44,7 @@
             </div>
 
             <form id="filters-form">
+                <div class="form-group"><label for="filter-person">Persona o actividad</label><input id="filter-person" name="q" placeholder="Nombre, RUT, cargo o nombre de la sesión"></div>
                 <div class="filters-grid">
                     <div class="form-group">
                         <label for="filter-type">Tipo de Sesión</label>
@@ -177,20 +172,13 @@
                 </button>
             </div>
 
+            <dl id="detail-activity-fields"></dl>
+            <div class="export-actions"><button class="secondary-button" type="button" id="detail-export-csv">Exportar asistentes CSV</button><button class="secondary-button" type="button" id="detail-export-xlsx">Exportar Excel con firmas</button></div>
             <p id="detail-feedback" class="feedback-message" role="status" hidden></p>
 
             <div class="table-container">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>RUT</th>
-                            <th>Teléfono</th>
-                            <th>Correo</th>
-                            <th>Fecha de registro</th>
-                            <th>Estado de firma</th>
-                        </tr>
-                    </thead>
+                    <thead><tr id="attendees-table-head"></tr></thead>
                     <tbody id="attendees-table-body"></tbody>
                 </table>
 
@@ -200,7 +188,9 @@
             </div>
         </section>
 
+            <details class="session-audit"><summary>Historial de cambios</summary><button type="button" class="secondary-button" id="admin-load-audit">Cargar historial de la sesión seleccionada</button><div id="admin-audit-results"></div></details>
     </main>
+    <dialog id="signature-preview-dialog" aria-labelledby="signature-preview-title"><h2 id="signature-preview-title">Firma guardada</h2><img id="signature-preview-image" alt="Firma guardada"><form method="dialog"><button class="secondary-button">Cerrar</button></form></dialog>
 
     <footer class="site-footer">
         <div class="container">
@@ -208,9 +198,9 @@
         </div>
     </footer>
 
-    <!-- Biblioteca necesaria para generar archivos XLSX -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <script src="{% static 'js/administrador.js' %}" defer></script>
+
+
+    <script src="{% static 'js/administrador.js' %}?v=revision-integral-2" defer></script>
 </body>
 </html>

@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS sesiones (
 
 CREATE TABLE IF NOT EXISTS asistentes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    rut TEXT NOT NULL UNIQUE,
+    rut TEXT UNIQUE,
     nombre TEXT NOT NULL,
     telefono TEXT NOT NULL,
     correo TEXT NOT NULL,
@@ -131,6 +131,9 @@ CREATE TABLE IF NOT EXISTS asistencias (
     asistente_id INTEGER NOT NULL,
 
     nombre_registrado TEXT NOT NULL,
+    cargo_registrado TEXT NOT NULL DEFAULT '',
+    campos_participante_json TEXT NOT NULL DEFAULT '{}',
+    registro_token TEXT UNIQUE,
     rut_registrado TEXT NOT NULL,
     telefono_registrado TEXT NOT NULL,
     correo_registrado TEXT NOT NULL,
@@ -230,3 +233,20 @@ CREATE INDEX IF NOT EXISTS idx_asistencias_estado
 
 CREATE INDEX IF NOT EXISTS idx_auditoria_fecha
     ON auditoria(fecha);
+CREATE TABLE IF NOT EXISTS firmas_devolucion (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    asistencia_id INTEGER NOT NULL UNIQUE REFERENCES asistencias(id) ON DELETE RESTRICT,
+    imagen BLOB NOT NULL,
+    formato TEXT NOT NULL DEFAULT 'image/png',
+    fecha_creacion TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS firmas_adicionales (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    asistencia_id INTEGER NOT NULL REFERENCES asistencias(id) ON DELETE RESTRICT,
+    tipo TEXT NOT NULL CHECK(tipo IN ('DOCENTE')),
+    imagen BLOB NOT NULL,
+    formato TEXT NOT NULL DEFAULT 'image/png',
+    fecha_creacion TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(asistencia_id, tipo)
+);

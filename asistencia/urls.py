@@ -1,76 +1,30 @@
 from django.urls import path
-from . import views
+from . import views, accounts, exports
 
 urlpatterns = [
-    path("", views.pagina_inicio, name="inicio"),
-    path("anfitrion/", views.pagina_anfitrion, name="anfitrion"),
-    path("administrador/", views.pagina_administrador, name="administrador"),
-
-    # Listar todas las sesiones
-    path(
-        "api/sesiones/",
-        views.listar_sesiones,
-        name="listar_sesiones",
-    ),
-
-    path(
-    "api/sesiones/crear/",
-    views.crear_sesion,
-    name="crear_sesion",
-    ),
-
-    # Consultar una sesión mediante su token QR
-    path(
-        "api/sesiones/<str:token>/",
-        views.consultar_sesion,
-        name="consultar_sesion",
-    ),
-
-    # Registrar una asistencia mediante el token QR
-    path(
-        "api/sesiones/<str:token>/asistencias/",
-        views.registrar_asistencia,
-        name="registrar_asistencia",
-    ),
-
-    # Listar las asistencias de una sesión
-    path(
-        "api/sesiones/<int:sesion_id>/asistencias/lista/",
-        views.listar_asistencias,
-        name="listar_asistencias",
-    ),
-
-    # Guardar la firma de una asistencia
-    path(
-        "api/asistencias/<int:asistencia_id>/firma/",
-        views.guardar_firma,
-        name="guardar_firma",
-    ),
-
-    # Cerrar una sesión
-    path(
-        "api/sesiones/<int:sesion_id>/cerrar/",
-        views.cerrar_sesion,
-        name="cerrar_sesion",
-    ),
-
-
-    path(
-        "api/sesiones/<str:token>/asistencias/consultar/",
-        views.consultar_asistencia_existente,
-        name="consultar_asistencia_existente",
-    ),
-
-    path(
-    "api/administrador/historial/",
-    views.historial_sesiones,
-    name="historial_sesiones",
-    ),
-
-    path(
-    "api/plantillas/",
-    views.opciones_creacion_sesion,
-    name="opciones_creacion_sesion",
-    ),
-    
+    path('', views.pagina_inicio, name='inicio'),
+    path('ingresar/', accounts.login, name='login'),
+    path('configuracion-inicial/', accounts.configuracion_inicial, name='configuracion_inicial'),
+    path('salir/', accounts.logout, name='logout'),
+    path('usuarios/', accounts.usuarios, name='usuarios'),
+    path('mi-cuenta/', accounts.mi_cuenta, name='mi_cuenta'),
+    path('anfitrion/', views.pagina_anfitrion, name='anfitrion'),
+    path('administrador/', views.pagina_administrador, name='administrador'),
+    path('api/configuracion-sesiones/', views.opciones_sesion),
+    path('api/sesiones/crear/', views.crear_sesion),
+    path('api/sesiones/', views.listar_sesiones),
+    path('api/sesiones/<int:sesion_id>/asistencias/lista/', views.listar_asistencias),
+    path('api/sesiones/<int:sesion_id>/desarrollo/', views.guardar_desarrollo),
+    path('api/sesiones/<int:sesion_id>/historial/', views.historial_cambios),
+    path('api/sesiones/<int:sesion_id>/cerrar/', views.cerrar_sesion),
+    path('api/sesiones/<int:sesion_id>/qr.png', views.codigo_qr),
+    path('api/sesiones/<str:token>/', views.consultar_sesion),
+    path('api/sesiones/<str:token>/asistencias/', views.registrar_asistencia),
+    path('api/sesiones/<str:token>/asistencias/consultar/', views.consultar_asistencia_existente),
+    path('api/asistencias/<int:asistencia_id>/firma/', views.guardar_firma),
+    path('api/asistencias/<int:asistencia_id>/devolucion/firma/', views.guardar_firma_devolucion),
+    path('api/asistencias/<int:asistencia_id>/docente/firma/', views.guardar_firma_docente),
+    path('api/asistencias/<int:asistencia_id>/imagen/<str:tipo>/', views.imagen_firma),
+    path('api/administrador/historial/', views.historial_sesiones),
+    path('api/administrador/exportar/<str:formato>/', exports.exportar),
 ]
