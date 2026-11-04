@@ -1,0 +1,347 @@
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    line-height: 1.5;
+    background: #f4f4f4;
+    color: #222;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid #222;
+    outline-offset: 2px;
+}
+
+.container {
+    width: min(100% - 2rem, 1200px);
+    margin-inline: auto;
+}
+
+/* Encabezado */
+
+.site-header {
+    padding: 1rem 0;
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.header-label,
+.event-label {
+    margin: 0 0 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #666;
+}
+
+.header-content h1 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+/* Contenido principal */
+
+main {
+    padding-block: 1.5rem;
+}
+
+.page-heading {
+    margin-bottom: 1.5rem;
+}
+
+.page-heading h2 {
+    margin: 0;
+    font-size: 1.6rem;
+}
+
+.page-heading > p:last-child {
+    margin: 0.5rem 0 0;
+    color: #666;
+}
+
+/* Botones */
+
+.primary-button,
+.secondary-button {
+    min-height: 2.75rem;
+    padding: 0.65rem 1rem;
+    border-radius: 0.4rem;
+    font-weight: 600;
+}
+
+.primary-button {
+    border: 1px solid #222;
+    background: #222;
+    color: #fff;
+}
+
+.secondary-button {
+    border: 1px solid #bbb;
+    background: #fff;
+    color: #222;
+}
+
+.primary-button:hover {
+    background: #444;
+}
+
+.secondary-button:hover {
+    background: #f0f0f0;
+}
+
+.primary-button:active,
+.secondary-button:active {
+    transform: translateY(1px);
+}
+
+.text-button {
+    padding: 0.4rem 0;
+    border: 0;
+    background: transparent;
+    color: #444;
+    text-decoration: underline;
+}
+
+/* Tarjetas */
+
+.filter-card,
+.history-section {
+    margin-bottom: 1.25rem;
+    padding: 1.25rem;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 0.75rem;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.section-heading h2 {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+/* Filtros */
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    min-height: 2.9rem;
+    padding: 0.65rem;
+    border: 1px solid #aaa;
+    border-radius: 0.4rem;
+    background: #fff;
+    color: #222;
+}
+
+.filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.25rem;
+}
+
+/* Resultados */
+
+.results-heading {
+    margin-bottom: 0.75rem;
+}
+
+.results-count {
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.export-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+/* Tabla */
+
+.table-container {
+    overflow-x: auto;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+thead {
+    background: #f4f4f4;
+}
+
+th,
+td {
+    padding: 0.85rem;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+}
+
+th {
+    font-weight: 700;
+}
+
+tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+tbody tr:hover {
+    background: #fafafa;
+}
+
+.status-number {
+    font-weight: 600;
+}
+
+.empty-message {
+    padding: 1.5rem;
+    margin: 0;
+    text-align: center;
+    color: #666;
+}
+
+/* Mensajes */
+
+.feedback-message {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+}
+
+.error-message {
+    color: #a11;
+}
+
+.demo-notice {
+    margin: 1rem 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.site-footer {
+    padding: 1.5rem 0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Pantallas medianas */
+
+@media (min-width: 600px) {
+    main {
+        padding-block: 2rem;
+    }
+
+    .filter-card,
+    .history-section {
+        padding: 1.75rem;
+    }
+
+    .filters-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Pantallas grandes */
+
+@media (min-width: 900px) {
+    .filters-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.clickable-session {
+    cursor: pointer;
+}
+
+.clickable-session:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.clickable-session:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+}
+
+#session-detail-section {
+    margin-top: 2rem;
+}
+.account-nav { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-left: auto; }
+.account-nav a { color: #222; font-size: .9rem; text-underline-offset: .2rem; }
+.account-nav form { margin: 0; }
+#signature-preview-dialog { width: min(95vw, 850px); border: 1px solid #ddd; border-radius: .75rem; padding: 1.5rem; }
+#signature-preview-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+#signature-preview-image { display: block; max-width: 100%; max-height: 60vh; object-fit: contain; background: #fff; margin-bottom: 1rem; }
+.session-audit { background: #fff; border: 1px solid #ddd; border-radius: .75rem; padding: 1rem; margin-block: 1rem; }
+.session-audit button { margin-block: 1rem; }
+.session-audit pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; }
+.session-audit details { margin-top: .75rem; }
+@media (max-width: 760px) { .header-content { flex-wrap: wrap; } .account-nav { width: 100%; margin-left: 0; gap: .75rem; } }
+
+#detail-activity-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-block: 1rem; }
+#detail-activity-fields dt { font-size: .85rem; color: #666; }
+#detail-activity-fields dd { margin: .25rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+#attendees-table-body td { vertical-align: top; }
+#attendees-table-body td p { font-size: .8rem; }

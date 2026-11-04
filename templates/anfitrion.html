@@ -1,0 +1,230 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="description"
+        content="Panel del encargado para gestionar sesiones de asistencia"
+    >
+
+    <title>Panel del encargado</title>
+
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/anfitrion.css' %}?v=revision-integral-2">
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-content">
+            <div>
+                <p class="header-label">Sistema de asistencia</p>
+                <h1>Panel del encargado</h1>
+            </div>
+            <nav class="account-nav" aria-label="Cuenta"><span>{{ actor.nombre }}</span><a href="{% url 'mi_cuenta' %}">Mi cuenta</a>{% if actor.rol == 'ADMINISTRADOR' %}<a href="{% url 'administrador' %}">Administración</a>{% endif %}<form action="{% url 'logout' %}" method="post">{% csrf_token %}<button class="secondary-button" type="submit">Salir</button></form></nav>
+        </div>
+    </header>
+
+    <main class="container dashboard">
+        <div class="dashboard-heading">
+            <div><p class="header-label">Panel del anfitrión</p><h2>Sesiones y asistencia</h2><p>Crea una actividad o gestiona sus participantes desde un solo lugar.</p></div>
+        </div>
+        <div class="dashboard-tabs" role="tablist" aria-label="Secciones del panel">
+            <button type="button" role="tab" id="tab-manage" aria-controls="panel-manage" aria-selected="true" data-dashboard-tab="manage">Gestionar sesión</button>
+            <button type="button" role="tab" id="tab-new" aria-controls="panel-new" aria-selected="false" tabindex="-1" data-dashboard-tab="new">Nueva sesión</button>
+        </div>
+        <p id="dashboard-feedback" class="dashboard-feedback" role="status" aria-live="polite" hidden></p>
+        <div id="panel-manage" role="tabpanel" aria-labelledby="tab-manage">
+            <div class="dashboard-metrics" aria-label="Resumen de asistencia">
+                <div><span>Asistentes</span><strong id="metric-total">0</strong></div>
+                <div><span>Firmados</span><strong id="metric-signed">0</strong></div>
+                <div><span>Pendientes de firma</span><strong id="metric-pending">0</strong></div>
+            </div>
+        <section class="session-card">
+            <div class="session-info">
+                <label for="session-selector">Seleccionar sesión</label>
+
+                <select id="session-selector" name="session-selector">
+                    <option value="">Cargando sesiones...</option>
+                </select>
+
+                <h2 id="selected-session-title">Sin sesión seleccionada</h2>
+
+                <div class="session-date" aria-label="Horarios registrados"></div>
+                <dl id="session-template-details"></dl>
+            </div>
+
+            <div class="qr-section">
+                <h3>Código QR de asistencia</h3>
+
+                <p>
+                    Escanea el código QR para registrar tu asistencia.
+                </p>
+
+                <div id="session-qr" class="qr-placeholder"
+                    role="img" aria-label="Código QR de la sesión seleccionada">
+                    Selecciona una sesión
+                </div>
+
+                <p><a id="session-link" href="#">Enlace de registro</a></p>
+                <p id="qr-local-warning" hidden>Este QR apunta a este dispositivo. Para usarlo desde un celular, abre el panel mediante la IP del computador en la red local.</p>
+
+                <p
+                    id="session-status"
+                    class="session-status"
+                    role="status"
+                    aria-live="polite"
+                >
+                    Selecciona una sesión.
+                </p>
+            </div>
+
+            <div class="session-actions">
+                <button
+                    type="button"
+                    id="close-session-button"
+                    class="primary-button"
+                    data-action="close-session"
+                    disabled
+                >
+                    Cerrar sesión
+                </button>
+            </div>
+        </section>
+
+        <div class="dashboard-columns">
+        <section class="attendance-section">
+            <header class="section-header">
+                <div>
+                    <p class="event-label">Asistencia</p>
+                    <h2>Asistentes registrados</h2>
+                </div>
+
+                <span
+                    id="attendance-count"
+                    class="attendance-count"
+                >
+                    0 asistentes
+                </span>
+            </header>
+
+            <ul
+                id="attendance-list"
+                class="attendance-list"
+                aria-live="polite"
+            ></ul>
+        </section>
+
+        <section id="development-section" class="session-card" hidden>
+            <div class="session-info">
+                <h2>Desarrollo y cierre de la actividad</h2>
+                <p>Puedes guardar estos datos durante la actividad o después de cerrarla. Guardarlos no cambia las horas registradas.</p>
+                <form id="development-form">
+                    {% csrf_token %}
+                    <div id="development-fields"></div>
+                    <button class="primary-button" id="save-development" type="submit">Guardar desarrollo y observaciones</button>
+                    <p id="development-feedback" role="status" aria-live="polite"></p>
+                </form>
+            </div>
+        </section>
+        </div>
+        <section
+            id="signature-section"
+            class="signature-section"
+            hidden
+        >
+            <header class="section-header">
+                <div>
+                    <p class="event-label">Firma</p>
+                    <h2 id="signature-title">Firma del asistente</h2>
+                </div>
+            </header>
+
+            <p id="signature-purpose"></p>
+            <div class="signature-info">
+                <strong id="signature-attendee-name"></strong>
+                <span id="signature-attendee-rut"></span>
+            </div>
+
+            <div class="signature-pad-container">
+                <canvas
+                    id="signature-pad"
+                    width="800"
+                    height="400"
+                    aria-label="Área para realizar la firma"
+                ></canvas>
+            </div>
+
+            <div class="signature-actions">
+                <button
+                    type="button"
+                    class="secondary-button"
+                    id="clear-signature"
+                >
+                    Limpiar firma
+                </button>
+
+                <button
+                    type="button"
+                    class="primary-button"
+                    id="confirm-signature"
+                >
+                    Confirmar firma
+                </button>
+            </div>
+        </section>
+        <details id="session-audit" class="session-audit"><summary>Historial de cambios de la sesión</summary><button type="button" class="secondary-button" id="load-audit">Cargar historial</button><div id="audit-results"></div></details>
+        </div>
+        <div id="panel-new" role="tabpanel" aria-labelledby="tab-new" hidden>
+        <section class="session-card" aria-labelledby="create-session-title">
+            <div class="session-info">
+                <h2 id="create-session-title">Nueva sesión</h2>
+                <form id="create-session-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="new-session-name">Nombre o motivo de la actividad</label>
+                        <input id="new-session-name" name="nombre" required maxlength="200" placeholder="Ejemplo: Coordinación de cierre de semestre">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-session-template">Tipo de actividad</label>
+                        <select id="new-session-template" required><option value="">Cargando...</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-session-host">Anfitrión a cargo</label>
+                        <select id="new-session-host" required><option value="">Cargando...</option></select>
+                    </div>
+                    <p>La fecha y hora de inicio se registran al crear la sesión. La hora de término se registra al cerrarla.</p>
+                    <p id="template-description"></p>
+                    <div id="template-fields"></div>
+                    <button id="create-session-button" class="primary-button" type="submit" disabled>Crear sesión y generar QR</button>
+                    <p id="create-session-feedback" role="status" aria-live="polite"></p>
+                </form>
+            </div>
+        </section>
+        </div>
+    </main>
+
+    <dialog id="discard-draft-dialog" aria-labelledby="discard-title"><h2 id="discard-title">Hay cambios sin guardar</h2><p>Si continúas, se descartarán las observaciones o la firma que aún no guardaste.</p><form method="dialog" class="close-dialog-actions"><button class="secondary-button" value="cancel" autofocus>Conservar borrador</button><button class="primary-button" value="discard">Descartar y continuar</button></form></dialog>
+    <dialog id="signature-preview-dialog" aria-labelledby="signature-preview-title"><h2 id="signature-preview-title">Firma guardada</h2><img id="signature-preview-image" alt="Firma guardada"><form method="dialog"><button class="secondary-button">Cerrar</button></form></dialog>
+    <dialog id="close-session-dialog" aria-labelledby="close-dialog-title" aria-describedby="close-dialog-description">
+        <h2 id="close-dialog-title">¿Cerrar esta sesión?</h2>
+        <p id="close-session-name"></p>
+        <p id="close-dialog-description">Se guardará la fecha y hora de término. Después del cierre no se podrán registrar nuevas asistencias ni firmas, incluidas las devoluciones de EPP.</p>
+        <p id="close-session-pending"></p>
+        <form method="dialog" class="close-dialog-actions">
+            <button class="secondary-button" value="cancel" autofocus>Cancelar</button>
+            <button class="primary-button" value="confirm">Sí, cerrar sesión</button>
+        </form>
+    </dialog>
+    <footer class="site-footer">
+        <div class="container">
+            <p>Sistema de Registro de Asistencia</p>
+        </div>
+    </footer>
+
+
+    <script src="{% static 'js/anfitrion.js' %}?v=revision-integral-2" defer></script>
+</body>
+</html>

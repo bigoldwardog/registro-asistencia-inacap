@@ -1,0 +1,67 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Registro de asistencia a eventos">
+    <title>Registro de asistencia</title>
+    {% load static %}
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <h1>Registro de asistencia</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="attendance-card" aria-labelledby="attendance-title">
+            <header class="attendance-card__header">
+                <p class="event-label">Evento</p>
+                <h2 id="attendance-title">Cargando evento...</h2>
+                <p class="event-date" id="event-date"></p>
+            </header>
+
+            <section id="remembered-person" hidden aria-labelledby="remembered-title">
+                <h3 id="remembered-title">¿Eres esta persona?</h3><p id="remembered-name"></p><p id="remembered-email"></p>
+                <button type="button" class="submit-button" id="use-profile">Sí, revisar mis datos</button>
+                <button type="button" class="submit-button" id="different-person">No soy esa persona</button>
+                <button type="button" class="submit-button" id="forget-profile">Borrar datos recordados</button>
+            </section>
+            <form id="attendance-form" hidden>
+                {% csrf_token %}
+                {% for campo in campos_asistente %}
+                <div class="form-group">
+                    <label for="attendee-{{ campo.nombre }}">{{ campo.etiqueta }}{% if not campo.obligatorio %} (opcional){% endif %}</label>
+                    <input id="attendee-{{ campo.nombre }}" name="{{ campo.nombre }}" type="{{ campo.tipo }}" maxlength="500" data-person-field {% if campo.obligatorio %}required{% endif %}>
+                </div>
+                {% endfor %}
+                <p><label><input type="checkbox" id="remember-profile"> Recordar mis datos en este dispositivo para próximas actividades.</label></p>
+                <button type="submit" class="submit-button" id="submit-button">
+                    Registrar asistencia
+                </button>
+
+
+            </form>
+
+            <p id="form-message" role="status" aria-live="polite">Cargando el formulario de la actividad…</p>
+            <noscript>Activa JavaScript en tu navegador para registrar la asistencia.</noscript>
+            <button type="button" class="submit-button" id="register-another" hidden>No soy esa persona / Registrar a otra persona</button>
+            <p class="signature-notice" id="signature-notice" hidden>
+                Después de registrar tus datos, dirígete a la tablet del encargado
+                para realizar tu firma.
+            </p>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>Sistema de Registro de Asistencia</p>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/app.js' %}?v=revision-integral-2"></script>
+</body>
+</html>

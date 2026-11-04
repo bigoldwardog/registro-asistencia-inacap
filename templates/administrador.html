@@ -1,0 +1,206 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel del administrador</title>
+    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=revision-integral-2">
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-content">
+            <div>
+                <p class="header-label">Sistema de asistencia</p>
+                <h1>Panel del administrador</h1>
+            </div>
+
+            <nav class="account-nav" aria-label="Cuenta"><a href="{% url 'anfitrion' %}">Panel anfitrión</a><a href="{% url 'usuarios' %}">Usuarios</a><a href="{% url 'mi_cuenta' %}">Mi cuenta</a><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secondary-button" type="submit">Salir</button></form></nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="page-heading">
+            <p class="event-label">Administración</p>
+            <h2>Historial de Sesiones</h2>
+            <p>
+                Consulta las Sesiones realizadas, filtra los resultados
+                y exporta los registros.
+            </p>
+        </section>
+
+        <section class="filter-card" aria-labelledby="filters-title">
+            <div class="section-heading">
+                <h2 id="filters-title">Filtros de búsqueda</h2>
+
+                <button
+                    type="button"
+                    class="text-button"
+                    id="clear-filters"
+                >
+                    Limpiar filtros
+                </button>
+            </div>
+
+            <form id="filters-form">
+                <div class="form-group"><label for="filter-person">Persona o actividad</label><input id="filter-person" name="q" placeholder="Nombre, RUT, cargo o nombre de la sesión"></div>
+                <div class="filters-grid">
+                    <div class="form-group">
+                        <label for="filter-type">Tipo de Sesión</label>
+
+                        <select id="filter-type" name="type">
+                            <option value="">Todos los tipos</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filter-host">Anfitrión</label>
+
+                        <select id="filter-host" name="host">
+                            <option value="">Todos los Anfitriones</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filter-date-from">Desde</label>
+
+                        <input
+                            type="date"
+                            id="filter-date-from"
+                            name="dateFrom"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filter-date-to">Hasta</label>
+
+                        <input
+                            type="date"
+                            id="filter-date-to"
+                            name="dateTo"
+                        >
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="primary-button">
+                        Buscar Sesiones
+                    </button>
+                </div>
+
+                <p
+                    id="filter-error"
+                    class="feedback-message error-message"
+                    role="alert"
+                    hidden
+                ></p>
+            </form>
+        </section>
+
+        <section class="history-section">
+            <div class="section-heading results-heading">
+                <div>
+                    <p class="event-label">Resultados</p>
+                    <h2>Sesiones registradas</h2>
+                </div>
+
+                <span id="results-count" class="results-count">
+                    0 Sesiones
+                </span>
+            </div>
+
+            <div class="export-actions">
+                <button
+                    type="button"
+                    class="secondary-button"
+                    id="export-csv"
+                >
+                    Exportar CSV
+                </button>
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    id="export-xlsx"
+                >
+                    Exportar XLSX
+                </button>
+            </div>
+
+            <p
+                id="export-feedback"
+                class="feedback-message"
+                role="status"
+                aria-live="polite"
+                hidden
+            ></p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sesión</th>
+                            <th>Tipo</th>
+                            <th>Fecha</th>
+                            <th>Anfitrión</th>
+                            <th>Asistencias</th>
+                            <th>Firmadas</th>
+                            <th>Pendientes</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="sessions-table-body"></tbody>
+                </table>
+
+                <p id="empty-message" class="empty-message" hidden>
+                    No se encontraron Sesiones con los filtros seleccionados.
+                </p>
+            </div>
+        </section>
+
+        <section id="session-detail-section" class="history-section" hidden>
+            <div class="section-heading results-heading">
+                <div>
+                    <p class="event-label">Detalle</p>
+                    <h2 id="detail-session-title">Asistentes de la sesión</h2>
+                    <p id="detail-session-info"></p>
+                </div>
+
+                <button type="button" class="secondary-button" id="back-to-history">
+                    Volver al historial
+                </button>
+            </div>
+
+            <dl id="detail-activity-fields"></dl>
+            <div class="export-actions"><button class="secondary-button" type="button" id="detail-export-csv">Exportar asistentes CSV</button><button class="secondary-button" type="button" id="detail-export-xlsx">Exportar Excel con firmas</button></div>
+            <p id="detail-feedback" class="feedback-message" role="status" hidden></p>
+
+            <div class="table-container">
+                <table>
+                    <thead><tr id="attendees-table-head"></tr></thead>
+                    <tbody id="attendees-table-body"></tbody>
+                </table>
+
+                <p id="attendees-empty-message" class="empty-message" hidden>
+                    Esta sesión no tiene asistentes registrados.
+                </p>
+            </div>
+        </section>
+
+            <details class="session-audit"><summary>Historial de cambios</summary><button type="button" class="secondary-button" id="admin-load-audit">Cargar historial de la sesión seleccionada</button><div id="admin-audit-results"></div></details>
+    </main>
+    <dialog id="signature-preview-dialog" aria-labelledby="signature-preview-title"><h2 id="signature-preview-title">Firma guardada</h2><img id="signature-preview-image" alt="Firma guardada"><form method="dialog"><button class="secondary-button">Cerrar</button></form></dialog>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>Sistema de Registro de Asistencia</p>
+        </div>
+    </footer>
+
+
+
+
+    <script src="{% static 'js/administrador.js' %}?v=revision-integral-2" defer></script>
+</body>
+</html>

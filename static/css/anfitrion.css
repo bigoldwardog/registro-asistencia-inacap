@@ -1,0 +1,570 @@
+/* =========================
+   Base
+========================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    line-height: 1.5;
+    background: #f4f4f4;
+    color: #222;
+}
+
+button,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled,
+select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.container {
+    width: min(100% - 2rem, 1200px);
+    margin-inline: auto;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+/* =========================
+   Header
+========================= */
+
+.site-header {
+    padding: 1rem 0;
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-label {
+    margin: 0 0 0.2rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #666;
+}
+
+.header-content h1 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+/* =========================
+   Main
+========================= */
+
+main {
+    padding-block: 1rem;
+}
+
+/* =========================
+   Buttons
+========================= */
+
+.primary-button,
+.secondary-button {
+    min-height: 3rem;
+    padding: 0.7rem 1rem;
+    border-radius: 0.4rem;
+    font-weight: 600;
+}
+
+.primary-button {
+    width: 100%;
+    border: 0;
+    background: #222;
+    color: #fff;
+}
+
+.secondary-button {
+    border: 1px solid #bbb;
+    background: #fff;
+    color: #222;
+}
+
+.primary-button:not(:disabled):active,
+.secondary-button:not(:disabled):active {
+    transform: translateY(1px);
+}
+
+/* =========================
+   Session card
+========================= */
+
+.session-card {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 0.75rem;
+}
+
+.session-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.session-info label {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+#session-selector {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #bbb;
+    border-radius: 0.4rem;
+    background: #fff;
+    color: #222;
+}
+
+.session-info h2 {
+    margin: 0.75rem 0 0;
+    font-size: 1.4rem;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.session-date {
+    margin: 0;
+    color: #666;
+}
+
+.event-label {
+    margin: 0 0 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #666;
+}
+
+/* =========================
+   QR section
+========================= */
+
+.qr-section {
+    padding: 1.25rem 0;
+    text-align: center;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+.qr-section h3 {
+    margin: 0 0 0.5rem;
+}
+
+.qr-section p {
+    max-width: 400px;
+    margin: 0 auto;
+    color: #666;
+}
+
+.qr-placeholder {
+    display: grid;
+    place-items: center;
+    width: min(70vw, 280px);
+    aspect-ratio: 1;
+    margin: 1.25rem auto;
+    padding: 1rem;
+    background: #f7f7f7;
+    border: 1px dashed #bbb;
+    border-radius: 0.5rem;
+    color: #666;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.session-status {
+    margin: 0 !important;
+    font-weight: 600;
+    color: #444 !important;
+}
+
+.session-status.is-open {
+    color: #216e39 !important;
+}
+
+.session-status.is-closed {
+    color: #8b2525 !important;
+}
+
+/* =========================
+   Session actions
+========================= */
+
+.session-actions {
+    display: flex;
+    align-items: flex-end;
+}
+
+/* =========================
+   Attendance section
+========================= */
+
+.attendance-section {
+    margin-bottom: 1.5rem;
+}
+
+.section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.attendance-count {
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* =========================
+   Attendance list
+========================= */
+
+.attendance-list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.attendance-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.attendance-item:last-child {
+    border-bottom: 0;
+}
+
+.attendance-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.attendance-info strong {
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+}
+
+.attendance-info span {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.attendance-state {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.attendance-item button {
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #bbb;
+    border-radius: 0.4rem;
+    background: #fff;
+    color: #222;
+    font-weight: 600;
+}
+
+.empty-attendance {
+    padding: 1.25rem;
+    color: #666;
+}
+
+/* =========================
+   Signature
+========================= */
+
+.signature-section {
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 0.75rem;
+}
+
+.signature-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin-bottom: 1rem;
+}
+
+.signature-info span {
+    color: #666;
+}
+
+.signature-pad-container {
+    width: 100%;
+    height: 250px;
+    background: #fff;
+    border: 1px solid #aaa;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+#signature-pad {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    touch-action: none;
+    cursor: crosshair;
+}
+
+.signature-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.signature-actions button {
+    width: 100%;
+}
+
+/* =========================
+   Footer
+========================= */
+
+.site-footer {
+    padding: 1.5rem 0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* =========================
+   Tablet
+========================= */
+
+@media (min-width: 600px) {
+    .session-card,
+    .signature-section {
+        padding: 2rem;
+    }
+
+    .qr-placeholder {
+        width: 280px;
+    }
+
+    .attendance-item {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .signature-actions {
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+
+    .signature-actions button {
+        width: auto;
+        min-width: 150px;
+    }
+}
+
+/* =========================
+   Desktop
+========================= */
+
+@media (min-width: 900px) {
+    main {
+        padding-block: 2rem;
+    }
+
+    .session-card {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 2rem;
+    }
+
+    .session-info {
+        align-self: start;
+    }
+
+    .qr-section {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        align-self: stretch;
+        padding: 0 0 0 2rem;
+        border-top: 0;
+        border-bottom: 0;
+        border-left: 1px solid #eee;
+    }
+
+    .session-actions {
+        grid-column: 1;
+        grid-row: 2;
+    }
+}
+
+.attendance-item-clickable {
+    cursor: pointer;
+}
+
+.attendance-item-clickable:hover {
+    background-color: #f5f5f5;
+}
+
+#session-qr {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 220px;
+    min-height: 220px;
+    padding: 12px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+#session-qr img,
+#session-qr canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+/* Campos de las plantillas: conservar la tipografía y la paleta existente. */
+#template-fields textarea, #development-fields textarea { width: 100%; font: inherit; padding: .75rem; border: 1px solid #ddd; border-radius: .4rem; resize: vertical; }
+#session-template-details dd { margin: 0 0 .75rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+#session-template-details dt { font-weight: 600; }
+
+#selected-session-title { margin: 1rem 0 .25rem; font-size: 1.35rem; }
+.session-date { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; width: 100%; padding-block: .75rem; border-bottom: 1px solid #eee; }
+.session-time { display: flex; flex-direction: column; gap: .25rem; font-size: .85rem; }
+.session-time span { color: #666; }
+.session-time strong { color: #222; font-weight: 500; }
+#session-template-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.5rem; width: 100%; margin: .75rem 0; }
+#session-template-details .session-detail { min-width: 0; }
+#session-template-details dt { color: #666; font-size: .8rem; font-weight: 500; margin-bottom: .25rem; }
+#session-template-details dd { margin: 0; color: #222; font-size: .95rem; line-height: 1.5; }
+#session-link { display: inline-block; margin: .5rem 0; color: #222; text-underline-offset: .2rem; }
+#development-section .session-info, [aria-labelledby="create-session-title"] .session-info { width: 100%; }
+#development-form, #create-session-form { width: 100%; }
+#development-fields textarea { min-height: 9rem; border-color: #aaa; }
+#new-session-template, #new-session-host { width: 100%; min-height: 3rem; padding: .65rem .75rem; border: 1px solid #aaa; border-radius: .4rem; background: #fff; color: #222; }
+@media (max-width: 480px) { #session-template-details, .session-date { grid-template-columns: 1fr; } }
+
+/* Dashboard del anfitrión */
+.dashboard-heading { margin: .25rem 0 1.5rem; }
+.dashboard-heading h2 { margin: .2rem 0 .4rem; font-size: 1.65rem; letter-spacing: -.025em; }
+.dashboard-heading p:last-child { margin: 0; color: #666; font-size: .95rem; }
+.dashboard-tabs { display: flex; gap: .35rem; width: fit-content; max-width: 100%; padding: .3rem; margin-bottom: 1.5rem; background: #e9e9e9; border-radius: .65rem; }
+.dashboard-tabs [role="tab"] { min-height: 2.8rem; padding: .65rem 1.25rem; border: 0; border-radius: .45rem; color: #555; background: transparent; font-weight: 600; }
+.dashboard-tabs [aria-selected="true"] { background: #222; color: #fff; }
+.dashboard-tabs [role="tab"]:focus-visible { outline: 2px solid #222; outline-offset: 3px; }
+.dashboard-feedback { padding: .75rem 1rem; border-left: 3px solid #222; margin: 0 0 1.25rem; background: #fff; }
+.dashboard-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.dashboard-metrics > div { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: 1rem 1.25rem; background: #fff; border: 1px solid #ddd; border-radius: .65rem; }
+.dashboard-metrics span { font-size: .85rem; color: #666; }
+.dashboard-metrics strong { font-size: 1.6rem; font-weight: 650; }
+.dashboard-columns { display: grid; gap: 1.25rem; align-items: start; }
+.dashboard-columns .attendance-section { min-width: 0; padding: 1.5rem; margin: 0; background: #fff; border: 1px solid #ddd; border-radius: .75rem; }
+.dashboard-columns #development-section { grid-template-columns: minmax(0, 1fr); padding: 1.5rem; margin: 0; }
+.dashboard-columns #development-section h2 { margin: 0; font-size: 1.2rem; }
+.dashboard-columns #development-section p { color: #666; font-size: .85rem; margin: .25rem 0 .75rem; }
+.dashboard-columns #development-fields textarea { min-height: 7rem; }
+#panel-manage .signature-section { margin-top: 1.25rem; }
+#panel-new .session-card { grid-template-columns: minmax(0, 1fr); max-width: 960px; margin-inline: auto; }
+#panel-new #create-session-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: .25rem 1.25rem; }
+#panel-new #create-session-form > p, #panel-new #create-session-form > button, #template-fields, #panel-new #create-session-form > .form-group:first-of-type { grid-column: 1 / -1; }
+#template-fields { display: grid; gap: .25rem 1.25rem; }
+#template-description:empty, #create-session-feedback:empty { display: none; }
+#panel-new #create-session-form > p { color: #666; font-size: .85rem; margin-top: 0; }
+@media (min-width: 760px) {
+    #panel-new #create-session-form, #template-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #template-fields .form-group:has(textarea) { grid-column: 1 / -1; }
+    .dashboard-columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+    .dashboard-metrics { gap: .5rem; }
+    .dashboard-metrics > div { flex-direction: column; align-items: flex-start; padding: .75rem; gap: .35rem; }
+    .dashboard-metrics span { font-size: .75rem; }
+    .dashboard-tabs { width: 100%; }
+    .dashboard-tabs [role="tab"] { flex: 1; padding-inline: .75rem; }
+    .dashboard-heading h2 { font-size: 1.4rem; }
+}
+
+.attendance-item { flex-wrap: wrap; }
+.return-confirmed { font-size: .85rem; font-weight: 600; color: #216e39; }
+#signature-purpose { color: #666; }
+
+#close-session-dialog { width: min(100% - 2rem, 520px); max-height: calc(100dvh - 2rem); overflow-y: auto; border: 1px solid #ddd; border-radius: .75rem; padding: 1.75rem; color: #222; background: #fff; }
+#close-session-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+#close-session-dialog h2 { margin: 0 0 .75rem; font-size: 1.3rem; }
+#close-session-name { font-weight: 600; overflow-wrap: anywhere; }
+#close-dialog-description, #close-session-pending { color: #555; font-size: .95rem; }
+#close-session-pending:empty { display: none; }
+.close-dialog-actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1.5rem; }
+.close-dialog-actions .primary-button { width: auto; }
+@media (max-width: 480px) { .close-dialog-actions { flex-direction: column-reverse; } }
+
+.account-nav { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-left: auto; }
+.account-nav a { color: #222; font-size: .9rem; text-underline-offset: .2rem; }
+.account-nav form { margin: 0; }
+#signature-preview-dialog { width: min(95vw, 850px); border: 1px solid #ddd; border-radius: .75rem; padding: 1.5rem; }
+#signature-preview-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+#signature-preview-image { display: block; max-width: 100%; max-height: 60vh; object-fit: contain; background: #fff; margin-bottom: 1rem; }
+.session-audit { background: #fff; border: 1px solid #ddd; border-radius: .75rem; padding: 1rem; margin-block: 1rem; }
+.session-audit button { margin-block: 1rem; }
+.session-audit pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; }
+.session-audit details { margin-top: .75rem; }
+@media (max-width: 760px) { .header-content { flex-wrap: wrap; } .account-nav { width: 100%; margin-left: 0; gap: .75rem; } }
+
+#discard-draft-dialog { width: min(100% - 2rem, 520px); border: 1px solid #ddd; border-radius: .75rem; padding: 1.75rem; color: #222; background: #fff; }
+#discard-draft-dialog::backdrop { background: rgb(0 0 0 / 45%); }
