@@ -210,8 +210,9 @@ main {
     text-align: center;
 }
 
-.session-status {
-    margin: 0 !important;
+.qr-section .session-status {
+    margin: .75rem auto 0;
+    text-align: center;
     font-weight: 600;
     color: #444 !important;
 }
