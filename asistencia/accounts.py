@@ -79,38 +79,6 @@ def logout(request):
     return redirect('login')
 
 
-@acceso(admin=True, pagina=True)
-def usuarios(request):
-    error, mensaje = '', ''
-    if request.method == 'POST':
-        try:
-            if request.POST.get('accion') == 'desactivar':
-                usuario = Usuarios.objects.get(id=request.POST.get('id'))
-                if usuario.id == request.actor.id:
-                    raise ValidationError('No puedes desactivar tu propia cuenta.')
-                usuario.activo = 0
-                usuario.save(update_fields=['activo'])
-                auditar(request, 'DESACTIVAR_USUARIO', 'usuario', usuario.id)
-                mensaje = 'Usuario desactivado.'
-            else:
-                correo = request.POST.get('correo', '').strip().lower()
-                nombre = request.POST.get('nombre', '').strip()
-                rol = request.POST.get('rol')
-                password = request.POST.get('password', '')
-                validate_email(correo)
-                password_valida(password)
-                if not nombre or len(nombre) > 150 or rol not in ('ANFITRION', 'ADMINISTRADOR'):
-                    raise ValidationError('Completa nombre y rol correctamente.')
-                if Usuarios.objects.filter(correo__iexact=correo).exists():
-                    raise ValidationError('Ya existe un usuario con ese correo.')
-                usuario = Usuarios.objects.create(nombre=nombre, correo=correo, rol=rol, activo=1, password_hash=make_password(password))
-                auditar(request, 'CREAR_USUARIO', 'usuario', usuario.id, despues={'nombre': nombre, 'correo': correo, 'rol': rol})
-                mensaje = 'Usuario creado.'
-        except (ValidationError, Usuarios.DoesNotExist, ValueError) as exc:
-            error = ' '.join(exc.messages) if isinstance(exc, ValidationError) else 'Usuario no válido.'
-    return render(request, 'usuarios.html', {'actor': request.actor, 'usuarios': Usuarios.objects.all().order_by('nombre'), 'error': error, 'mensaje': mensaje})
-
-
 @acceso(pagina=True)
 def mi_cuenta(request):
     error, mensaje = '', ''

@@ -13,30 +13,44 @@
     <title>Panel del encargado</title>
 
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <link rel="stylesheet" href="{% static 'css/anfitrion.css' %}?v=revision-integral-2">
+    <link rel="stylesheet" href="{% static 'css/anfitrion.css' %}?v=panel-anfitrion-3">
 </head>
 
-<body>
+<body class="host-shell">
     <header class="site-header">
         <div class="container header-content">
-            <div>
-                <p class="header-label">Sistema de asistencia</p>
-                <h1>Panel del encargado</h1>
-            </div>
-            <nav class="account-nav" aria-label="Cuenta"><span>{{ actor.nombre }}</span><a href="{% url 'mi_cuenta' %}">Mi cuenta</a>{% if actor.rol == 'ADMINISTRADOR' %}<a href="{% url 'administrador' %}">Administración</a>{% endif %}<form action="{% url 'logout' %}" method="post">{% csrf_token %}<button class="secondary-button" type="submit">Salir</button></form></nav>
+            <div class="host-brand"><strong>INACAP</strong><h1>Registro de asistencia</h1></div>
+            <nav class="account-nav" aria-label="Cuenta">
+                <span>{{ actor.nombre }}</span>
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button class="secondary-button" type="submit">Salir</button>
+                </form>
+            </nav>
         </div>
     </header>
 
+    <div class="host-layout">
+        <nav class="host-sidebar" aria-label="Navegación principal">
+            {% if actor.rol == 'ADMINISTRADOR' %}
+            <a href="{% url 'administrador' %}">← Administración</a>
+            {% endif %}
+            <a href="{% url 'anfitrion' %}" aria-current="page">Panel anfitrión</a>
+            <a href="{% url 'mi_cuenta' %}">Mi cuenta</a>
+        </nav>
     <main class="container dashboard">
         <div class="dashboard-heading">
-            <div><p class="header-label">Panel del anfitrión</p><h2>Sesiones y asistencia</h2><p>Crea una actividad o gestiona sus participantes desde un solo lugar.</p></div>
+            <div><p class="header-label">Panel del anfitrión</p><h2>Sesiones y asistencia</h2><p>Crea una actividad y gestiona su asistencia.</p></div>
         </div>
         <div class="dashboard-tabs" role="tablist" aria-label="Secciones del panel">
-            <button type="button" role="tab" id="tab-manage" aria-controls="panel-manage" aria-selected="true" data-dashboard-tab="manage">Gestionar sesión</button>
-            <button type="button" role="tab" id="tab-new" aria-controls="panel-new" aria-selected="false" tabindex="-1" data-dashboard-tab="new">Nueva sesión</button>
+            <button type="button" role="tab" id="tab-manage" aria-controls="panel-manage" aria-selected="false" tabindex="-1" disabled data-dashboard-tab="manage">Gestionar sesión</button>
+            <button type="button" role="tab" id="tab-new" aria-controls="panel-new" aria-selected="true" data-dashboard-tab="new">Nueva sesión</button>
+            <button type="button" role="tab" id="tab-list" aria-controls="panel-list" aria-selected="false" tabindex="-1" data-dashboard-tab="list">Lista actual</button>
+            <button type="button" role="tab" id="tab-development" aria-controls="panel-development" aria-selected="false" tabindex="-1" data-dashboard-tab="development">Desarrollo</button>
         </div>
+        <p id="no-sessions" class="no-sessions" role="status" hidden>Aún no hay sesiones disponibles.</p>
         <p id="dashboard-feedback" class="dashboard-feedback" role="status" aria-live="polite" hidden></p>
-        <div id="panel-manage" role="tabpanel" aria-labelledby="tab-manage">
+        <div id="panel-manage" role="tabpanel" aria-labelledby="tab-manage" hidden>
             <div class="dashboard-metrics" aria-label="Resumen de asistencia">
                 <div><span>Asistentes</span><strong id="metric-total">0</strong></div>
                 <div><span>Firmados</span><strong id="metric-signed">0</strong></div>
@@ -69,6 +83,7 @@
                 </div>
 
                 <p><a id="session-link" href="#">Enlace de registro</a></p>
+                <button type="button" id="download-poster" class="secondary-button" disabled>Descargar afiche PDF</button>
                 <p id="qr-local-warning" hidden>Este QR apunta a este dispositivo. Para usarlo desde un celular, abre el panel mediante la IP del computador en la red local.</p>
 
                 <p
@@ -94,7 +109,9 @@
             </div>
         </section>
 
-        <div class="dashboard-columns">
+        <details id="session-audit" class="session-audit"><summary>Historial de cambios de la sesión</summary><button type="button" class="secondary-button" id="load-audit">Cargar historial</button><div id="audit-results"></div></details>
+        </div>
+        <div id="panel-list" role="tabpanel" aria-labelledby="tab-list" hidden>
         <section class="attendance-section">
             <header class="section-header">
                 <div>
@@ -117,6 +134,39 @@
             ></ul>
         </section>
 
+        <div class="session-export-actions">
+            <button type="button" class="secondary-button" data-export-format="csv" disabled>Exportar CSV</button>
+            <button type="button" class="secondary-button" data-export-format="xlsx" disabled>Exportar Excel</button>
+        </div>
+        <section
+            id="signature-section"
+            class="signature-section"
+            hidden
+        >
+            <header class="section-header">
+                <div>
+                    <p class="event-label">Firma</p>
+                    <h2 id="signature-title">Firma del docente</h2>
+                </div>
+            </header>
+
+            <p id="signature-purpose"></p>
+            <div class="signature-info">
+                <strong id="signature-attendee-name"></strong>
+                <span id="signature-attendee-rut"></span>
+            </div>
+
+            <div class="signature-pad-container">
+                <canvas id="signature-pad" width="800" height="400" aria-label="Área para realizar la firma"></canvas>
+            </div>
+
+            <div class="signature-actions">
+                <button type="button" class="secondary-button" id="clear-signature">Limpiar firma</button>
+                <button type="button" class="primary-button" id="confirm-signature">Confirmar firma docente</button>
+            </div>
+        </section>
+        </div>
+        <div id="panel-development" role="tabpanel" aria-labelledby="tab-development" hidden>
         <section id="development-section" class="session-card" hidden>
             <div class="session-info">
                 <h2>Desarrollo y cierre de la actividad</h2>
@@ -130,54 +180,7 @@
             </div>
         </section>
         </div>
-        <section
-            id="signature-section"
-            class="signature-section"
-            hidden
-        >
-            <header class="section-header">
-                <div>
-                    <p class="event-label">Firma</p>
-                    <h2 id="signature-title">Firma del asistente</h2>
-                </div>
-            </header>
-
-            <p id="signature-purpose"></p>
-            <div class="signature-info">
-                <strong id="signature-attendee-name"></strong>
-                <span id="signature-attendee-rut"></span>
-            </div>
-
-            <div class="signature-pad-container">
-                <canvas
-                    id="signature-pad"
-                    width="800"
-                    height="400"
-                    aria-label="Área para realizar la firma"
-                ></canvas>
-            </div>
-
-            <div class="signature-actions">
-                <button
-                    type="button"
-                    class="secondary-button"
-                    id="clear-signature"
-                >
-                    Limpiar firma
-                </button>
-
-                <button
-                    type="button"
-                    class="primary-button"
-                    id="confirm-signature"
-                >
-                    Confirmar firma
-                </button>
-            </div>
-        </section>
-        <details id="session-audit" class="session-audit"><summary>Historial de cambios de la sesión</summary><button type="button" class="secondary-button" id="load-audit">Cargar historial</button><div id="audit-results"></div></details>
-        </div>
-        <div id="panel-new" role="tabpanel" aria-labelledby="tab-new" hidden>
+        <div id="panel-new" role="tabpanel" aria-labelledby="tab-new">
         <section class="session-card" aria-labelledby="create-session-title">
             <div class="session-info">
                 <h2 id="create-session-title">Nueva sesión</h2>
@@ -205,6 +208,7 @@
         </section>
         </div>
     </main>
+    </div>
 
     <dialog id="discard-draft-dialog" aria-labelledby="discard-title"><h2 id="discard-title">Hay cambios sin guardar</h2><p>Si continúas, se descartarán las observaciones o la firma que aún no guardaste.</p><form method="dialog" class="close-dialog-actions"><button class="secondary-button" value="cancel" autofocus>Conservar borrador</button><button class="primary-button" value="discard">Descartar y continuar</button></form></dialog>
     <dialog id="signature-preview-dialog" aria-labelledby="signature-preview-title"><h2 id="signature-preview-title">Firma guardada</h2><img id="signature-preview-image" alt="Firma guardada"><form method="dialog"><button class="secondary-button">Cerrar</button></form></dialog>
@@ -220,11 +224,11 @@
     </dialog>
     <footer class="site-footer">
         <div class="container">
-            <p>Sistema de Registro de Asistencia</p>
+            <p>INACAP · Sistema de registro de asistencia</p>
         </div>
     </footer>
 
 
-    <script src="{% static 'js/anfitrion.js' %}?v=revision-integral-2" defer></script>
+    <script src="{% static 'js/anfitrion.js' %}?v=panel-anfitrion-3" defer></script>
 </body>
 </html>

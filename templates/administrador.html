@@ -5,28 +5,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel del administrador</title>
-    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=revision-integral-2">
+    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=panel-inacap-1">
 </head>
 
-<body>
+<body class="admin-shell">
     <header class="site-header">
         <div class="container header-content">
-            <div>
-                <p class="header-label">Sistema de asistencia</p>
-                <h1>Panel del administrador</h1>
+            <div class="admin-brand">
+                <strong>INACAP</strong>
+                <h1>Registro de asistencia</h1>
             </div>
 
-            <nav class="account-nav" aria-label="Cuenta"><a href="{% url 'anfitrion' %}">Panel anfitrión</a><a href="{% url 'usuarios' %}">Usuarios</a><a href="{% url 'mi_cuenta' %}">Mi cuenta</a><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secondary-button" type="submit">Salir</button></form></nav>
+            <nav class="account-nav" aria-label="Cuenta"><span>{{ actor.nombre }}</span><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secondary-button" type="submit">Salir</button></form></nav>
         </div>
     </header>
 
+    <div class="admin-layout">
+    <nav class="admin-sidebar" aria-label="Navegación principal">
+        <a href="{% url 'administrador' %}" aria-current="page">Sesiones</a>
+        <a href="{% url 'anfitrion' %}">Panel anfitrión</a>
+        <a href="{% url 'mi_cuenta' %}">Mi cuenta</a>
+    </nav>
     <main class="container">
         <section class="page-heading">
             <p class="event-label">Administración</p>
-            <h2>Historial de Sesiones</h2>
+            <h2>Sesiones</h2>
             <p>
-                Consulta las Sesiones realizadas, filtra los resultados
-                y exporta los registros.
+                Consulta actividades, revisa las firmas y exporta los registros.
             </p>
         </section>
 
@@ -124,7 +129,7 @@
                     class="secondary-button"
                     id="export-xlsx"
                 >
-                    Exportar XLSX
+                    Exportar Excel
                 </button>
             </div>
 
@@ -190,6 +195,7 @@
 
             <details class="session-audit"><summary>Historial de cambios</summary><button type="button" class="secondary-button" id="admin-load-audit">Cargar historial de la sesión seleccionada</button><div id="admin-audit-results"></div></details>
     </main>
+    </div>
     <dialog id="signature-preview-dialog" aria-labelledby="signature-preview-title"><h2 id="signature-preview-title">Firma guardada</h2><img id="signature-preview-image" alt="Firma guardada"><form method="dialog"><button class="secondary-button">Cerrar</button></form></dialog>
 
     <footer class="site-footer">

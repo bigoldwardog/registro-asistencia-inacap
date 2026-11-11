@@ -49,10 +49,16 @@
             <p id="form-message" role="status" aria-live="polite">Cargando el formulario de la actividad…</p>
             <noscript>Activa JavaScript en tu navegador para registrar la asistencia.</noscript>
             <button type="button" class="submit-button" id="register-another" hidden>No soy esa persona / Registrar a otra persona</button>
-            <p class="signature-notice" id="signature-notice" hidden>
-                Después de registrar tus datos, dirígete a la tablet del encargado
-                para realizar tu firma.
-            </p>
+            <section id="signature-notice" hidden aria-labelledby="signature-label">
+                <h3 id="signature-label">Firma de asistencia</h3>
+                <button type="button" class="submit-button" id="start-return" hidden>Firmar devolución de EPP</button>
+                <div id="signature-controls">
+                    <p>Dibuja tu firma en este recuadro.</p>
+                    <canvas id="participant-signature" width="640" height="240" aria-label="Área para dibujar tu firma"></canvas>
+                    <button type="button" id="clear-participant-signature">Limpiar firma</button>
+                    <button type="button" class="submit-button" id="submit-participant-signature">Confirmar firma</button>
+                </div>
+            </section>
         </section>
     </main>
 
@@ -62,6 +68,6 @@
         </div>
     </footer>
 
-    <script src="{% static 'js/app.js' %}?v=revision-integral-2"></script>
+    <script src="{% static 'js/app.js' %}?v=firma-dispositivo-1"></script>
 </body>
 </html>

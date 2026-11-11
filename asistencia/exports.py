@@ -24,7 +24,7 @@ def texto_csv(valor):
     return "'" + valor if valor.lstrip().startswith(('=', '+', '-', '@')) else valor
 
 
-@acceso(admin=True)
+@acceso()
 @require_GET
 @errores
 def exportar(request, formato):
@@ -126,3 +126,8 @@ def exportar(request, formato):
     response['Content-Disposition'] = f'attachment; filename="registros-asistencia.{formato}"'
     response['Cache-Control'] = 'private, no-store'
     return response
+
+
+@acceso(admin=True)
+def exportar_administrador(request, formato):
+    return exportar(request, formato)

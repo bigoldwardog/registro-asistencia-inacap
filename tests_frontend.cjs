@@ -14,15 +14,15 @@ async function recovery(committed) {
             window: { location: { search: '?token=sesion' } },
             localStorage: { getItem: k => stored.get(k) || null, setItem: (k, v) => stored.set(k, v), removeItem: k => stored.delete(k) },
             fetch: async (url, options) => {
+                if (url.includes('consultar')) {
+                    const id = JSON.parse(options.body).registro_token;
+                    return { ok: true, json: async () => ({ registrada: server.has(id), estado: 'PENDIENTE_FIRMA' }) };
+                }
                 if (options) {
                     sends++; const data = JSON.parse(options.body);
                     if (committed || sends > 1) server.set(data.registro_token, data);
                     if (sends === 1) throw Error('Respuesta perdida');
                     return { ok: true, json: async () => ({ registro_token: data.registro_token, estado: 'PENDIENTE_FIRMA' }) };
-                }
-                if (url.includes('consultar')) {
-                    const id = new URL('http://test' + url).searchParams.get('registro_token');
-                    return { ok: true, json: async () => ({ registrada: server.has(id), estado: 'PENDIENTE_FIRMA' }) };
                 }
                 return { ok: true, json: async () => ({ nombre: 'Sesión', fecha_inicio: '2026-10-30T20:00:00Z', estado: 'ABIERTA' }) };
             }

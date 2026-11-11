@@ -345,3 +345,28 @@ tbody tr:hover {
 #detail-activity-fields dd { margin: .25rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 #attendees-table-body td { vertical-align: top; }
 #attendees-table-body td p { font-size: .8rem; }
+
+/* Panel de sesiones */
+.admin-shell { display: flex; flex-direction: column; }
+.admin-shell .site-header, .admin-shell .site-footer { background: #111; color: #fff; }
+.admin-shell .site-header .container { width: calc(100% - 3rem); }
+.admin-brand { display: flex; align-items: center; gap: 1rem; }
+.admin-brand strong { font-size: 1.45rem; padding-right: 1rem; border-right: 1px solid #777; }
+.admin-brand h1 { font-size: 1rem; }
+.admin-layout { display: grid; grid-template-columns: 13rem minmax(0, 1fr); flex: 1; }
+.admin-layout main { width: min(calc(100% - 3rem), 1280px); }
+.admin-sidebar { background: #fff; border-right: 1px solid #dedede; padding: 1.25rem .65rem; }
+.admin-sidebar a { display: block; padding: .65rem .85rem; border-left: 3px solid transparent; border-radius: 4px; color: #242424; text-decoration: none; }
+.admin-sidebar a:hover { background: #f4f4f4; }
+.admin-sidebar a[aria-current="page"] { background: #f9e7ec; border-color: #b90030; color: #851027; font-weight: 650; }
+.admin-shell .page-heading h2 { font-size: clamp(1.75rem, 3vw, 2.25rem); }
+.admin-shell .primary-button { background: #b90030; border-color: #b90030; color: #fff; }
+.admin-shell .primary-button:hover { background: #980028; }
+.admin-shell .table-container { overflow-x: auto; }
+
+@media (max-width: 760px) {
+    .admin-layout { grid-template-columns: minmax(0, 1fr); }
+    .admin-layout main { width: calc(100% - 2rem); }
+    .admin-sidebar { display: flex; flex-wrap: wrap; padding: .5rem; border-right: 0; border-bottom: 1px solid #dedede; }
+    .admin-shell .header-content { flex-wrap: wrap; }
+}

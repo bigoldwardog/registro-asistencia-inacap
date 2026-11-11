@@ -126,6 +126,9 @@ async function loadAttendanceList() {
 
 async function loadSessions(preferredSessionId = null) {
     sessionSelector.disabled = true;
+    const manageTab = document.getElementById("tab-manage");
+    const emptyMessage = document.getElementById("no-sessions");
+    emptyMessage.hidden = true;
 
     try {
         const response = await apiFetch("/api/sesiones/");
@@ -151,7 +154,9 @@ async function loadSessions(preferredSessionId = null) {
 
         sessionSelector.innerHTML = "";
 
-        if (sessions.length === 0) {
+        manageTab.disabled = sessions.length === 0;
+        emptyMessage.hidden = !manageTab.disabled;
+        if (manageTab.disabled) {
             sessionSelector.add(
                 new Option("No hay sesiones disponibles", "")
             );
@@ -200,6 +205,8 @@ async function loadSessions(preferredSessionId = null) {
         );
 
         resetSessionView();
+        manageTab.disabled = true;
+        if (manageTab.getAttribute("aria-selected") === "true") activateDashboardTab("new");
     } finally {
         sessionSelector.disabled =
             sessionSelector.options.length <= 1 &&
@@ -218,6 +225,8 @@ async function selectSession(sessionId, sessions) {
     document.querySelector('#audit-results').replaceChildren();
     signatureHasInk = false;
     sessionState.currentSessionId = sessionId;
+    document.querySelector("#download-poster").disabled = !sessionId;
+    document.querySelectorAll("[data-export-format]").forEach(button => { button.disabled = !sessionId; });
     sessionState.isOpen = false;
     sessionState.attendees = [];
     selectedAttendee = null;
@@ -276,6 +285,8 @@ function resetSessionView() {
     developmentBaseline = {}; currentSessionData = null; signatureHasInk = false;
 
     sessionState.currentSessionId = null;
+    document.querySelector("#download-poster").disabled = true;
+    document.querySelectorAll("[data-export-format]").forEach(button => { button.disabled = true; });
     sessionState.isOpen = false;
     sessionState.attendees = [];
     selectedAttendee = null;
@@ -304,7 +315,7 @@ function renderAttendanceList() {
         name.textContent = attendee.name;
 
         const rut = document.createElement("span");
-        rut.textContent = attendee.cargo || attendee.rut || "";
+        rut.textContent = [attendee.rut, attendee.cargo].filter(Boolean).join(" · ");
 
         info.appendChild(name);
         info.appendChild(rut);
@@ -323,22 +334,11 @@ function renderAttendanceList() {
                 returned.textContent = "Devolución firmada";
                 returned.title = new Date(attendee.returnedAt).toLocaleString("es-CL", {timeZone: "America/Santiago"});
                 article.append(returned);
-            } else if (attendee.status === "FIRMADO" && sessionState.isOpen) {
-                const button = document.createElement("button"); button.type = "button";
-                button.textContent = "Firmar devolución";
-                button.addEventListener("click", () => selectAttendee(attendee.id, "devolucion"));
-                article.append(button);
+            } else if (attendee.status === "FIRMADO") {
+                const pending = document.createElement("span");
+                pending.textContent = "Devolución pendiente";
+                article.append(pending);
             }
-        }
-
-        if (
-            attendee.status === "PENDIENTE_FIRMA" &&
-            sessionState.isOpen
-        ) {
-            article.classList.add("attendance-item-clickable");
-            article.addEventListener("click", () => {
-                selectAttendee(attendee.id);
-            });
         }
 
         if (sessionState.esPanol && attendee.status === 'FIRMADO') {
@@ -838,6 +838,8 @@ document.querySelector("#development-form").addEventListener("submit", async (ev
 
 // Cambiar de pestaña conserva los formularios y la firma en curso.
 function activateDashboardTab(name, focus = false) {
+    const requested = document.querySelector(`[data-dashboard-tab="${name}"]`);
+    if (!requested || requested.disabled) return;
     for (const tab of document.querySelectorAll("[data-dashboard-tab]")) {
         const active = tab.dataset.dashboardTab === name;
         tab.setAttribute("aria-selected", String(active));
@@ -849,7 +851,7 @@ function activateDashboardTab(name, focus = false) {
 for (const tab of document.querySelectorAll("[data-dashboard-tab]")) {
     tab.addEventListener("click", () => activateDashboardTab(tab.dataset.dashboardTab));
     tab.addEventListener("keydown", (event) => {
-        const tabs = [...document.querySelectorAll("[data-dashboard-tab]")];
+        const tabs = [...document.querySelectorAll("[data-dashboard-tab]:not(:disabled)")];
         const index = tabs.indexOf(tab);
         let next;
         if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
@@ -952,3 +954,18 @@ for (const button of document.querySelectorAll('dialog form[method="dialog"] but
     button.type = 'button';
     button.addEventListener('click', () => button.closest('dialog').close(button.value || 'cancel'));
 }
+
+
+for (const button of document.querySelectorAll("[data-export-format]")) {
+    button.addEventListener("click", () => {
+        if (!sessionState.currentSessionId) return;
+        const ids = encodeURIComponent(sessionState.currentSessionId);
+        window.location.assign(`/api/sesiones/exportar/${button.dataset.exportFormat}/?sesiones=${ids}`);
+    });
+}
+
+
+document.querySelector('#download-poster').addEventListener('click', () => {
+    const id = sessionState.currentSessionId;
+    if (id) window.location.assign(`/api/sesiones/${encodeURIComponent(id)}/afiche.pdf`);
+});

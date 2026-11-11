@@ -6,7 +6,7 @@ Aplicación web Django para anfitriones, asistentes y administración. Mantiene 
 
 1. Desde la carpeta del proyecto ejecuta `./INICIAR_LOCAL.ps1` en PowerShell.
 2. En el computador del servidor abre http://127.0.0.1:8000/configuracion-inicial/ y crea tu cuenta administradora. No existe una contraseña predeterminada. Este formulario solo funciona desde el servidor y deja de estar disponible al crear la primera cuenta.
-3. En Administración → Usuarios crea las cuentas de anfitrión. El administrador también puede abrir el panel del anfitrión y crear actividades.
+3. El administrador puede abrir el panel del anfitrión y crear actividades.
 4. Abre el panel mediante la IP de la red que muestra el iniciador y accede con tu cuenta. Genera el QR desde esa dirección, no desde localhost, para que los celulares de la misma red puedan abrirlo.
 
 Las cuentas antiguas con `HASH_SOLO_PARA_PRUEBAS` se desactivan al preparar el sistema; no tenían una contraseña funcional. Los datos de personas y sus registros históricos se conservan. Los perfiles históricos con RUT equivalente no se fusionan automáticamente; las nuevas altas usan el perfil canónico y la comprobación de duplicados contempla todas las representaciones anteriores.
@@ -48,7 +48,7 @@ Las imágenes se validan con Pillow antes de almacenarse. Los valores introducid
 
 - Asistente: acceso público únicamente al formulario y a la comprobación mediante el identificador aleatorio de su propio envío.
 - Anfitrión: solo sus sesiones, participantes, notas, firmas y QR.
-- Administrador: todas las sesiones, búsquedas, exportaciones y gestión de usuarios.
+- Administrador: todas las sesiones, búsquedas y exportaciones.
 - Salir elimina la sesión de acceso. Una cuenta desactivada pierde acceso al siguiente pedido.
 - Cambiar la contraseña propia: Mi cuenta.
 - Recuperación desde el servidor:
@@ -69,7 +69,7 @@ node tests_frontend.cjs
 
 Node solo es necesario para las pruebas de lógica de JavaScript, no para ejecutar la aplicación. Las pruebas Django crean una base aparte; no escriben en `asistencia.db`.
 
-Casos cubiertos: diez plantillas, RUT y duplicados, fechas Chile, CSRF, acceso por rol y propietario, alta de usuarios, login/logout, configuración inicial, registro idempotente, notas con historial/conflictos, imágenes inválidas o vacías, firmas de EPP y docente, bloqueo tras el cierre, QR local y exportaciones con imágenes.
+Casos cubiertos: diez plantillas, RUT y duplicados, fechas Chile, CSRF, acceso por rol y propietario, login/logout, configuración inicial, registro idempotente, notas con historial/conflictos, imágenes inválidas o vacías, firmas de EPP y docente, bloqueo tras el cierre, QR local y exportaciones con imágenes.
 
 Pruebas físicas pendientes para la entrega: dos personas desde celulares distintos en una misma sesión abierta; recepción y devolución con el lápiz de la tablet; comprobar el Excel descargado en la versión de Microsoft Excel utilizada por el cliente. Se verificó la estructura del XLSX con openpyxl, pero eso no sustituye comprobar la presentación en el Excel del cliente.
 

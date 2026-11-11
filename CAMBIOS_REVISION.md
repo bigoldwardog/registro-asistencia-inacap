@@ -12,7 +12,7 @@ Se implementaron los cambios del informe de revisión y se conservaron los color
 - Advertencia de borradores al cambiar de sesión y al abandonar la página. Cambiar de pestaña conserva los formularios.
 - Historial con autor, fecha y valores anteriores/nuevos; control de modificaciones simultáneas de observaciones.
 - Formularios de asistentes específicos para las diez plantillas; en Pañol, firma adicional del docente.
-- Login/logout reales, cuentas administradoras y de anfitrión, acceso por propietario, gestión de usuarios y cambio de contraseña.
+- Login/logout reales, cuentas administradoras y de anfitrión, acceso por propietario y cambio de contraseña.
 - Primer administrador creado por el usuario desde el servidor, sin contraseña predeterminada y sin configuración inicial pública en la red.
 - Protección CSRF en las operaciones de escritura, incluidas las del formulario público.
 - QR generado por Django y Excel generado en el servidor: sin bibliotecas externas de CDN.
@@ -30,6 +30,6 @@ La comprobación física con dos celulares y el lápiz de la tablet sigue pendie
 
 ## Primer acceso después de actualizar
 
-Reinicia con `./INICIAR_LOCAL.ps1`. Desde el computador del servidor abre http://127.0.0.1:8000/configuracion-inicial/ y crea tu cuenta administradora. Luego crea anfitriones desde Usuarios o usa tu cuenta administradora para abrir el panel del anfitrión. Para escanear desde celulares, abre el panel con la IP local que muestra el iniciador y entra con esa cuenta.
+Reinicia con `./INICIAR_LOCAL.ps1`. Desde el computador del servidor abre http://127.0.0.1:8000/configuracion-inicial/ y crea tu cuenta administradora. Luego abre el panel del anfitrión con tu cuenta administradora. Para escanear desde celulares, abre el panel con la IP local que muestra el iniciador y entra con esa cuenta.
 
 Las instrucciones completas están en [README.md](README.md).
