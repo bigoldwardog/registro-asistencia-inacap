@@ -15,3 +15,39 @@
 .site-header, .site-footer { background: #111; color: #fff; }
 .site-header a, .site-header .header-label { color: #fff; }
 .submit-button:not(:disabled) { background: #b90030; }
+
+.account-layout {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 1fr);
+    min-height: calc(100vh - 4rem);
+}
+.account-sidebar {
+    background: #fff;
+    border-right: 1px solid #dedede;
+    padding: 1.25rem .65rem;
+}
+.account-sidebar a {
+    display: block;
+    padding: .65rem .85rem;
+    border-left: 3px solid transparent;
+    border-radius: 4px;
+    color: #242424;
+    text-decoration: none;
+}
+.account-sidebar a:hover { background: #f4f4f4; }
+.account-sidebar a[aria-current="page"] {
+    background: #f9e7ec;
+    border-color: #b90030;
+    color: #851027;
+    font-weight: 650;
+}
+@media (max-width: 760px) {
+    .account-layout { grid-template-columns: minmax(0, 1fr); }
+    .account-sidebar {
+        display: flex;
+        flex-wrap: wrap;
+        padding: .5rem;
+        border-right: 0;
+        border-bottom: 1px solid #dedede;
+    }
+}

@@ -1,6 +1,16 @@
 {% load static %}
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ titulo }}</title><link rel="stylesheet" href="{% static 'css/styles.css' %}"></head>
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ titulo }}</title><link rel="stylesheet" href="{% static 'css/styles.css' %}?v=cuenta-lateral"></head>
 <body><header class="site-header"><div class="container"><h1>Sistema de asistencia</h1></div></header>
+{% if actor %}
+<div class="account-layout">
+    <nav class="account-sidebar" aria-label="Navegación principal">
+        {% if actor.rol == 'ADMINISTRADOR' %}
+        <a href="{% url 'administrador' %}">{% if request.GET.panel != 'anfitrion' %}← {% endif %}Administración</a>
+        {% endif %}
+        <a href="{% url 'anfitrion' %}">{% if actor.rol != 'ADMINISTRADOR' or request.GET.panel == 'anfitrion' %}← {% endif %}Panel anfitrión</a>
+        <a href="{% url 'mi_cuenta' %}{% if request.GET.panel == 'anfitrion' %}?panel=anfitrion{% endif %}" aria-current="page">Mi cuenta</a>
+    </nav>
+{% endif %}
 <main class="container"><section class="attendance-card"><p class="event-label">Acceso al sistema</p><h2>{{ titulo }}</h2>
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}{% if mensaje %}<p role="status">{{ mensaje }}</p>{% endif %}
 {% if modo != 'local' %}<form method="post">{% csrf_token %}
@@ -9,5 +19,6 @@
 <div class="form-group"><label for="password">{% if modo == 'password' %}Nueva contraseña{% else %}Contraseña{% endif %}</label><input id="password" name="password" type="password" required maxlength="256" autocomplete="{% if modo == 'login' %}current-password{% else %}new-password{% endif %}"></div>
 {% if modo != 'login' %}<p>Usa al menos ocho caracteres y evita contraseñas comunes o completamente numéricas.</p><div class="form-group"><label for="password2">Repetir contraseña</label><input id="password2" name="password2" type="password" required autocomplete="new-password"></div>{% endif %}
 <button class="submit-button" type="submit">{% if modo == 'login' %}Entrar{% elif modo == 'inicial' %}Crear cuenta{% else %}Guardar contraseña{% endif %}</button></form>{% endif %}
-{% if actor %}<p><a href="{% url 'anfitrion' %}">Volver al panel</a></p>{% endif %}
-</section></main></body></html>
+</section></main>
+{% if actor %}</div>{% endif %}
+</body></html>
