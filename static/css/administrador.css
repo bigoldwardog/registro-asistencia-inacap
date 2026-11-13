@@ -162,6 +162,7 @@ main {
 /* Filtros */
 
 .filters-grid {
+    margin-top: 1.25rem;
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -369,4 +370,74 @@ tbody tr:hover {
     .admin-layout main { width: calc(100% - 2rem); }
     .admin-sidebar { display: flex; flex-wrap: wrap; padding: .5rem; border-right: 0; border-bottom: 1px solid #dedede; }
     .admin-shell .header-content { flex-wrap: wrap; }
+}
+
+.admin-subnav {
+    flex-basis: 100%;
+    list-style: none;
+    margin: .35rem 0 .35rem .85rem;
+    padding: 0 0 0 .55rem;
+    border-left: 1px solid #dedede;
+}
+
+.admin-subnav button {
+    width: 100%;
+    padding: .5rem .6rem;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-subnav button:hover,
+.admin-subnav button[aria-current="true"] {
+    background: #f9e7ec;
+    color: #851027;
+}
+
+.admin-subnav button[aria-current="true"] {
+    font-weight: 650;
+}
+
+.current-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 1rem;
+}
+
+.current-card {
+    padding: 1.25rem;
+    border: 1px solid #ddd;
+    border-radius: .6rem;
+    background: #fff;
+}
+
+.current-card h3 {
+    margin: .65rem 0 .35rem;
+}
+
+.current-card progress {
+    width: 100%;
+    accent-color: #b90030;
+}
+
+.current-badge {
+    display: inline-block;
+    padding: .2rem .6rem;
+    border-radius: 1rem;
+    background: #f9e7ec;
+    color: #851027;
+    font-size: .85rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    #current-sessions:not([hidden]), #search-sessions:not([hidden]) {
+        animation: admin-section-enter 180ms ease-out;
+    }
+
+    @keyframes admin-section-enter {
+        from { opacity: .65; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 }

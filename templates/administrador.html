@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel del administrador</title>
-    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=panel-inacap-1">
+    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=sesiones-en-curso-2">
     <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=2">
 </head>
 
@@ -24,17 +24,25 @@
     <div class="admin-layout">
     <nav class="admin-sidebar" aria-label="Navegación principal">
         <a href="{% url 'administrador' %}" aria-current="page">Sesiones</a>
+        <ul class="admin-subnav" aria-label="Secciones de sesiones">
+            <li><button type="button" data-session-view="current" aria-controls="current-sessions" aria-current="true">Sesiones en curso</button></li>
+            <li><button type="button" data-session-view="search" aria-controls="search-sessions">Buscar sesiones</button></li>
+        </ul>
         <a href="{% url 'anfitrion' %}">Panel anfitrión</a>
     </nav>
     <main class="container">
         <section class="page-heading">
             <p class="event-label">Administración</p>
-            <h2>Sesiones</h2>
-            <p>
-                Consulta actividades, revisa las firmas y exporta los registros.
-            </p>
+            <h2 id="sessions-title">Sesiones en curso</h2>
+            <p id="sessions-description">Consulta las sesiones abiertas y el avance de sus firmas.</p>
         </section>
 
+        <section id="current-sessions" aria-labelledby="sessions-title">
+            <p id="current-feedback" role="status">Cargando sesiones…</p>
+            <div id="current-cards" class="current-cards"></div>
+        </section>
+
+        <div id="search-sessions" hidden>
         <section class="filter-card" aria-labelledby="filters-title">
             <div class="section-heading">
                 <h2 id="filters-title">Filtros de búsqueda</h2>
@@ -164,6 +172,8 @@
             </div>
         </section>
 
+        </div>
+
         <section id="session-detail-section" class="history-section" hidden>
             <div class="section-heading results-heading">
                 <div>
@@ -193,7 +203,7 @@
             </div>
         </section>
 
-            <details class="session-audit"><summary>Historial de cambios</summary><button type="button" class="secondary-button" id="admin-load-audit">Cargar historial de la sesión seleccionada</button><div id="admin-audit-results"></div></details>
+            <details class="session-audit" hidden><summary>Historial de cambios</summary><button type="button" class="secondary-button" id="admin-load-audit">Cargar historial de la sesión seleccionada</button><div id="admin-audit-results"></div></details>
     </main>
     </div>
     <dialog id="signature-preview-dialog" aria-labelledby="signature-preview-title"><h2 id="signature-preview-title">Firma guardada</h2><img id="signature-preview-image" alt="Firma guardada"><form method="dialog"><button class="secondary-button">Cerrar</button></form></dialog>
@@ -207,6 +217,6 @@
 
 
 
-    <script src="{% static 'js/administrador.js' %}?v=revision-integral-2" defer></script>
+    <script src="{% static 'js/administrador.js' %}?v=sesiones-en-curso-2" defer></script>
 </body>
 </html>

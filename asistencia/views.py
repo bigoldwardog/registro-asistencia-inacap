@@ -95,6 +95,8 @@ def historial_sesiones(request):
     q = request.GET.get('q', '').strip().casefold()
     results = []
     sesiones = Sesiones.objects.select_related('plantilla', 'anfitrion').prefetch_related('asistencias_set').order_by('-id')
+    if request.GET.get('estado') == 'ABIERTA':
+        sesiones = sesiones.filter(estado='ABIERTA')
     for sesion in sesiones:
         attendees = list(sesion.asistencias_set.all())
         if q and q not in sesion.nombre.casefold() and not any(q in ' '.join([a.nombre_registrado, a.rut_registrado, a.cargo_registrado]).casefold() or q.replace('.', '').replace('-', '') in a.rut_registrado.replace('.', '').replace('-', '').casefold() for a in attendees):
@@ -493,33 +495,74 @@ def codigo_qr(request, sesion_id):
 @errores
 def afiche_qr(request, sesion_id):
     import io
-    import textwrap
     import qrcode
     from PIL import Image, ImageDraw, ImageFont
 
     sesion = obtener_sesion(request, sesion_id)
     url = request.build_absolute_uri('/?token=' + sesion.token_qr)
-    pagina = Image.new('RGB', (1240, 1754), 'white')
+    ancho, alto = 1240, 1754
+    centro = ancho // 2
+    rojo, negro, gris = '#b90030', '#151515', '#515151'
+    pagina = Image.new('RGB', (ancho, alto), 'white')
     dibujo = ImageDraw.Draw(pagina)
-    dibujo.rectangle((0, 0, 1240, 140), fill='#111111')
-    dibujo.text((70, 42), 'INACAP  |  Registro de asistencia', fill='white',
-                font=ImageFont.load_default(size=42))
-    dibujo.text((70, 190), 'ESCANEA PARA REGISTRAR TU ASISTENCIA', fill='#b90030',
-                font=ImageFont.load_default(size=37))
-    y = 265
+
+    def texto_centrado(valor, y, tamano, color, max_lineas=1):
+        for nombre_fuente in ('DejaVuSans.ttf', 'arial.ttf'):
+            try:
+                fuente = ImageFont.truetype(nombre_fuente, tamano)
+                break
+            except OSError:
+                continue
+        else:
+            fuente = ImageFont.load_default(size=tamano)
+        palabras = str(valor).split()
+        lineas = []
+        linea = ''
+        for palabra in palabras:
+            candidato = f'{linea} {palabra}'.strip()
+            if linea and dibujo.textlength(candidato, font=fuente) > 1040:
+                lineas.append(linea)
+                linea = palabra
+            else:
+                linea = candidato
+        if linea:
+            lineas.append(linea)
+        for indice, linea in enumerate(lineas[:max_lineas]):
+            sufijo = '…' if indice == max_lineas - 1 and len(lineas) > max_lineas else ''
+            while dibujo.textlength(linea + sufijo, font=fuente) > 1040:
+                linea = linea[:-1]
+                sufijo = '…'
+            dibujo.text((centro, y), linea + sufijo, fill=color, font=fuente, anchor='mt')
+            y += tamano + 12
+        return y
+
+    dibujo.rectangle((0, 0, ancho, 144), fill=negro)
+    dibujo.rectangle((0, 144, ancho, 152), fill=rojo)
+    texto_centrado('INACAP  |  Registro de asistencia', 51, 42, 'white')
+    texto_centrado('ESCANEA PARA REGISTRAR TU ASISTENCIA', 218, 34, rojo)
+
     datos = json_guardado(sesion.campos_valores_json, dict)
     tema = datos.get('tema') or datos.get('tema_o_asunto')
-    for valor, tamano, ancho in [(sesion.nombre, 50, 34), (sesion.plantilla.nombre, 32, 55),
-                                  (str(tema or '')[:180], 32, 55),
-                                  (sesion.anfitrion.nombre[:120], 30, 58)]:
-        for linea in textwrap.wrap(valor, width=ancho):
-            dibujo.text((70, y), linea, fill='#242424', font=ImageFont.load_default(size=tamano))
-            y += tamano + 8
-        y += 12
-    qr = qrcode.make(url).convert('RGB').resize((520, 520), Image.Resampling.NEAREST)
-    pagina.paste(qr, (360, max(840, min(y, 1080))))
-    dibujo.text((70, 1660), 'Completa tus datos y firma desde tu dispositivo.', fill='#242424',
-                font=ImageFont.load_default(size=34))
+    y = texto_centrado(sesion.nombre, 292, 66, negro, max_lineas=2)
+    y = texto_centrado(sesion.plantilla.nombre, y + 20, 38, gris, max_lineas=2)
+    if tema:
+        y = texto_centrado(tema, y + 4, 34, gris, max_lineas=2)
+    y = texto_centrado(f'Anfitrión: {sesion.anfitrion.nombre}', y + 8, 32, gris, max_lineas=2)
+
+    codigo = qrcode.QRCode(border=4)
+    codigo.add_data(url)
+    codigo.make(fit=True)
+    codigo.box_size = max(1, 620 // (codigo.modules_count + 2 * codigo.border))
+    qr = codigo.make_image().convert('RGB')
+    y_qr = max(660, y + 48)
+    x_qr = (ancho - qr.width) // 2
+    dibujo.rounded_rectangle(
+        (x_qr - 18, y_qr - 18, x_qr + qr.width + 18, y_qr + qr.height + 18),
+        radius=30, outline='#dddddd', width=3,
+    )
+    pagina.paste(qr, (x_qr, y_qr))
+    texto_centrado('Completa tus datos y firma desde tu dispositivo.',
+                   y_qr + qr.height + 80, 36, negro)
     buffer = io.BytesIO()
     pagina.save(buffer, format='PDF', resolution=150)
     response = HttpResponse(buffer.getvalue(), content_type='application/pdf')

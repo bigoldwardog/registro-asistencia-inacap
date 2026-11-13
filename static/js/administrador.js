@@ -1,4 +1,5 @@
 let sessions = [], filteredSessions = [], currentDetail = null;
+let sessionView = 'current';
 const $ = id => document.getElementById(id);
 async function api(url) {
     const response = await fetch(url);
@@ -6,7 +7,9 @@ async function api(url) {
     if (!response.ok) { const data = await response.json(); throw new Error(data.error || 'No se pudo completar la operación.'); }
     return response;
 }
-function formatDate(value) { return value ? new Date(value).toLocaleString('es-CL', {timeZone:'America/Santiago'}) : '—'; }
+function formatDate(value, options = {}) {
+    return value ? new Date(value).toLocaleString('es-CL', {timeZone: 'America/Santiago', ...options}) : '—';
+}
 function appendCell(row, text) { const cell = document.createElement('td'); cell.textContent = text ?? '—'; row.append(cell); return cell; }
 function populateFilters() {
     for (const [id,key] of [['filter-type','plantilla'],['filter-host','anfitrion']]) {
@@ -49,14 +52,17 @@ function signatureButton(cell, attendee, type, label){
 }
 async function openSessionDetail(session){
     currentDetail=session;
-    document.querySelector('.history-section').hidden=true;$('session-detail-section').hidden=false;
+    $('current-sessions').hidden = true;
+    $('search-sessions').hidden = true;
+    $('session-detail-section').hidden = false;
+    document.querySelector('.session-audit').hidden = false;
     $('detail-session-title').textContent=session.nombre;
     $('detail-session-info').textContent=`${session.plantilla} · ${session.anfitrion} · ${session.estado}`;
     $('detail-feedback').hidden=false;$('detail-feedback').textContent='Cargando asistentes…';
     $('attendees-table-body').replaceChildren();
     try{
         const response=await api(`/api/sesiones/${session.id}/asistencias/lista/`);const data=await response.json();
-        if(currentDetail.id!==session.id)return;
+        if(currentDetail !== session)return;
         const fields=data.sesion.campos_asistente;
         const headers=[...fields.map(f=>f.etiqueta),'Registro (Chile)','Estado','Recepción / asistencia'];
         if(data.sesion.es_epp)headers.push('Devolución EPP');
@@ -80,9 +86,9 @@ async function openSessionDetail(session){
         }
         $('attendees-empty-message').hidden=data.asistencias.length>0;$('detail-feedback').hidden=true;
         $('admin-audit-results').replaceChildren();
-    }catch(error){$('detail-feedback').textContent=error.message;}
+    }catch(error){if (currentDetail === session) $('detail-feedback').textContent=error.message;}
 }
-$('back-to-history').addEventListener('click',()=>{$('session-detail-section').hidden=true;document.querySelector('.history-section').hidden=false;currentDetail=null;});
+$('back-to-history').addEventListener('click', () => showSessionView(sessionView));
 async function exportData(format,detail=false){
     const ids=detail&&currentDetail?[currentDetail.id]:filteredSessions.map(s=>s.id);
     const feedback=detail?$('detail-feedback'):$('export-feedback');feedback.hidden=false;
@@ -104,7 +110,72 @@ $('admin-load-audit').addEventListener('click',async()=>{
         if(!data.historial.length)results.textContent='Sin cambios registrados.';
     }catch(error){results.textContent=error.message;}
 });
-loadSessions();
+async function loadCurrentSessions() {
+    const cards = $('current-cards');
+    const feedback = $('current-feedback');
+    cards.replaceChildren();
+    feedback.textContent = 'Cargando sesiones…';
+    try {
+        const response = await api('/api/administrador/historial/?estado=ABIERTA');
+        const {sesiones} = await response.json();
+        for (const session of sesiones) {
+            const card = document.createElement('article');
+            card.className = 'current-card';
+            const status = document.createElement('span');
+            status.className = 'current-badge';
+            status.textContent = 'En curso';
+            const title = document.createElement('h3');
+            title.textContent = session.nombre;
+            const type = document.createElement('p');
+            type.textContent = session.plantilla;
+            const start = document.createElement('p');
+            start.textContent = `${session.anfitrion} · ${formatDate(session.fecha_inicio, {dateStyle: 'short', timeStyle: 'short'})}`;
+            const count = document.createElement('p');
+            const total = session.total_firmadas + session.total_pendientes;
+            count.textContent = `${session.total_firmadas} de ${total} firmas · ${session.total_pendientes} pendientes`;
+            const progress = document.createElement('progress');
+            progress.max = total || 1;
+            progress.value = session.total_firmadas;
+            progress.setAttribute('aria-label', 'Firmas registradas');
+            const detail = document.createElement('button');
+            detail.type = 'button';
+            detail.className = 'secondary-button';
+            detail.textContent = 'Ver detalle';
+            detail.addEventListener('click', () => openSessionDetail(session));
+            card.append(status, title, type, start, progress, count, detail);
+            cards.append(card);
+        }
+        feedback.textContent = sesiones.length ? '' : 'No hay sesiones en curso.';
+    } catch (error) {
+        feedback.textContent = error.message;
+    }
+}
+
+function showSessionView(view) {
+    sessionView = view;
+    currentDetail = null;
+    const current = view === 'current';
+    $('current-sessions').hidden = !current;
+    $('search-sessions').hidden = current;
+    $('session-detail-section').hidden = true;
+    document.querySelector('.session-audit').hidden = true;
+    $('sessions-title').textContent = current ? 'Sesiones en curso' : 'Buscar sesiones';
+    $('sessions-description').textContent = current
+        ? 'Consulta las sesiones abiertas y el avance de sus firmas.'
+        : 'Consulta actividades, revisa las firmas y exporta los registros.';
+    $('back-to-history').textContent = current ? 'Volver a sesiones en curso' : 'Volver a buscar sesiones';
+    for (const button of document.querySelectorAll('[data-session-view]')) {
+        if (button.dataset.sessionView === view) button.setAttribute('aria-current', 'true');
+        else button.removeAttribute('aria-current');
+    }
+    if (current) loadCurrentSessions();
+    else loadSessions();
+}
+
+for (const button of document.querySelectorAll('[data-session-view]')) {
+    button.addEventListener('click', () => showSessionView(button.dataset.sessionView));
+}
+showSessionView('current');
 
 // Cierre explícito para que los cuadros también funcionen en navegadores embebidos.
 for (const button of document.querySelectorAll('dialog form[method="dialog"] button')) {
