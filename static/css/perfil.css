@@ -1,4 +1,4 @@
-.perfil-encabezado { display: flex; align-items: center; gap: .8rem; }
+.perfil-encabezado { display: flex; align-items: center; gap: .8rem; margin-inline-start: auto; }
 .perfil-avatar {
     display: inline-block;
     position: relative;
