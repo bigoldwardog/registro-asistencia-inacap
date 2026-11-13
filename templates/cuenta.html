@@ -1,6 +1,20 @@
 {% load static %}
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ titulo }}</title><link rel="stylesheet" href="{% static 'css/styles.css' %}?v=cuenta-lateral"></head>
-<body><header class="site-header"><div class="container"><h1>Sistema de asistencia</h1></div></header>
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ titulo }}</title><link rel="stylesheet" href="{% static 'css/styles.css' %}?v=cuenta-panel"></head>
+<body{% if actor %} class="account-panel"{% endif %}>
+<header class="site-header">
+    {% if actor %}
+    <div class="container account-header">
+        <div class="account-brand"><strong>INACAP</strong><h1>Registro de asistencia</h1></div>
+        <form class="account-actions" action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <span>{{ actor.nombre }}</span>
+            <button type="submit">Salir</button>
+        </form>
+    </div>
+    {% else %}
+    <div class="container"><h1>Sistema de asistencia</h1></div>
+    {% endif %}
+</header>
 {% if actor %}
 <div class="account-layout">
     <nav class="account-sidebar" aria-label="Navegación principal">
@@ -11,7 +25,12 @@
         <a href="{% url 'mi_cuenta' %}{% if request.GET.panel == 'anfitrion' %}?panel=anfitrion{% endif %}" aria-current="page">Mi cuenta</a>
     </nav>
 {% endif %}
-<main class="container"><section class="attendance-card"><p class="event-label">Acceso al sistema</p><h2>{{ titulo }}</h2>
+<main class="container">
+{% if actor %}
+<div class="account-heading"><h2>{{ titulo }}</h2></div>
+{% endif %}
+<section class="attendance-card">
+{% if actor %}<h3>Cambiar contraseña</h3>{% else %}<p class="event-label">Acceso al sistema</p><h2>{{ titulo }}</h2>{% endif %}
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}{% if mensaje %}<p role="status">{{ mensaje }}</p>{% endif %}
 {% if modo != 'local' %}<form method="post">{% csrf_token %}
 {% if modo == 'inicial' %}<div class="form-group"><label for="nombre">Nombre</label><input id="nombre" name="nombre" required maxlength="150" autocomplete="name"></div>{% endif %}

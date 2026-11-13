@@ -19,7 +19,7 @@
 .account-layout {
     display: grid;
     grid-template-columns: 13rem minmax(0, 1fr);
-    min-height: calc(100vh - 4rem);
+    flex: 1;
 }
 .account-sidebar {
     background: #fff;
@@ -50,4 +50,26 @@
         border-right: 0;
         border-bottom: 1px solid #dedede;
     }
+}
+
+.account-panel { display: flex; flex-direction: column; }
+.site-header .account-header, .account-layout main {
+    width: min(calc(100% - 3rem), 1280px);
+}
+.site-header .account-header { width: calc(100% - 3rem); }
+.account-header, .account-brand, .account-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.account-header { justify-content: space-between; flex-wrap: wrap; }
+.account-brand strong { font-size: 1.45rem; padding-right: 1rem; border-right: 1px solid #777; }
+.account-brand h1 { font-size: 1rem; }
+.account-actions button { padding: .65rem 1rem; background: white; border: 1px solid #ddd; border-radius: .4rem; cursor: pointer; }
+.account-heading h2 { margin: 0 0 1.25rem; font-size: clamp(1.75rem, 3vw, 2.25rem); }
+.account-layout .attendance-card { max-width: none; margin: 0; }
+.account-layout .attendance-card form { max-width: 650px; }
+.account-layout .submit-button { width: auto; }
+@media (max-width: 760px) {
+    .site-header .account-header, .account-layout main { width: calc(100% - 2rem); }
 }
