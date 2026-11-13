@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INACAP · Registro de asistencia</title>
+<link rel="stylesheet" href="estilos.css">
+<header>
+  <strong>INACAP</strong><span>Registro de asistencia</span>
+  <label class="demo">Cuenta de demostración<select id="account"></select><span id="accountRole"></span></label>
+  <button class="account-avatar" data-view="account" aria-label="Mi cuenta" title="Mi cuenta"><span aria-hidden="true"></span></button>
+</header>
+<div class="layout">
+  <nav aria-label="Navegación principal">
+    <button data-view="sessions">Sesiones</button>
+    <button data-view="roles">Roles y permisos</button>
+    <button data-view="public">Vista del asistente</button>
+  </nav>
+  <main id="main"></main>
+</div>
+<footer>INACAP · Registro de asistencia <span>Datos ficticios de demostración</span></footer>
+<dialog id="dialog"><div id="dialogContent"></div></dialog>
+<script src="plantillas.js"></script>
+<script src="propuesta.js"></script>
+</html>
