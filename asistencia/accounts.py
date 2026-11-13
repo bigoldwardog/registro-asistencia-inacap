@@ -1,3 +1,5 @@
+from django.views.decorators.cache import never_cache
+from django.db import IntegrityError
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -80,21 +82,59 @@ def logout(request):
 
 
 @acceso(pagina=True)
+@never_cache
 def mi_cuenta(request):
-    error, mensaje = '', ''
+    actor = request.actor
+    origen = 'administrador' if request.GET.get('panel') != 'anfitrion' and actor.rol == 'ADMINISTRADOR' else 'anfitrion'
+    seccion = 'password' if request.GET.get('seccion') == 'password' else 'informacion'
+    error = mensaje = ''
+    mostrar_datos = False
     if request.method == 'POST':
-        password = request.POST.get('password', '')
+        clave = request.POST.get('actual', '')
+        clave_intentos = f'cuenta:confirmacion:{actor.id}'
+        intentos = cache.get(clave_intentos, 0)
         try:
-            if not check_password(request.POST.get('actual', ''), request.actor.password_hash):
+            if intentos >= 10:
+                raise ValidationError('Demasiados intentos. Intenta nuevamente en diez minutos.')
+            if len(clave) > 256 or not check_password(clave, actor.password_hash):
+                cache.set(clave_intentos, intentos + 1, 600)
                 raise ValidationError('La contraseña actual no es correcta.')
-            password_valida(password)
-            if password != request.POST.get('password2'):
-                raise ValidationError('Las contraseñas nuevas no coinciden.')
-            request.actor.password_hash = make_password(password)
-            request.actor.save(update_fields=['password_hash'])
-            request.session.cycle_key()
-            auditar(request, 'CAMBIAR_PASSWORD', 'usuario', request.actor.id)
-            mensaje = 'Contraseña actualizada.'
+            cache.delete(clave_intentos)
+            accion = request.POST.get('accion')
+            if seccion == 'password' and accion == 'password':
+                password = request.POST.get('password', '')
+                password_valida(password)
+                if password != request.POST.get('password2'):
+                    raise ValidationError('Las contraseñas nuevas no coinciden.')
+                with transaction.atomic():
+                    actor.password_hash = make_password(password)
+                    actor.save(update_fields=['password_hash'])
+                    auditar(request, 'CAMBIAR_PASSWORD', 'usuario', actor.id)
+                request.session.cycle_key()
+                mensaje = 'Contraseña actualizada.'
+            elif seccion == 'informacion' and accion in ('ver', 'guardar'):
+                mostrar_datos = True
+                if accion == 'guardar':
+                    nombre = request.POST.get('nombre', '').strip()
+                    correo = request.POST.get('correo', '').strip().lower()
+                    if not nombre or len(nombre) > 150:
+                        raise ValidationError('Indica un nombre de hasta 150 caracteres.')
+                    validate_email(correo)
+                    with transaction.atomic():
+                        if Usuarios.objects.filter(correo__iexact=correo).exclude(pk=actor.pk).exists():
+                            raise ValidationError('Ya existe una cuenta con ese correo.')
+                        actor.nombre, actor.correo = nombre, correo
+                        actor.save(update_fields=['nombre', 'correo'])
+                        auditar(request, 'ACTUALIZAR_CUENTA', 'usuario', actor.id)
+                    mensaje = 'Información actualizada.'
+            else:
+                raise ValidationError('Acción no disponible.')
         except ValidationError as exc:
             error = ' '.join(exc.messages)
-    return render(request, 'cuenta.html', {'actor': request.actor, 'modo': 'password', 'titulo': 'Mi cuenta', 'error': error, 'mensaje': mensaje})
+        except IntegrityError:
+            actor.refresh_from_db()
+            error = 'No se pudo guardar la información. Comprueba el correo e inténtalo de nuevo.'
+    return render(request, 'perfil.html', {
+        'actor': actor, 'origen': origen, 'seccion': seccion,
+        'mostrar_datos': mostrar_datos, 'error': error, 'mensaje': mensaje,
+    })

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel del administrador</title>
     <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=panel-inacap-1">
+    <link rel="stylesheet" href="{% static 'css/perfil.css' %}">
 </head>
 
 <body class="admin-shell">
@@ -16,7 +17,7 @@
                 <h1>Registro de asistencia</h1>
             </div>
 
-            <nav class="account-nav" aria-label="Cuenta"><span>{{ actor.nombre }}</span><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secondary-button" type="submit">Salir</button></form></nav>
+            {% include "avatar_cuenta.html" with origen="administrador" %}
         </div>
     </header>
 
@@ -24,7 +25,6 @@
     <nav class="admin-sidebar" aria-label="Navegación principal">
         <a href="{% url 'administrador' %}" aria-current="page">Sesiones</a>
         <a href="{% url 'anfitrion' %}">Panel anfitrión</a>
-        <a href="{% url 'mi_cuenta' %}?panel=administrador">Mi cuenta</a>
     </nav>
     <main class="container">
         <section class="page-heading">

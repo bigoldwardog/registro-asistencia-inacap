@@ -1,0 +1,76 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mi cuenta</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=perfil">
+    <link rel="stylesheet" href="{% static 'css/perfil.css' %}">
+    <script src="{% static 'js/perfil.js' %}" defer></script>
+</head>
+<body class="account-panel">
+    <header class="site-header">
+        <div class="container account-header">
+            <div class="account-brand"><strong>INACAP</strong><h1>Registro de asistencia</h1></div>
+            {% include "avatar_cuenta.html" %}
+        </div>
+    </header>
+    <div class="account-layout">
+        <nav class="account-sidebar perfil-menu" aria-label="Opciones de cuenta">
+            <a href="{% url origen %}">← Volver al panel</a>
+            <a href="?panel={{ origen }}" {% if seccion == 'informacion' %}aria-current="page"{% endif %}>Información de la cuenta</a>
+            <a href="?panel={{ origen }}&amp;seccion=password" {% if seccion == 'password' %}aria-current="page"{% endif %}>Cambiar contraseña</a>
+            <a class="perfil-cerrar" id="solicitar-salida" href="?panel={{ origen }}{% if seccion == 'password' %}&amp;seccion=password{% endif %}&amp;confirmar_salida=1">Cerrar sesión</a>
+        </nav>
+        <main class="container">
+            <div class="account-heading"><h2>Mi cuenta</h2></div>
+            {% if request.GET.confirmar_salida == '1' %}
+            <section class="attendance-card" aria-labelledby="confirmacion-salida">
+                <h3 id="confirmacion-salida">¿Cerrar sesión?</h3>
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <a href="?panel={{ origen }}{% if seccion == 'password' %}&amp;seccion=password{% endif %}">Cancelar</a>
+                    <button class="submit-button" type="submit">Cerrar sesión</button>
+                </form>
+            </section>
+            {% else %}
+            <section class="attendance-card">
+                <h3>{% if seccion == 'password' %}Cambiar contraseña{% else %}Información de la cuenta{% endif %}</h3>
+                {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+                {% if mensaje %}<p role="status">{{ mensaje }}</p>{% endif %}
+                {% if seccion == 'informacion' and not mostrar_datos %}
+                <p>Confirma tu contraseña para ver o actualizar tus datos.</p>
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+                    {% if mostrar_datos %}
+                    <div class="form-group"><label for="nombre">Nombre</label><input id="nombre" name="nombre" value="{{ actor.nombre }}" required maxlength="150" autocomplete="name"></div>
+                    <div class="form-group"><label for="correo">Correo</label><input id="correo" name="correo" type="email" value="{{ actor.correo }}" required autocomplete="email"></div>
+                    {% endif %}
+                    <div class="form-group"><label for="actual">Contraseña actual</label><input id="actual" name="actual" type="password" required maxlength="256" autocomplete="current-password"></div>
+                    {% if seccion == 'password' %}
+                    <div class="form-group"><label for="password">Nueva contraseña</label><input id="password" name="password" type="password" required maxlength="256" autocomplete="new-password"></div>
+                    <p>Usa al menos ocho caracteres y evita contraseñas comunes o completamente numéricas.</p>
+                    <div class="form-group"><label for="password2">Repetir contraseña</label><input id="password2" name="password2" type="password" required maxlength="256" autocomplete="new-password"></div>
+                    <button class="submit-button" name="accion" value="password">Guardar contraseña</button>
+                    {% elif mostrar_datos %}
+                    <button class="submit-button" name="accion" value="guardar">Guardar información</button>
+                    {% else %}
+                    <button class="submit-button" name="accion" value="ver">Ver información</button>
+                    {% endif %}
+                </form>
+            </section>
+            {% endif %}
+        </main>
+    </div>
+    <dialog id="confirmar-salida" aria-labelledby="titulo-salida">
+        <h2 id="titulo-salida">¿Cerrar sesión?</h2>
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button id="cancelar-salida" type="button" autofocus>Cancelar</button>
+            <button class="submit-button" type="submit">Cerrar sesión</button>
+        </form>
+    </dialog>
+</body>
+</html>

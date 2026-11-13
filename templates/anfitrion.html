@@ -14,19 +14,14 @@
 
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link rel="stylesheet" href="{% static 'css/anfitrion.css' %}?v=panel-anfitrion-4">
+    <link rel="stylesheet" href="{% static 'css/perfil.css' %}">
 </head>
 
 <body class="host-shell">
     <header class="site-header">
         <div class="container header-content">
             <div class="host-brand"><strong>INACAP</strong><h1>Registro de asistencia</h1></div>
-            <nav class="account-nav" aria-label="Cuenta">
-                <span>{{ actor.nombre }}</span>
-                <form action="{% url 'logout' %}" method="post">
-                    {% csrf_token %}
-                    <button class="secondary-button" type="submit">Salir</button>
-                </form>
-            </nav>
+            {% include "avatar_cuenta.html" with origen="anfitrion" %}
         </div>
     </header>
 
@@ -36,7 +31,6 @@
             <a href="{% url 'administrador' %}">← Administración</a>
             {% endif %}
             <a href="{% url 'anfitrion' %}" aria-current="page">Panel anfitrión</a>
-            <a href="{% url 'mi_cuenta' %}?panel=anfitrion">Mi cuenta</a>
         </nav>
     <main class="container dashboard">
         <div class="dashboard-heading">

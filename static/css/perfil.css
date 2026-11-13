@@ -1,0 +1,33 @@
+.perfil-encabezado { display: flex; align-items: center; gap: .8rem; }
+.perfil-avatar {
+    display: inline-block;
+    position: relative;
+    flex: 0 0 2.6rem;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 50%;
+    background: #666;
+}
+.perfil-avatar::before, .perfil-avatar::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+}
+.perfil-avatar::before { top: 22%; width: 28%; height: 28%; border-radius: 50%; }
+.perfil-avatar::after { bottom: 20%; width: 53%; height: 25%; border-radius: 50% 50% 24% 24%; }
+.perfil-avatar:hover { background: #888; }
+.perfil-avatar:focus-visible { outline: 2px solid white; outline-offset: 4px; }
+.perfil-menu { display: flex; flex-direction: column; gap: .25rem; }
+.perfil-menu .perfil-cerrar { margin-top: auto; color: #8b0029; border: 1px solid #ccc; }
+#confirmar-salida { max-width: calc(100% - 2rem); border: 1px solid #ddd; border-radius: .75rem; padding: 1.5rem; }
+#confirmar-salida::backdrop { background: #0008; }
+#confirmar-salida h2 { margin-top: 0; }
+#confirmar-salida form { display: flex; flex-wrap: wrap; gap: .6rem; }
+#confirmar-salida .submit-button, #cancelar-salida { width: auto; margin: 0; }
+#cancelar-salida { padding: .65rem 1rem; border: 1px solid #ccc; border-radius: .4rem; background: #fff; cursor: pointer; }
+@media (max-width: 760px) {
+    .perfil-menu { flex-direction: row; }
+    .perfil-menu .perfil-cerrar { margin-top: 0; }
+}
