@@ -7,7 +7,7 @@
     <meta name="description" content="Registro de asistencia a eventos">
     <title>Registro de asistencia</title>
     {% load static %}
-<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<link rel="stylesheet" href="{% static 'css/styles.css' %}?v=firma-c">
 </head>
 <body>
     <header class="site-header">
@@ -54,7 +54,7 @@
                 <button type="button" class="submit-button" id="start-return" hidden>Firmar devolución de EPP</button>
                 <div id="signature-controls">
                     <p>Dibuja tu firma en este recuadro.</p>
-                    <canvas id="participant-signature" width="640" height="240" aria-label="Área para dibujar tu firma"></canvas>
+                    <canvas id="participant-signature" width="640" height="600" aria-label="Área para dibujar tu firma"></canvas>
                     <button type="button" id="clear-participant-signature">Limpiar firma</button>
                     <button type="button" class="submit-button" id="submit-participant-signature">Confirmar firma</button>
                 </div>
