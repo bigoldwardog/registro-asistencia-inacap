@@ -1,3 +1,5 @@
+@import url("roboto.css");
+
 /* =========================
    Base
 ========================= */
@@ -13,12 +15,7 @@ html {
 body {
     min-height: 100vh;
     margin: 0;
-    font-family:
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+    font-family: Roboto, system-ui, "Segoe UI", sans-serif;
     line-height: 1.5;
     background: #f4f4f4;
     color: #222;
@@ -574,7 +571,7 @@ main {
 
 .site-header { background: #111; color: #fff; }
 .site-header a, .site-header .header-label { color: #fff; }
-.primary-button:not(:disabled), .dashboard-tabs button[aria-selected="true"] { background: #b90030; color: #fff; }
+.primary-button:not(:disabled), .dashboard-tabs button[aria-selected="true"] { background: #cc0000; color: #fff; }
 .session-export-actions { display: flex; gap: 10px; margin: 16px 0; }
 
 /* Distribución del panel anfitrión */
@@ -588,11 +585,11 @@ main {
 .host-sidebar { background: #fff; border-right: 1px solid #dedede; padding: 1.25rem .65rem; }
 .host-sidebar a { display: block; padding: .65rem .85rem; border-left: 3px solid transparent; border-radius: 4px; color: #242424; text-decoration: none; }
 .host-sidebar a:hover { background: #f4f4f4; }
-.host-sidebar a[aria-current="page"] { background: #f9e7ec; border-color: #b90030; color: #851027; font-weight: 650; }
+.host-sidebar a[aria-current="page"] { background: #ffebeb; border-color: #cc0000; color: #cc0000; font-weight: 650; }
 .host-shell .dashboard-heading h2 { font-size: clamp(1.75rem, 3vw, 2.25rem); }
 .host-shell .dashboard-tabs { width: 100%; margin-inline: 0; padding: 0; background: transparent; border-radius: 0; border-bottom: 1px solid #ccc; }
 .host-shell .dashboard-tabs [role="tab"] { border-radius: 0; border-bottom: 3px solid transparent; }
-.host-shell .dashboard-tabs [aria-selected="true"] { background: transparent; color: #222; border-bottom-color: #b90030; }
+.host-shell .dashboard-tabs [aria-selected="true"] { background: transparent; color: #222; border-bottom-color: #cc0000; }
 .host-shell #panel-new .session-card { max-width: none; }
 .host-shell #create-session-button { justify-self: start; }
 .host-shell .no-sessions { margin: -.5rem 0 1.25rem; color: #555; }
@@ -625,8 +622,8 @@ main {
 
 .host-subnav button:hover:not(:disabled),
 .host-subnav button[aria-current="true"] {
-    background: #f9e7ec;
-    color: #851027;
+    background: #ffebeb;
+    color: #cc0000;
 }
 
 .host-subnav button[aria-current="true"] {

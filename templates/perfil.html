@@ -5,14 +5,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Mi cuenta</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=perfil">
-    <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=3">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=perfil-roboto-rojo-barra-roja">
+    <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=3-barra-roja">
     <script src="{% static 'js/perfil.js' %}?v=3" defer></script>
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}">
 </head>
 <body class="account-panel">
     <header class="site-header">
         <div class="container account-header">
-            <div class="account-brand"><strong>INACAP</strong><h1>Registro de asistencia</h1></div>
+            {% include "marca_encabezado.html" %}
             {% include "avatar_cuenta.html" %}
         </div>
     </header>

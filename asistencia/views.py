@@ -496,6 +496,7 @@ def codigo_qr(request, sesion_id):
 def afiche_qr(request, sesion_id):
     import io
     import qrcode
+    from django.contrib.staticfiles import finders
     from PIL import Image, ImageDraw, ImageFont
 
     sesion = obtener_sesion(request, sesion_id)
@@ -536,9 +537,13 @@ def afiche_qr(request, sesion_id):
             y += tamano + 12
         return y
 
-    dibujo.rectangle((0, 0, ancho, 144), fill=negro)
-    dibujo.rectangle((0, 144, ancho, 152), fill=rojo)
-    texto_centrado('INACAP  |  Registro de asistencia', 51, 42, 'white')
+    dibujo.rectangle((0, 0, ancho, 168), fill='#1e1e1e')
+    dibujo.rectangle((0, 168, ancho, 176), fill='#cc0000')
+    with Image.open(finders.find('img/inacap-60.png')) as imagen:
+        logo = imagen.convert('RGBA')
+        logo.thumbnail((420, 76), Image.Resampling.LANCZOS)
+        pagina.paste(logo, (centro - logo.width // 2, 26), logo)
+    texto_centrado('Registro de asistencia', 111, 32, 'white')
     texto_centrado('ESCANEA PARA REGISTRAR TU ASISTENCIA', 218, 34, rojo)
 
     datos = json_guardado(sesion.campos_valores_json, dict)

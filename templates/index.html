@@ -7,12 +7,13 @@
     <meta name="description" content="Registro de asistencia a eventos">
     <title>Registro de asistencia</title>
     {% load static %}
-<link rel="stylesheet" href="{% static 'css/styles.css' %}?v=firma-botones">
+<link rel="stylesheet" href="{% static 'css/styles.css' %}?v=firma-botones-roboto-rojo-barra-roja">
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}">
 </head>
 <body>
     <header class="site-header">
-        <div class="container">
-            <h1>Registro de asistencia</h1>
+        <div class="container account-header">
+            {% include "marca_encabezado.html" %}
         </div>
     </header>
 

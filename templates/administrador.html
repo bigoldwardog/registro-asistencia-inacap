@@ -5,17 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel del administrador</title>
-    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=sesiones-en-curso-2">
-    <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=sesiones-en-curso-2-roboto-rojo-barra-roja">
+    <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=2-barra-roja">
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}">
 </head>
 
 <body class="admin-shell">
     <header class="site-header">
         <div class="container header-content">
-            <div class="admin-brand">
-                <strong>INACAP</strong>
-                <h1>Registro de asistencia</h1>
-            </div>
+            {% include "marca_encabezado.html" %}
 
             {% include "avatar_cuenta.html" with origen="administrador" %}
         </div>

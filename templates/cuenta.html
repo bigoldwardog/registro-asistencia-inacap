@@ -1,12 +1,10 @@
 {% load static %}
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ titulo }}</title><link rel="stylesheet" href="{% static 'css/styles.css' %}?v=cuenta-panel"></head>
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ titulo }}</title><link rel="stylesheet" href="{% static 'css/styles.css' %}?v=cuenta-panel-roboto-rojo-barra-roja">    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}">
+</head>
 <body>
 <header class="site-header">
     <div class="container account-header">
-        <div class="account-brand">
-            <strong>INACAP</strong>
-            <h1>Registro de asistencia</h1>
-        </div>
+        {% include "marca_encabezado.html" %}
     </div>
 </header>
 <main class="container"><section class="attendance-card"><p class="event-label">Acceso al sistema</p><h2>{{ titulo }}</h2>

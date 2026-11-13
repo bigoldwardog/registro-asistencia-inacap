@@ -20,7 +20,7 @@
 .perfil-avatar:hover { background: #888; }
 .perfil-avatar:focus-visible { outline: 2px solid white; outline-offset: 4px; }
 .perfil-menu { display: flex; flex-direction: column; gap: .25rem; }
-.perfil-menu .perfil-cerrar { margin-top: auto; color: #8b0029; border: 1px solid #ccc; }
+.perfil-menu .perfil-cerrar { margin-top: auto; background: #fff; color: #cc0000; border: 1px solid #ccc; }
 #confirmar-salida { max-width: calc(100% - 2rem); border: 1px solid #ddd; border-radius: .75rem; padding: 1.5rem; }
 #confirmar-salida::backdrop { background: #0008; }
 #confirmar-salida h2 { margin-top: 0; }
