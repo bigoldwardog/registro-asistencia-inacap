@@ -74,14 +74,12 @@
     .site-header .account-header, .account-layout main { width: calc(100% - 2rem); }
 }
 
-#clear-participant-signature {
-    padding: .65rem 1rem;
-    border: 1px solid #111;
-    border-radius: .4rem;
+#submit-participant-signature {
+    margin-top: 1rem;
+}
+
+#clear-participant-signature.submit-button {
     background: #111;
-    color: #fff;
-    font-weight: 600;
-    cursor: pointer;
 }
 #clear-participant-signature:hover:not(:disabled) { background: #333; }
 #clear-participant-signature:focus-visible { outline: 2px solid #111; outline-offset: 3px; }

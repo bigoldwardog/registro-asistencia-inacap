@@ -1,36 +1,52 @@
 <!doctype html>
 <html lang="es">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pantallas del sprint · Registro de asistencia INACAP</title>
+<title>Galería del sistema de asistencia</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f5f5f5;color:#242424;font:16px/1.55 "Segoe UI",Arial,sans-serif}
-header,footer{background:#111;color:#fff;padding:16px max(20px,calc((100vw - 1120px)/2))}
-main{max-width:1160px;margin:auto;padding:30px 20px}h1{margin:0;font-size:clamp(24px,4vw,34px)}h2{margin:28px 0 10px}
-a{color:#900026}a:focus-visible,summary:focus-visible{outline:3px solid #b90030;outline-offset:3px}
-figure,details{background:white;border:1px solid #ddd;border-radius:6px;margin:0 0 20px;padding:16px}
-figcaption{margin-bottom:12px}img{display:block;max-width:100%;height:auto;margin:auto;border:1px solid #ddd}
-.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:16px}.grid figure{min-width:0}
-summary{cursor:pointer;font-weight:650}.button{display:inline-block;background:#b90030;color:white;border-radius:4px;padding:9px 14px;text-decoration:none}
-@media(max-width:650px){.grid{grid-template-columns:1fr}}
+body{margin:0;background:#f2f2f2;color:#222;font:1rem/1.5 "Segoe UI",sans-serif}
+header{background:#151515;color:white;padding:1.5rem max(1rem,calc((100vw - 76rem)/2))}
+h1{margin:0} main{max-width:76rem;margin:auto;padding:1.5rem 1rem 3rem}
+nav{display:flex;flex-wrap:wrap;gap:1rem} nav a{color:#980029}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1rem}
+section+section{margin-top:3rem}
+figure{margin:0;overflow:hidden;background:white;border:1px solid #ddd;border-radius:8px}
+figure a{display:block} img{display:block;width:100%;height:15rem;object-fit:contain;background:#f8f8f8}
+figcaption{padding:.75rem 1rem;font-weight:600}
 </style>
-<header><strong>INACAP</strong> · Registro de asistencia</header>
+</head>
+<body>
+<header><h1>Galería del sistema de asistencia</h1></header>
 <main>
-<h1>Pantallas del sprint actual</h1>
-<p>Capturas del sistema Django con datos ficticios.</p>
-<nav aria-label="Pantallas del sprint"><a href="#administracion">Administración</a> · <a href="#panel-anfitrión">Panel anfitrión</a> · <a href="#asistente">Asistente</a></nav>
-<h2 id="administracion">Administración</h2>
-<figure><figcaption><strong>Historial de sesiones y filtros</strong> · <a href="sprint-administracion.jpg" download>Descargar imagen</a></figcaption><a href="sprint-administracion.jpg"><img loading="lazy" src="sprint-administracion.jpg" alt="Historial de sesiones y filtros"></a></figure>
-<figure><figcaption><strong>Detalle de asistentes y exportación</strong> · <a href="sprint-detalle.jpg" download>Descargar imagen</a></figcaption><a href="sprint-detalle.jpg"><img loading="lazy" src="sprint-detalle.jpg" alt="Detalle de asistentes y exportación"></a></figure>
-<h2 id="panel-anfitrión">Panel anfitrión</h2>
-<figure><figcaption><strong>Nueva sesión</strong> · <a href="sprint-nueva-sesion.jpg" download>Descargar imagen</a></figcaption><a href="sprint-nueva-sesion.jpg"><img loading="lazy" src="sprint-nueva-sesion.jpg" alt="Nueva sesión"></a></figure>
-<figure><figcaption><strong>Gestión de sesión, QR y afiche PDF</strong> · <a href="sprint-gestion.jpg" download>Descargar imagen</a></figcaption><a href="sprint-gestion.jpg"><img loading="lazy" src="sprint-gestion.jpg" alt="Gestión de sesión, QR y afiche PDF"></a></figure>
-<figure><figcaption><strong>Lista actual y estado de firma</strong> · <a href="sprint-lista.jpg" download>Descargar imagen</a></figcaption><a href="sprint-lista.jpg"><img loading="lazy" src="sprint-lista.jpg" alt="Lista actual y estado de firma"></a></figure>
-<figure><figcaption><strong>Campos de desarrollo de la actividad</strong> · <a href="sprint-desarrollo.jpg" download>Descargar imagen</a></figcaption><a href="sprint-desarrollo.jpg"><img loading="lazy" src="sprint-desarrollo.jpg" alt="Campos de desarrollo de la actividad"></a></figure>
-<h2>Mi cuenta</h2><figure><figcaption><strong>Navegación lateral y regreso al panel</strong> · <a href="sprint-mi-cuenta.jpg" download>Descargar imagen</a></figcaption><a href="sprint-mi-cuenta.jpg"><img loading="lazy" src="sprint-mi-cuenta.jpg" alt="Mi cuenta con navegación lateral"></a></figure>
-<h2 id="asistente">Asistente</h2>
-<figure><figcaption><strong>Formulario abierto desde el QR</strong> · <a href="sprint-formulario.jpg" download>Descargar imagen</a></figcaption><a href="sprint-formulario.jpg"><img loading="lazy" src="sprint-formulario.jpg" alt="Formulario abierto desde el QR"></a></figure>
-<figure><figcaption><strong>Área de firma en el dispositivo del asistente</strong> · <a href="sprint-firma.jpg" download>Descargar imagen</a></figcaption><a href="sprint-firma.jpg"><img loading="lazy" src="sprint-firma.jpg" alt="Área de firma en el dispositivo del asistente"></a></figure>
+<nav aria-label="Versiones"><a href="#version-1">Versión actual</a><a href="#version-2">Primera versión en blanco y negro</a></nav>
+<p>Selecciona una captura para verla a tamaño completo.</p>
+<section id="version-1"><h2>Versión actual</h2><div class="grid">
+<figure><a href="actual-ingreso.jpg"><img loading="lazy" src="actual-ingreso.jpg" alt="Iniciar sesión"></a><figcaption>Iniciar sesión</figcaption></figure>
+<figure><a href="actual-administracion.jpg"><img loading="lazy" src="actual-administracion.jpg" alt="Administración · Sesiones y exportación"></a><figcaption>Administración · Sesiones y exportación</figcaption></figure>
+<figure><a href="actual-administracion-detalle.jpg"><img loading="lazy" src="actual-administracion-detalle.jpg" alt="Administración · Detalle de asistencia"></a><figcaption>Administración · Detalle de asistencia</figcaption></figure>
+<figure><a href="actual-anfitrion-nueva.jpg"><img loading="lazy" src="actual-anfitrion-nueva.jpg" alt="Anfitrión · Nueva sesión"></a><figcaption>Anfitrión · Nueva sesión</figcaption></figure>
+<figure><a href="actual-anfitrion-gestionar.jpg"><img loading="lazy" src="actual-anfitrion-gestionar.jpg" alt="Anfitrión · Gestionar sesión y QR"></a><figcaption>Anfitrión · Gestionar sesión y QR</figcaption></figure>
+<figure><a href="actual-anfitrion-lista.jpg"><img loading="lazy" src="actual-anfitrion-lista.jpg" alt="Anfitrión · Lista actual"></a><figcaption>Anfitrión · Lista actual</figcaption></figure>
+<figure><a href="actual-anfitrion-desarrollo.jpg"><img loading="lazy" src="actual-anfitrion-desarrollo.jpg" alt="Anfitrión · Desarrollo"></a><figcaption>Anfitrión · Desarrollo</figcaption></figure>
+<figure><a href="actual-asistente-formulario.jpg"><img loading="lazy" src="actual-asistente-formulario.jpg" alt="Asistente · Formulario desde QR"></a><figcaption>Asistente · Formulario desde QR</figcaption></figure>
+<figure><a href="actual-asistente-firma.jpg"><img loading="lazy" src="actual-asistente-firma.jpg" alt="Asistente · Firma en su dispositivo"></a><figcaption>Asistente · Firma en su dispositivo</figcaption></figure>
+<figure><a href="actual-cuenta-verificacion.jpg"><img loading="lazy" src="actual-cuenta-verificacion.jpg" alt="Mi cuenta · Verificar contraseña"></a><figcaption>Mi cuenta · Verificar contraseña</figcaption></figure>
+<figure><a href="actual-cuenta-perfil.jpg"><img loading="lazy" src="actual-cuenta-perfil.jpg" alt="Mi cuenta · Información personal"></a><figcaption>Mi cuenta · Información personal</figcaption></figure>
+<figure><a href="actual-cuenta-contrasena.jpg"><img loading="lazy" src="actual-cuenta-contrasena.jpg" alt="Mi cuenta · Cambiar contraseña"></a><figcaption>Mi cuenta · Cambiar contraseña</figcaption></figure>
+<figure><a href="actual-cuenta-salida.jpg"><img loading="lazy" src="actual-cuenta-salida.jpg" alt="Mi cuenta · Confirmar cierre de sesión"></a><figcaption>Mi cuenta · Confirmar cierre de sesión</figcaption></figure>
+</div></section>
+<section id="version-2"><h2>Primera versión en blanco y negro</h2><div class="grid">
+<figure><a href="00-iniciar-sesion.jpg"><img loading="lazy" src="00-iniciar-sesion.jpg" alt="Iniciar sesión"></a><figcaption>Iniciar sesión</figcaption></figure>
+<figure><a href="01-anfitrion-nueva-sesion.jpg"><img loading="lazy" src="01-anfitrion-nueva-sesion.jpg" alt="Anfitrión · Nueva sesión"></a><figcaption>Anfitrión · Nueva sesión</figcaption></figure>
+<figure><a href="02-anfitrion-gestionar.jpg"><img loading="lazy" src="02-anfitrion-gestionar.jpg" alt="Anfitrión · Gestionar sesión"></a><figcaption>Anfitrión · Gestionar sesión</figcaption></figure>
+<figure><a href="03-anfitrion-firma.jpg"><img loading="lazy" src="03-anfitrion-firma.jpg" alt="Anfitrión · Firma en dispositivo dedicado"></a><figcaption>Anfitrión · Firma en dispositivo dedicado</figcaption></figure>
+<figure><a href="04-asistente-formulario.jpg"><img loading="lazy" src="04-asistente-formulario.jpg" alt="Asistente · Formulario"></a><figcaption>Asistente · Formulario</figcaption></figure>
+<figure><a href="05-asistente-confirmacion.jpg"><img loading="lazy" src="05-asistente-confirmacion.jpg" alt="Asistente · Confirmación"></a><figcaption>Asistente · Confirmación</figcaption></figure>
+<figure><a href="06-administrador-historial.jpg"><img loading="lazy" src="06-administrador-historial.jpg" alt="Administración · Historial"></a><figcaption>Administración · Historial</figcaption></figure>
+<figure><a href="07-administrador-detalle.jpg"><img loading="lazy" src="07-administrador-detalle.jpg" alt="Administración · Detalle"></a><figcaption>Administración · Detalle</figcaption></figure>
+<figure><a href="08-administrador-usuarios.jpg"><img loading="lazy" src="08-administrador-usuarios.jpg" alt="Administración · Usuarios (pantalla histórica)"></a><figcaption>Administración · Usuarios (pantalla histórica)</figcaption></figure>
+</div></section>
 </main>
-<footer>INACAP · Registro de asistencia</footer>
+</body>
 </html>
