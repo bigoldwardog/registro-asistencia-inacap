@@ -124,9 +124,17 @@ async function loadAttendanceList() {
     }
 }
 
+function updateManageAvailability(hasOpenSession) {
+    const tab = document.getElementById("tab-manage");
+    tab.disabled = !hasOpenSession;
+    document.querySelector('[data-sidebar-tab="manage"]').disabled = !hasOpenSession;
+    if (tab.disabled && tab.getAttribute("aria-selected") === "true") {
+        activateDashboardTab("new");
+    }
+}
+
 async function loadSessions(preferredSessionId = null) {
     sessionSelector.disabled = true;
-    const manageTab = document.getElementById("tab-manage");
     const emptyMessage = document.getElementById("no-sessions");
     emptyMessage.hidden = true;
 
@@ -154,9 +162,9 @@ async function loadSessions(preferredSessionId = null) {
 
         sessionSelector.innerHTML = "";
 
-        manageTab.disabled = sessions.length === 0;
-        emptyMessage.hidden = !manageTab.disabled;
-        if (manageTab.disabled) {
+        updateManageAvailability(sessions.some((session) => session.estado === "ABIERTA"));
+        emptyMessage.hidden = sessions.length !== 0;
+        if (sessions.length === 0) {
             sessionSelector.add(
                 new Option("No hay sesiones disponibles", "")
             );
@@ -205,8 +213,7 @@ async function loadSessions(preferredSessionId = null) {
         );
 
         resetSessionView();
-        manageTab.disabled = true;
-        if (manageTab.getAttribute("aria-selected") === "true") activateDashboardTab("new");
+        updateManageAvailability(false);
     } finally {
         sessionSelector.disabled =
             sessionSelector.options.length <= 1 &&
@@ -628,7 +635,7 @@ async function closeSession() {
         sessionStatus.textContent = "Sesión cerrada";
         closeSessionButton.textContent = "Sesión cerrada";
 
-        await loadAttendanceList();
+        await loadSessions(sessionState.currentSessionId);
 
     } catch (error) {
         alert(error.message);
@@ -840,6 +847,10 @@ document.querySelector("#development-form").addEventListener("submit", async (ev
 function activateDashboardTab(name, focus = false) {
     const requested = document.querySelector(`[data-dashboard-tab="${name}"]`);
     if (!requested || requested.disabled) return;
+    for (const item of document.querySelectorAll("[data-sidebar-tab]")) {
+        if (item.dataset.sidebarTab === name) item.setAttribute("aria-current", "true");
+        else item.removeAttribute("aria-current");
+    }
     for (const tab of document.querySelectorAll("[data-dashboard-tab]")) {
         const active = tab.dataset.dashboardTab === name;
         tab.setAttribute("aria-selected", String(active));
@@ -847,6 +858,24 @@ function activateDashboardTab(name, focus = false) {
         document.getElementById(tab.getAttribute("aria-controls")).hidden = !active;
         if (active && focus) tab.focus();
     }
+}
+for (const item of document.querySelectorAll("[data-sidebar-tab]")) {
+    item.addEventListener("click", () => {
+        activateDashboardTab(item.dataset.sidebarTab);
+        const panel = document.getElementById(item.getAttribute("aria-controls"));
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduceMotion) {
+            panel.scrollIntoView({block: "nearest"});
+            return;
+        }
+        panel.scrollIntoView({behavior: "smooth", block: "nearest"});
+        if (panel.getAnimations().length === 0) {
+            panel.animate([
+                {opacity: 0.6, transform: "translateY(6px)"},
+                {opacity: 1, transform: "translateY(0)"}
+            ], {duration: 180, easing: "ease-out"});
+        }
+    });
 }
 for (const tab of document.querySelectorAll("[data-dashboard-tab]")) {
     tab.addEventListener("click", () => activateDashboardTab(tab.dataset.dashboardTab));

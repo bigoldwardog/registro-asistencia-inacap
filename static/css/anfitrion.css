@@ -603,3 +603,37 @@ main {
     .host-layout .dashboard { width: calc(100% - 2rem); }
     .host-sidebar { display: flex; flex-wrap: wrap; padding: .5rem; border-right: 0; border-bottom: 1px solid #dedede; }
 }
+
+.host-subnav {
+    flex-basis: 100%;
+    margin: .35rem 0 0 .85rem;
+    padding: 0 0 0 .55rem;
+    border-left: 1px solid #dedede;
+    list-style: none;
+}
+
+.host-subnav button {
+    width: 100%;
+    padding: .45rem .6rem;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #242424;
+    text-align: left;
+    cursor: pointer;
+}
+
+.host-subnav button:hover:not(:disabled),
+.host-subnav button[aria-current="true"] {
+    background: #f9e7ec;
+    color: #851027;
+}
+
+.host-subnav button[aria-current="true"] {
+    font-weight: 650;
+}
+
+.host-subnav button:disabled {
+    color: #737373;
+    cursor: default;
+}

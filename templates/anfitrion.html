@@ -13,7 +13,7 @@
     <title>Panel del encargado</title>
 
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <link rel="stylesheet" href="{% static 'css/anfitrion.css' %}?v=panel-anfitrion-4">
+    <link rel="stylesheet" href="{% static 'css/anfitrion.css' %}?v=panel-anfitrion-5">
     <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=2">
 </head>
 
@@ -31,6 +31,12 @@
             <a href="{% url 'administrador' %}">← Administración</a>
             {% endif %}
             <a href="{% url 'anfitrion' %}" aria-current="page">Panel anfitrión</a>
+            <ul class="host-subnav" aria-label="Secciones del panel anfitrión">
+                <li><button type="button" data-sidebar-tab="manage" aria-controls="panel-manage" disabled>Gestionar sesión</button></li>
+                <li><button type="button" data-sidebar-tab="new" aria-controls="panel-new" aria-current="true">Nueva sesión</button></li>
+                <li><button type="button" data-sidebar-tab="list" aria-controls="panel-list">Lista actual</button></li>
+                <li><button type="button" data-sidebar-tab="development" aria-controls="panel-development">Desarrollo</button></li>
+            </ul>
         </nav>
     <main class="container dashboard">
         <div class="dashboard-heading">
@@ -223,6 +229,6 @@
     </footer>
 
 
-    <script src="{% static 'js/anfitrion.js' %}?v=panel-anfitrion-3" defer></script>
+    <script src="{% static 'js/anfitrion.js' %}?v=panel-anfitrion-5" defer></script>
 </body>
 </html>
