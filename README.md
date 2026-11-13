@@ -2,6 +2,8 @@
 
 Aplicación web Django para anfitriones, asistentes y administración. Los asistentes se registran mediante un QR y firman desde su propio dispositivo. Los registros de cada actividad se pueden consultar y exportar. Las capturas de la interfaz están en [la galería](docs/capturas/GALERIA.html).
 
+La galería conserva las capturas de la primera versión y muestra la interfaz actual con Roboto, el logo de INACAP y las vistas de sesiones en curso y búsqueda. La [demo interactiva](docs/propuesta-asistencia/index.html) usa datos ficticios e incluye la propuesta de roles y permisos.
+
 ## Primer uso en este computador
 
 1. Desde la carpeta del proyecto ejecuta `./INICIAR_LOCAL.ps1` en PowerShell.
