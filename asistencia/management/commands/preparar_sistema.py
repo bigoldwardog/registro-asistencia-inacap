@@ -14,6 +14,9 @@ class Command(BaseCommand):
         connection.connection.executescript((Path(settings.BASE_DIR) / 'database/schema.sql').read_text(encoding='utf-8-sig'))
         call_command('actualizar_formularios')
         with connection.cursor() as c:
+            c.execute('PRAGMA table_info(usuarios)')
+            if 'telefono' not in {r[1] for r in c.fetchall()}:
+                c.execute("ALTER TABLE usuarios ADD COLUMN telefono TEXT NOT NULL DEFAULT ''")
             c.execute('PRAGMA table_info(asistencias)')
             if 'campos_participante_json' not in {r[1] for r in c.fetchall()}:
                 c.execute("ALTER TABLE asistencias ADD COLUMN campos_participante_json TEXT NOT NULL DEFAULT '{}'")

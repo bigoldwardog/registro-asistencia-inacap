@@ -31,3 +31,27 @@
     .perfil-menu { flex-direction: row; }
     .perfil-menu .perfil-cerrar { margin-top: 0; }
 }
+
+.perfil-menu .perfil-cerrar { text-align: center; }
+#confirmar-salida form { justify-content: center; }
+#confirmar-salida button { text-align: center; }
+.perfil-campo { position: relative; }
+.perfil-campo:has(.perfil-ojo) input { padding-inline-end: 3rem; }
+.perfil-oculto { -webkit-text-security: disc; }
+.perfil-ojo {
+    position: absolute;
+    inset-inline-end: .3rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border: 0;
+    border-radius: .35rem;
+    background: transparent;
+    color: #444;
+    cursor: pointer;
+}
+.perfil-ojo:hover { background: #eee; }
+.perfil-ojo[aria-pressed="true"] .perfil-ojo-tachado { display: none; }

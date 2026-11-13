@@ -120,11 +120,14 @@ def mi_cuenta(request):
                     if not nombre or len(nombre) > 150:
                         raise ValidationError('Indica un nombre de hasta 150 caracteres.')
                     validate_email(correo)
+                    telefono = request.POST.get('telefono', actor.telefono).strip()
+                    if len(telefono) > 32 or any(c not in '0123456789+ ()-' for c in telefono) or (telefono and not any(c.isdigit() for c in telefono)):
+                        raise ValidationError('Indica un teléfono válido o deja el campo vacío.')
                     with transaction.atomic():
                         if Usuarios.objects.filter(correo__iexact=correo).exclude(pk=actor.pk).exists():
                             raise ValidationError('Ya existe una cuenta con ese correo.')
-                        actor.nombre, actor.correo = nombre, correo
-                        actor.save(update_fields=['nombre', 'correo'])
+                        actor.nombre, actor.correo, actor.telefono = nombre, correo, telefono
+                        actor.save(update_fields=['nombre', 'correo', 'telefono'])
                         auditar(request, 'ACTUALIZAR_CUENTA', 'usuario', actor.id)
                     mensaje = 'Información actualizada.'
             else:
