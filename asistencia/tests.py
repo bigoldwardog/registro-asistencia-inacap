@@ -174,6 +174,29 @@ class SistemaTests(TransactionTestCase):
         self.assertEqual(self.a.get('/usuarios/').status_code, 404)
 
 
+    def test_telefono_opcional_en_perfil_propio(self):
+        url = '/mi-cuenta/'
+        datos = {
+            'accion': 'guardar', 'actual': 'Prueba-valida-2026!',
+            'nombre': self.host.nombre, 'correo': 'perfil@example.com',
+            'usuario_id': self.admin.id,
+        }
+        numero = '+56 9 0000 0010'
+        self.assertContains(self.h.post(url, dict(datos, telefono=numero)), 'Información actualizada.')
+        self.host.refresh_from_db()
+        self.admin.refresh_from_db()
+        self.assertEqual(self.host.telefono, numero)
+        self.assertEqual(self.host.correo, datos['correo'])
+        self.assertEqual(self.admin.telefono, '')
+        self.assertNotContains(self.h.get(url), numero)
+        self.assertContains(self.h.post(url, {'accion': 'ver', 'actual': datos['actual']}), numero)
+        self.h.post(url, datos)
+        self.host.refresh_from_db()
+        self.assertEqual(self.host.telefono, numero)
+        self.h.post(url, dict(datos, telefono=''))
+        self.host.refresh_from_db()
+        self.assertEqual(self.host.telefono, '')
+
     def test_configuracion_inicial_solo_local_y_una_vez(self):
         Usuarios.objects.update(activo=0)
         self.assertEqual(self.client.get('/configuracion-inicial/', REMOTE_ADDR='192.168.1.10').status_code, 403)
