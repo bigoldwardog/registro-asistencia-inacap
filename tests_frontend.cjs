@@ -2,7 +2,7 @@ const fs = require('node:fs'), vm = require('node:vm'), assert = require('node:a
 const { webcrypto } = require('node:crypto');
 const app = fs.readFileSync('static/js/app.js', 'utf8');
 const host = fs.readFileSync('static/js/anfitrion.js', 'utf8');
-function element() { return { hidden: true, textContent: '', checked: false, value: '', events: {}, addEventListener(t, f) { this.events[t] = f; }, focus() {}, reset() {}, querySelector() { return { value: 'csrf-token' }; } }; }
+function element() { return { hidden: true, textContent: '', checked: false, value: '', events: {}, addEventListener(t, f) { this.events[t] = f; }, focus() {}, reset() {}, querySelector(selector) { return selector === '#attendee-rut' ? null : { value: 'csrf-token' }; } }; }
 async function recovery(committed) {
     const stored = new Map(), server = new Map(); let sends = 0;
     async function browser() {

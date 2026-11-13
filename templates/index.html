@@ -35,7 +35,7 @@
                 {% for campo in campos_asistente %}
                 <div class="form-group">
                     <label for="attendee-{{ campo.nombre }}">{{ campo.etiqueta }}{% if not campo.obligatorio %} (opcional){% endif %}</label>
-                    <input id="attendee-{{ campo.nombre }}" name="{{ campo.nombre }}" type="{{ campo.tipo }}" maxlength="500" data-person-field {% if campo.obligatorio %}required{% endif %}>
+                    <input id="attendee-{{ campo.nombre }}" name="{{ campo.nombre }}" type="{{ campo.tipo }}" maxlength="500" data-person-field {% if campo.nombre == 'rut' %}autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="12.345.678-5"{% endif %} {% if campo.obligatorio %}required{% endif %}>
                 </div>
                 {% endfor %}
                 <p><label><input type="checkbox" id="remember-profile"> Recordar mis datos en este dispositivo para próximas actividades.</label></p>
@@ -68,6 +68,6 @@
         </div>
     </footer>
 
-    <script src="{% static 'js/app.js' %}?v=firma-dispositivo-1"></script>
+    <script src="{% static 'js/app.js' %}?v=rut-1"></script>
 </body>
 </html>

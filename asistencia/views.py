@@ -245,8 +245,12 @@ def registrar_asistencia(request, token):
         asistente.correo, asistente.telefono = valores.get('correo', ''), valores.get('telefono', '')
         asistente.fecha_actualizacion = timezone.now().isoformat()
         asistente.save()
+        rut_visible = ''
+        if rut:
+            cuerpo_rut, verificador = rut.split('-')
+            rut_visible = f"{int(cuerpo_rut):,}".replace(',', '.') + '-' + verificador
         a = Asistencias.objects.create(sesion=sesion, asistente=asistente,
-            nombre_registrado=valores['nombre'], rut_registrado=rut, cargo_registrado=valores.get('cargo', ''),
+            nombre_registrado=valores['nombre'], rut_registrado=rut_visible, cargo_registrado=valores.get('cargo', ''),
             correo_registrado=valores.get('correo', ''), telefono_registrado=valores.get('telefono', ''),
             campos_participante_json=json.dumps(valores, ensure_ascii=False), registro_token=envio, estado='PENDIENTE_FIRMA')
         auditar(request, 'REGISTRAR_ASISTENCIA', 'asistencia', a.id, despues={'sesion_id': sesion.id})
