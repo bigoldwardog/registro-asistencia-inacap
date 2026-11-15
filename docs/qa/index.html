@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Informe QA - INACAP</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+<header>
+    <div class="cabecera">
+        <h1>INACAP <span>| Informe QA</span></h1>
+        <p>Sistema de Registro de Asistencia</p>
+    </div>
+</header>
+
+<nav>
+    <a href="#inicio">Inicio</a>
+    <a href="#pruebas">Pruebas</a>
+    <a href="#errores">Errores</a>
+    <a href="#sugerencias">Sugerencias</a>
+    <a href="#conclusion">Conclusión</a>
+</nav>
+
+<main>
+
+    <!-- INFORMACIÓN GENERAL -->
+    <section id="inicio">
+        <h2>Informe de Control de Calidad</h2>
+        <p class="subtitulo">Evaluación y seguimiento del sistema</p>
+
+        <div class="informacion">
+            <p><strong>Proyecto:</strong> Registro de Asistencia INACAP</p>
+            <p><strong>Responsable:</strong> [Tu nombre]</p>
+            <p><strong>Rol:</strong> QA Tester</p>
+            <p><strong>Versión:</strong> 1.0</p>
+            <p><strong>Estado:</strong> En evaluación</p>
+        </div>
+
+        <h3>Objetivo</h3>
+        <p>
+            Identificar errores, comprobar el funcionamiento
+            del sistema y proponer mejoras que optimicen
+            la experiencia del usuario.
+        </p>
+    </section>
+
+    <!-- REGISTRO DE PRUEBAS -->
+    <section id="pruebas">
+        <h2>01. Registro de pruebas</h2>
+        <p>Casos de prueba preparados para evaluar el sistema.</p>
+
+        <div class="tabla-contenedor">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Prueba</th>
+                        <th>Resultado esperado</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>QA-001</td>
+                        <td>Formato de RUT</td>
+                        <td>Validar correctamente el RUT chileno.</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+                    <tr>
+                        <td>QA-002</td>
+                        <td>Formato de teléfono</td>
+                        <td>Aceptar el formato telefónico permitido.</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="nota">
+            Los resultados se actualizarán después de ejecutar
+            las pruebas y registrar sus evidencias.
+        </p>
+    </section>
+
+    <!-- ERRORES DETECTADOS -->
+    <section id="errores">
+        <h2>02. Errores reportados</h2>
+        <p>Problemas que requieren verificación.</p>
+
+        <article class="tarjeta error">
+            <div class="fila">
+                <strong>BUG-001 · Formato del RUT</strong>
+                <span class="pendiente">Por verificar</span>
+            </div>
+            <p><strong>Módulo:</strong> Registro de usuarios.</p>
+            <p><strong>Formato reportado:</strong> xx.xxx.xxx-x</p>
+            <p>
+                <strong>Descripción:</strong> Se reporta un problema
+                relacionado con el formato o validación del RUT.
+            </p>
+            <p>
+                <strong>Resultado esperado:</strong> Validar el RUT
+                y mostrar un mensaje claro si es incorrecto.
+            </p>
+            <p><strong>Resultado obtenido:</strong> Por documentar.</p>
+            <p><strong>Evidencia:</strong> Pendiente.</p>
+        </article>
+
+        <article class="tarjeta error">
+            <div class="fila">
+                <strong>BUG-002 · Formato telefónico</strong>
+                <span class="pendiente">Por verificar</span>
+            </div>
+            <p><strong>Módulo:</strong> Registro de usuarios.</p>
+            <p><strong>Formato reportado:</strong> x xxxx xxxx</p>
+            <p>
+                <strong>Descripción:</strong> Se reporta un problema
+                relacionado con el ingreso del número telefónico.
+            </p>
+            <p>
+                <strong>Resultado esperado:</strong> Aceptar los números
+                que cumplan el formato definido por el sistema.
+            </p>
+            <p><strong>Resultado obtenido:</strong> Por documentar.</p>
+            <p><strong>Evidencia:</strong> Pendiente.</p>
+        </article>
+    </section>
+
+    <!-- SUGERENCIAS -->
+    <section id="sugerencias">
+        <h2>03. Sugerencias de mejora</h2>
+        <p>Recomendaciones propuestas para el equipo de desarrollo.</p>
+
+
+        <article class="tarjeta">
+            <strong>SG-001 · Formato automático del RUT</strong>
+            <p>
+                Se recomienda implementar un formato automático
+                para el campo RUT durante el registro de usuarios.
+            </p>
+            <p>
+                Al ingresar los números, el sistema debería
+                incorporar automáticamente los puntos y el guion,
+                sin que el usuario tenga que escribirlos manualmente.
+            </p>
+            <p>
+                <strong>Ejemplo:</strong> Al escribir 123456785,
+                el formulario mostraría 12.345.678-5.
+            </p>
+            <p>
+                <strong>Beneficio:</strong> Facilitar el ingreso
+                del RUT, reducir errores de formato y mejorar
+                la experiencia del usuario.
+            </p>
+            <small>Prioridad: Media · Usabilidad</small>
+        </article>
+
+
+        <article class="tarjeta">
+            <strong>SG-002 · Inicio de sesión</strong>
+            <p>
+                Reemplazar las ventanas emergentes por mensajes
+                de error en rojo dentro del formulario, para
+                llamar la atención del usuario sin interrumpirlo.
+            </p>
+            <small>Prioridad: Media · Interfaz</small>
+        </article>
+
+        <article class="tarjeta">
+            <strong>SG-003 · Cambiar contraseña</strong>
+            <p>
+                Mover la opción "Cambiar contraseña" al apartado
+                "Información de la cuenta", evitando mantener
+                una sección independiente en el menú.
+            </p>
+            <small>Prioridad: Media · Navegación</small>
+        </article>
+
+        <article class="tarjeta">
+            <strong>SG-004 · Errores al cambiar contraseña</strong>
+            <p>
+                Resaltar en rojo los campos incorrectos y mostrar
+                mensajes claros cuando las contraseñas no coincidan
+                o no cumplan los requisitos.
+            </p>
+            <small>Prioridad: Media · Validaciones</small>
+        </article>
+
+        <article class="tarjeta">
+            <strong>SG-005 · Teléfonos internacionales</strong>
+            <p>
+                Agregar un selector de país para permitir
+                distintos prefijos y formatos telefónicos,
+                facilitando el registro de usuarios extranjeros.
+            </p>
+            <small>Prioridad: Baja · Formularios</small>
+        </article>
+
+        <article class="tarjeta">
+            <strong>SG-006 · Firma digital</strong>
+            <p>
+                Incorporar un botón "Deshacer" que elimine
+                solamente el último trazo realizado, manteniendo
+                el botón "Limpiar" para borrar toda la firma.
+            </p>
+            <small>Prioridad: Media · Usabilidad</small>
+        </article>
+    </section>
+
+    <!-- CONCLUSIÓN -->
+    <section id="conclusion">
+        <h2>04. Conclusión</h2>
+        <p>
+            La revisión inicial permitió identificar seis
+            oportunidades de mejora y dos posibles problemas
+            relacionados con la validación de datos.
+        </p>
+        <p>
+            Se recomienda evaluar las propuestas con el equipo
+            y ejecutar las pruebas pendientes para confirmar
+            los errores antes de implementar correcciones.
+        </p>
+        <p><strong>Estado general:</strong> Evaluación en desarrollo.</p>
+    </section>
+
+</main>
+
+<footer>
+    <p>INACAP · Documentación QA · Registro de Asistencia</p>
+</footer>
+
+</body>
+</html>
