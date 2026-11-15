@@ -1,3 +1,5 @@
+from django.views.decorators.cache import never_cache
+from django.db import IntegrityError
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -79,54 +81,70 @@ def logout(request):
     return redirect('login')
 
 
-@acceso(admin=True, pagina=True)
-def usuarios(request):
-    error, mensaje = '', ''
-    if request.method == 'POST':
-        try:
-            if request.POST.get('accion') == 'desactivar':
-                usuario = Usuarios.objects.get(id=request.POST.get('id'))
-                if usuario.id == request.actor.id:
-                    raise ValidationError('No puedes desactivar tu propia cuenta.')
-                usuario.activo = 0
-                usuario.save(update_fields=['activo'])
-                auditar(request, 'DESACTIVAR_USUARIO', 'usuario', usuario.id)
-                mensaje = 'Usuario desactivado.'
-            else:
-                correo = request.POST.get('correo', '').strip().lower()
-                nombre = request.POST.get('nombre', '').strip()
-                rol = request.POST.get('rol')
-                password = request.POST.get('password', '')
-                validate_email(correo)
-                password_valida(password)
-                if not nombre or len(nombre) > 150 or rol not in ('ANFITRION', 'ADMINISTRADOR'):
-                    raise ValidationError('Completa nombre y rol correctamente.')
-                if Usuarios.objects.filter(correo__iexact=correo).exists():
-                    raise ValidationError('Ya existe un usuario con ese correo.')
-                usuario = Usuarios.objects.create(nombre=nombre, correo=correo, rol=rol, activo=1, password_hash=make_password(password))
-                auditar(request, 'CREAR_USUARIO', 'usuario', usuario.id, despues={'nombre': nombre, 'correo': correo, 'rol': rol})
-                mensaje = 'Usuario creado.'
-        except (ValidationError, Usuarios.DoesNotExist, ValueError) as exc:
-            error = ' '.join(exc.messages) if isinstance(exc, ValidationError) else 'Usuario no válido.'
-    return render(request, 'usuarios.html', {'actor': request.actor, 'usuarios': Usuarios.objects.all().order_by('nombre'), 'error': error, 'mensaje': mensaje})
-
-
 @acceso(pagina=True)
+@never_cache
 def mi_cuenta(request):
-    error, mensaje = '', ''
+    actor = request.actor
+    origen = 'administrador' if request.GET.get('panel') != 'anfitrion' and actor.rol == 'ADMINISTRADOR' else 'anfitrion'
+    seccion = 'password' if request.GET.get('seccion') == 'password' else 'informacion'
+    error = mensaje = ''
+    mostrar_datos = False
     if request.method == 'POST':
-        password = request.POST.get('password', '')
+        clave = request.POST.get('actual', '')
+        clave_intentos = f'cuenta:confirmacion:{actor.id}'
+        intentos = cache.get(clave_intentos, 0)
         try:
-            if not check_password(request.POST.get('actual', ''), request.actor.password_hash):
+            if intentos >= 10:
+                raise ValidationError('Demasiados intentos. Intenta nuevamente en diez minutos.')
+            if len(clave) > 256 or not check_password(clave, actor.password_hash):
+                cache.set(clave_intentos, intentos + 1, 600)
                 raise ValidationError('La contraseña actual no es correcta.')
-            password_valida(password)
-            if password != request.POST.get('password2'):
-                raise ValidationError('Las contraseñas nuevas no coinciden.')
-            request.actor.password_hash = make_password(password)
-            request.actor.save(update_fields=['password_hash'])
-            request.session.cycle_key()
-            auditar(request, 'CAMBIAR_PASSWORD', 'usuario', request.actor.id)
-            mensaje = 'Contraseña actualizada.'
+            cache.delete(clave_intentos)
+            accion = request.POST.get('accion')
+            if seccion == 'password' and accion == 'password':
+                password = request.POST.get('password', '')
+                password_valida(password)
+                if password != request.POST.get('password2'):
+                    raise ValidationError('Las contraseñas nuevas no coinciden.')
+                with transaction.atomic():
+                    actor.password_hash = make_password(password)
+                    actor.save(update_fields=['password_hash'])
+                    auditar(request, 'CAMBIAR_PASSWORD', 'usuario', actor.id)
+                request.session.cycle_key()
+                mensaje = 'Contraseña actualizada.'
+            elif seccion == 'informacion' and accion in ('ver', 'guardar'):
+                mostrar_datos = True
+                if accion == 'guardar':
+                    nombre = request.POST.get('nombre', '').strip()
+                    correo = request.POST.get('correo', '').strip().lower()
+                    if not nombre or len(nombre) > 150:
+                        raise ValidationError('Indica un nombre de hasta 150 caracteres.')
+                    validate_email(correo)
+                    telefono = request.POST.get('telefono')
+                    if telefono is not None:
+                        telefono = telefono.strip()
+                    if telefono and (len(telefono) > 32 or any(c not in '0123456789+ ()-' for c in telefono)
+                                     or not any(c.isdigit() for c in telefono)):
+                        raise ValidationError('Indica un teléfono válido o deja el campo vacío.')
+                    with transaction.atomic():
+                        if Usuarios.objects.filter(correo__iexact=correo).exclude(pk=actor.pk).exists():
+                            raise ValidationError('Ya existe una cuenta con ese correo.')
+                        actor.nombre, actor.correo = nombre, correo
+                        campos = ['nombre', 'correo']
+                        if telefono is not None:
+                            actor.telefono = telefono
+                            campos.append('telefono')
+                        actor.save(update_fields=campos)
+                        auditar(request, 'ACTUALIZAR_CUENTA', 'usuario', actor.id)
+                    mensaje = 'Información actualizada.'
+            else:
+                raise ValidationError('Acción no disponible.')
         except ValidationError as exc:
             error = ' '.join(exc.messages)
-    return render(request, 'cuenta.html', {'actor': request.actor, 'modo': 'password', 'titulo': 'Mi cuenta', 'error': error, 'mensaje': mensaje})
+        except IntegrityError:
+            actor.refresh_from_db()
+            error = 'No se pudo guardar la información. Comprueba el correo e inténtalo de nuevo.'
+    return render(request, 'perfil.html', {
+        'actor': actor, 'origen': origen, 'seccion': seccion,
+        'mostrar_datos': mostrar_datos, 'error': error, 'mensaje': mensaje,
+    })

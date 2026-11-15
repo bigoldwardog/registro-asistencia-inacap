@@ -9,7 +9,7 @@ from django.db import IntegrityError, OperationalError, transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from .access import acceso
 from .catalogo_plantillas import campos_por_etapa
@@ -95,6 +95,8 @@ def historial_sesiones(request):
     q = request.GET.get('q', '').strip().casefold()
     results = []
     sesiones = Sesiones.objects.select_related('plantilla', 'anfitrion').prefetch_related('asistencias_set').order_by('-id')
+    if request.GET.get('estado') == 'ABIERTA':
+        sesiones = sesiones.filter(estado='ABIERTA')
     for sesion in sesiones:
         attendees = list(sesion.asistencias_set.all())
         if q and q not in sesion.nombre.casefold() and not any(q in ' '.join([a.nombre_registrado, a.rut_registrado, a.cargo_registrado]).casefold() or q.replace('.', '').replace('-', '') in a.rut_registrado.replace('.', '').replace('-', '').casefold() for a in attendees):
@@ -140,18 +142,65 @@ def listar_asistencias(request, sesion_id):
 def consultar_sesion(request, token):
     s = obtener_sesion(token=token)
     return JsonResponse(dict(id=s.id, nombre=s.nombre, estado=s.estado,
-        fecha_inicio=fecha_chile(s.fecha_inicio), fecha_cierre=fecha_chile(s.fecha_cierre), campos_asistente=campos_asistente(s)))
+        fecha_inicio=fecha_chile(s.fecha_inicio), fecha_cierre=fecha_chile(s.fecha_cierre), campos_asistente=campos_asistente(s), entrega_epp=s.plantilla.nombre == EPP))
 
 
-@require_GET
+@require_http_methods(['GET', 'POST'])
 @errores
 def consultar_asistencia_existente(request, token):
     sesion = obtener_sesion(token=token)
-    envio = request.GET.get('registro_token', '')
+    envio = cuerpo(request).get('registro_token', '') if request.method == 'POST' else request.GET.get('registro_token', '')
     if not envio:
         raise ErrorFormulario('Se necesita el identificador del registro.')
     a = Asistencias.objects.filter(sesion=sesion, registro_token=envio).first()
-    return JsonResponse({'registrada': a is not None, 'estado': a.estado if a else None})
+    response = JsonResponse({'registrada': a is not None, 'estado': a.estado if a else None,
+        'devolucion_firmada': bool(a and FirmasDevolucion.objects.filter(asistencia=a).exists())})
+    response['Cache-Control'] = 'no-store'
+    return response
+
+
+@require_POST
+@errores
+def firmar_desde_dispositivo(request, token):
+    data = cuerpo(request)
+    try:
+        registro = str(uuid.UUID(data.get('registro_token', '')))
+    except (ValueError, TypeError, AttributeError):
+        raise ErrorFormulario('No se reconoce el registro de este dispositivo.')
+    tipo = data.get('tipo')
+    if tipo not in ('asistencia', 'devolucion'):
+        raise ErrorFormulario('Tipo de firma inválido.')
+    imagen = validar_png(data.get('firma'))
+    with transaction.atomic():
+        sesion = obtener_sesion(token=token, lock=True)
+        a = Asistencias.objects.select_for_update().filter(sesion=sesion, registro_token=registro).first()
+        if a is None:
+            raise ErrorFormulario('No se encontró tu registro en esta actividad.', 404)
+        devolucion = tipo == 'devolucion'
+        if devolucion and sesion.plantilla.nombre != EPP:
+            raise ErrorFormulario('Esta actividad no contempla una firma de devolución.')
+        model = FirmasDevolucion if devolucion else Firmas
+        previa = model.objects.filter(asistencia=a).first()
+        if previa and bytes(previa.imagen) == imagen:
+            return JsonResponse({'estado': a.estado, 'devolucion_firmada': devolucion})
+        if sesion.estado != 'ABIERTA':
+            raise ErrorFormulario('La sesión está cerrada. No se pueden guardar firmas.', 409)
+        if previa:
+            raise ErrorFormulario('Esta firma ya está guardada.', 409)
+        if devolucion:
+            if a.estado != 'FIRMADO' or not Firmas.objects.filter(asistencia=a).exists():
+                raise ErrorFormulario('Primero debes firmar la recepción.', 409)
+            accion = 'FIRMAR_DEVOLUCION'
+        else:
+            if a.estado != 'PENDIENTE_FIRMA':
+                raise ErrorFormulario('Esta asistencia ya no está pendiente de firma.', 409)
+            accion = 'FIRMAR_RECEPCION' if sesion.plantilla.nombre == EPP else 'FIRMAR_ASISTENCIA'
+        model.objects.create(asistencia=a, imagen=imagen, formato='image/png')
+        if not devolucion:
+            a.estado, a.fecha_firma = 'FIRMADO', timezone.now().isoformat()
+            a.save(update_fields=['estado', 'fecha_firma'])
+        auditar(request, accion, 'asistencia', a.id, despues={'sesion_id': sesion.id})
+    return JsonResponse({'estado': a.estado, 'devolucion_firmada': devolucion}, status=201)
 
 
 @require_POST
@@ -198,8 +247,12 @@ def registrar_asistencia(request, token):
         asistente.correo, asistente.telefono = valores.get('correo', ''), valores.get('telefono', '')
         asistente.fecha_actualizacion = timezone.now().isoformat()
         asistente.save()
+        rut_visible = ''
+        if rut:
+            cuerpo_rut, verificador = rut.split('-')
+            rut_visible = f"{int(cuerpo_rut):,}".replace(',', '.') + '-' + verificador
         a = Asistencias.objects.create(sesion=sesion, asistente=asistente,
-            nombre_registrado=valores['nombre'], rut_registrado=rut, cargo_registrado=valores.get('cargo', ''),
+            nombre_registrado=valores['nombre'], rut_registrado=rut_visible, cargo_registrado=valores.get('cargo', ''),
             correo_registrado=valores.get('correo', ''), telefono_registrado=valores.get('telefono', ''),
             campos_participante_json=json.dumps(valores, ensure_ascii=False), registro_token=envio, estado='PENDIENTE_FIRMA')
         auditar(request, 'REGISTRAR_ASISTENCIA', 'asistencia', a.id, despues={'sesion_id': sesion.id})
@@ -435,3 +488,89 @@ def codigo_qr(request, sesion_id):
     buffer = io.BytesIO()
     qrcode.make(url).save(buffer, format='PNG')
     return HttpResponse(buffer.getvalue(), content_type='image/png')
+
+
+@acceso()
+@require_GET
+@errores
+def afiche_qr(request, sesion_id):
+    import io
+    import qrcode
+    from django.contrib.staticfiles import finders
+    from PIL import Image, ImageDraw, ImageFont
+
+    sesion = obtener_sesion(request, sesion_id)
+    url = request.build_absolute_uri('/?token=' + sesion.token_qr)
+    ancho, alto = 1240, 1754
+    centro = ancho // 2
+    rojo, negro, gris = '#b90030', '#151515', '#515151'
+    pagina = Image.new('RGB', (ancho, alto), 'white')
+    dibujo = ImageDraw.Draw(pagina)
+
+    def texto_centrado(valor, y, tamano, color, max_lineas=1):
+        for nombre_fuente in ('DejaVuSans.ttf', 'arial.ttf'):
+            try:
+                fuente = ImageFont.truetype(nombre_fuente, tamano)
+                break
+            except OSError:
+                continue
+        else:
+            fuente = ImageFont.load_default(size=tamano)
+        palabras = str(valor).split()
+        lineas = []
+        linea = ''
+        for palabra in palabras:
+            candidato = f'{linea} {palabra}'.strip()
+            if linea and dibujo.textlength(candidato, font=fuente) > 1040:
+                lineas.append(linea)
+                linea = palabra
+            else:
+                linea = candidato
+        if linea:
+            lineas.append(linea)
+        for indice, linea in enumerate(lineas[:max_lineas]):
+            sufijo = '…' if indice == max_lineas - 1 and len(lineas) > max_lineas else ''
+            while dibujo.textlength(linea + sufijo, font=fuente) > 1040:
+                linea = linea[:-1]
+                sufijo = '…'
+            dibujo.text((centro, y), linea + sufijo, fill=color, font=fuente, anchor='mt')
+            y += tamano + 12
+        return y
+
+    dibujo.rectangle((0, 0, ancho, 168), fill='#1e1e1e')
+    dibujo.rectangle((0, 168, ancho, 176), fill='#cc0000')
+    with Image.open(finders.find('img/inacap-60.png')) as imagen:
+        logo = imagen.convert('RGBA')
+        logo.thumbnail((420, 76), Image.Resampling.LANCZOS)
+        pagina.paste(logo, (centro - logo.width // 2, 26), logo)
+    texto_centrado('Registro de asistencia', 111, 32, 'white')
+    texto_centrado('ESCANEA PARA REGISTRAR TU ASISTENCIA', 218, 34, rojo)
+
+    datos = json_guardado(sesion.campos_valores_json, dict)
+    tema = datos.get('tema') or datos.get('tema_o_asunto')
+    y = texto_centrado(sesion.nombre, 292, 66, negro, max_lineas=2)
+    y = texto_centrado(sesion.plantilla.nombre, y + 20, 38, gris, max_lineas=2)
+    if tema:
+        y = texto_centrado(tema, y + 4, 34, gris, max_lineas=2)
+    y = texto_centrado(f'Anfitrión: {sesion.anfitrion.nombre}', y + 8, 32, gris, max_lineas=2)
+
+    codigo = qrcode.QRCode(border=4)
+    codigo.add_data(url)
+    codigo.make(fit=True)
+    codigo.box_size = max(1, 620 // (codigo.modules_count + 2 * codigo.border))
+    qr = codigo.make_image().convert('RGB')
+    y_qr = max(660, y + 48)
+    x_qr = (ancho - qr.width) // 2
+    dibujo.rounded_rectangle(
+        (x_qr - 18, y_qr - 18, x_qr + qr.width + 18, y_qr + qr.height + 18),
+        radius=30, outline='#dddddd', width=3,
+    )
+    pagina.paste(qr, (x_qr, y_qr))
+    texto_centrado('Completa tus datos y firma desde tu dispositivo.',
+                   y_qr + qr.height + 80, 36, negro)
+    buffer = io.BytesIO()
+    pagina.save(buffer, format='PDF', resolution=150)
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="afiche-asistencia-{sesion.id}.pdf"'
+    response['Cache-Control'] = 'private, no-store'
+    return response

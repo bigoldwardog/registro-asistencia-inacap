@@ -113,6 +113,7 @@ class Sesiones(models.Model):
 class Usuarios(models.Model):
     nombre = models.TextField()
     correo = models.TextField(unique=True)
+    telefono = models.TextField(default='')
     password_hash = models.TextField()
     rol = models.TextField()
     activo = models.IntegerField()

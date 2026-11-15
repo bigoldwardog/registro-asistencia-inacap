@@ -2,7 +2,7 @@ const fs = require('node:fs'), vm = require('node:vm'), assert = require('node:a
 const { webcrypto } = require('node:crypto');
 const app = fs.readFileSync('static/js/app.js', 'utf8');
 const host = fs.readFileSync('static/js/anfitrion.js', 'utf8');
-function element() { return { hidden: true, textContent: '', checked: false, value: '', events: {}, addEventListener(t, f) { this.events[t] = f; }, focus() {}, reset() {}, querySelector() { return { value: 'csrf-token' }; } }; }
+function element() { return { hidden: true, textContent: '', checked: false, value: '', events: {}, addEventListener(t, f) { this.events[t] = f; }, focus() {}, reset() {}, querySelector(selector) { return selector === '#attendee-rut' ? null : { value: 'csrf-token' }; } }; }
 async function recovery(committed) {
     const stored = new Map(), server = new Map(); let sends = 0;
     async function browser() {
@@ -14,15 +14,15 @@ async function recovery(committed) {
             window: { location: { search: '?token=sesion' } },
             localStorage: { getItem: k => stored.get(k) || null, setItem: (k, v) => stored.set(k, v), removeItem: k => stored.delete(k) },
             fetch: async (url, options) => {
+                if (url.includes('consultar')) {
+                    const id = JSON.parse(options.body).registro_token;
+                    return { ok: true, json: async () => ({ registrada: server.has(id), estado: 'PENDIENTE_FIRMA' }) };
+                }
                 if (options) {
                     sends++; const data = JSON.parse(options.body);
                     if (committed || sends > 1) server.set(data.registro_token, data);
                     if (sends === 1) throw Error('Respuesta perdida');
                     return { ok: true, json: async () => ({ registro_token: data.registro_token, estado: 'PENDIENTE_FIRMA' }) };
-                }
-                if (url.includes('consultar')) {
-                    const id = new URL('http://test' + url).searchParams.get('registro_token');
-                    return { ok: true, json: async () => ({ registrada: server.has(id), estado: 'PENDIENTE_FIRMA' }) };
                 }
                 return { ok: true, json: async () => ({ nombre: 'Sesión', fecha_inicio: '2026-10-30T20:00:00Z', estado: 'ABIERTA' }) };
             }

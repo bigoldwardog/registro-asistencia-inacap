@@ -79,6 +79,47 @@ class SistemaTests(TransactionTestCase):
                 self.assertEqual(response.status_code, 409)
         self.assertEqual(PlantillasSesion.objects.filter(activa=1).count(), 10)
 
+    def test_firmas_desde_dispositivo_y_alcance_de_exportacion(self):
+        sesion = self.crear(EPP)
+        registro, valores = self.registrar(sesion)
+        self.assertEqual(registro.status_code, 201, registro.content)
+        url = f'/api/sesiones/{sesion.token_qr}/asistencias/firma/'
+        data = {'registro_token': valores['registro_token'], 'firma': self.png}
+        csrf_client = Client(enforce_csrf_checks=True)
+        self.assertEqual(csrf_client.post(url, dict(data, tipo='asistencia'), content_type='application/json').status_code, 403)
+        self.assertEqual(self.client.post(url, dict(data, tipo='devolucion'), content_type='application/json').status_code, 409)
+        otra = self.crear()
+        self.assertEqual(self.client.post(f'/api/sesiones/{otra.token_qr}/asistencias/firma/',
+            dict(data, tipo='asistencia'), content_type='application/json').status_code, 404)
+        self.assertEqual(self.client.post(url, dict(data, tipo='asistencia'), content_type='application/json').status_code, 201)
+        self.assertEqual(self.client.post(url, dict(data, tipo='asistencia'), content_type='application/json').status_code, 200)
+        self.assertEqual(self.client.post(url, dict(data, tipo='devolucion'), content_type='application/json').status_code, 201)
+        export = f'/api/sesiones/exportar/xlsx/?sesiones={sesion.id}'
+        self.assertEqual(self.o.get(export).status_code, 403)
+        self.assertEqual(self.h.get(export).status_code, 200)
+        poster = self.h.get(f'/api/sesiones/{sesion.id}/afiche.pdf')
+        self.assertEqual(poster.status_code, 200)
+        self.assertTrue(poster.content.startswith(b'%PDF'))
+        self.assertEqual(self.o.get(f'/api/sesiones/{sesion.id}/afiche.pdf').status_code, 403)
+        segunda, otros = self.registrar(sesion, rut='11111111-1')
+        self.assertEqual(segunda.status_code, 201, segunda.content)
+        self.h.post(f'/api/sesiones/{sesion.id}/cerrar/')
+        self.assertEqual(self.client.post(url, dict(data, tipo='asistencia',
+            registro_token=otros['registro_token']), content_type='application/json').status_code, 409)
+
+    def test_panol_mantiene_firma_docente_separada(self):
+        sesion = self.crear(PANOL)
+        registro, valores = self.registrar(sesion)
+        self.assertEqual(registro.status_code, 201, registro.content)
+        id_asistencia = registro.json()['asistencia_id']
+        url = f'/api/sesiones/{sesion.token_qr}/asistencias/firma/'
+        datos = {'registro_token': valores['registro_token'], 'firma': self.png}
+        self.assertEqual(self.client.post(url, dict(datos, tipo='docente'), content_type='application/json').status_code, 400)
+        self.assertEqual(self.client.post(url, dict(datos, tipo='asistencia'), content_type='application/json').status_code, 201)
+        docente = f'/api/asistencias/{id_asistencia}/docente/firma/'
+        self.assertEqual(self.client.post(docente, datos, content_type='application/json').status_code, 401)
+        self.assertEqual(self.h.post(docente, datos, content_type='application/json').status_code, 201)
+
     def test_rut_canonico_digito_y_duplicado(self):
         self.assertEqual(normalizar_rut('12.345.678-5'), '12345678-5')
         self.assertEqual(normalizar_rut('123456785'), '12345678-5')
@@ -124,16 +165,37 @@ class SistemaTests(TransactionTestCase):
         self.host.activo = 0; self.host.save()
         self.assertEqual(self.h.get('/api/sesiones/').status_code, 401)
 
-    def test_login_logout_y_usuarios(self):
+    def test_login_logout_y_ruta_retirada(self):
         c = Client()
         r = c.post('/ingresar/', {'correo': self.host.correo, 'password': 'Prueba-valida-2026!'})
         self.assertEqual(r.status_code, 302); self.assertEqual(c.get('/anfitrion/').status_code, 200)
         self.assertEqual(c.get('/salir/').status_code, 405)
         self.assertEqual(c.post('/salir/').status_code, 302); self.assertEqual(c.get('/api/sesiones/').status_code, 401)
-        self.assertEqual(self.h.get('/usuarios/').status_code, 302)
-        result = self.a.post('/usuarios/', {'nombre': 'Nueva', 'correo': 'nueva@example.com', 'rol': 'ANFITRION', 'password': 'Otra-clave-valida-2026!'})
-        self.assertContains(result, 'Usuario creado')
-        self.assertNotEqual(Usuarios.objects.get(correo='nueva@example.com').password_hash, 'Otra-clave-valida-2026!')
+        self.assertEqual(self.a.get('/usuarios/').status_code, 404)
+
+
+    def test_telefono_opcional_en_perfil_propio(self):
+        url = '/mi-cuenta/'
+        datos = {
+            'accion': 'guardar', 'actual': 'Prueba-valida-2026!',
+            'nombre': self.host.nombre, 'correo': 'perfil@example.com',
+            'usuario_id': self.admin.id,
+        }
+        numero = '+56 9 0000 0010'
+        self.assertContains(self.h.post(url, dict(datos, telefono=numero)), 'Información actualizada.')
+        self.host.refresh_from_db()
+        self.admin.refresh_from_db()
+        self.assertEqual(self.host.telefono, numero)
+        self.assertEqual(self.host.correo, datos['correo'])
+        self.assertEqual(self.admin.telefono, '')
+        self.assertNotContains(self.h.get(url), numero)
+        self.assertContains(self.h.post(url, {'accion': 'ver', 'actual': datos['actual']}), numero)
+        self.h.post(url, datos)
+        self.host.refresh_from_db()
+        self.assertEqual(self.host.telefono, numero)
+        self.h.post(url, dict(datos, telefono=''))
+        self.host.refresh_from_db()
+        self.assertEqual(self.host.telefono, '')
 
     def test_configuracion_inicial_solo_local_y_una_vez(self):
         Usuarios.objects.update(activo=0)

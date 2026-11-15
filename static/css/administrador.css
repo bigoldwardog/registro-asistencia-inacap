@@ -1,3 +1,5 @@
+@import url("roboto.css");
+
 * {
     box-sizing: border-box;
 }
@@ -9,12 +11,7 @@ html {
 body {
     min-height: 100vh;
     margin: 0;
-    font-family:
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+    font-family: Roboto, system-ui, "Segoe UI", sans-serif;
     line-height: 1.5;
     background: #f4f4f4;
     color: #222;
@@ -162,6 +159,7 @@ main {
 /* Filtros */
 
 .filters-grid {
+    margin-top: 1.25rem;
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -345,3 +343,98 @@ tbody tr:hover {
 #detail-activity-fields dd { margin: .25rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 #attendees-table-body td { vertical-align: top; }
 #attendees-table-body td p { font-size: .8rem; }
+
+/* Panel de sesiones */
+.admin-shell { display: flex; flex-direction: column; }
+.admin-shell .site-header, .admin-shell .site-footer { background: #111; color: #fff; }
+.admin-shell .site-header .container { width: calc(100% - 3rem); }
+.admin-brand { display: flex; align-items: center; gap: 1rem; }
+.admin-brand strong { font-size: 1.45rem; padding-right: 1rem; border-right: 1px solid #777; }
+.admin-brand h1 { font-size: 1rem; }
+.admin-layout { display: grid; grid-template-columns: 13rem minmax(0, 1fr); flex: 1; }
+.admin-layout main { width: min(calc(100% - 3rem), 1280px); }
+.admin-sidebar { background: #fff; border-right: 1px solid #dedede; padding: 1.25rem .65rem; }
+.admin-sidebar a { display: block; padding: .65rem .85rem; border-left: 3px solid transparent; border-radius: 4px; color: #242424; text-decoration: none; }
+.admin-sidebar a:hover { background: #f4f4f4; }
+.admin-sidebar a[aria-current="page"] { background: #ffebeb; border-color: #cc0000; color: #cc0000; font-weight: 650; }
+.admin-shell .page-heading h2 { font-size: clamp(1.75rem, 3vw, 2.25rem); }
+.admin-shell .primary-button { background: #cc0000; border-color: #cc0000; color: #fff; }
+.admin-shell .primary-button:hover { background: #a30000; }
+.admin-shell .table-container { overflow-x: auto; }
+
+@media (max-width: 760px) {
+    .admin-layout { grid-template-columns: minmax(0, 1fr); }
+    .admin-layout main { width: calc(100% - 2rem); }
+    .admin-sidebar { display: flex; flex-wrap: wrap; padding: .5rem; border-right: 0; border-bottom: 1px solid #dedede; }
+    .admin-shell .header-content { flex-wrap: wrap; }
+}
+
+.admin-subnav {
+    flex-basis: 100%;
+    list-style: none;
+    margin: .35rem 0 .35rem .85rem;
+    padding: 0 0 0 .55rem;
+    border-left: 1px solid #dedede;
+}
+
+.admin-subnav button {
+    width: 100%;
+    padding: .5rem .6rem;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-subnav button:hover,
+.admin-subnav button[aria-current="true"] {
+    background: #ffebeb;
+    color: #cc0000;
+}
+
+.admin-subnav button[aria-current="true"] {
+    font-weight: 650;
+}
+
+.current-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 1rem;
+}
+
+.current-card {
+    padding: 1.25rem;
+    border: 1px solid #ddd;
+    border-radius: .6rem;
+    background: #fff;
+}
+
+.current-card h3 {
+    margin: .65rem 0 .35rem;
+}
+
+.current-card progress {
+    width: 100%;
+    accent-color: #b90030;
+}
+
+.current-badge {
+    display: inline-block;
+    padding: .2rem .6rem;
+    border-radius: 1rem;
+    background: #f9e7ec;
+    color: #851027;
+    font-size: .85rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    #current-sessions:not([hidden]), #search-sessions:not([hidden]) {
+        animation: admin-section-enter 180ms ease-out;
+    }
+
+    @keyframes admin-section-enter {
+        from { opacity: .65; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+}

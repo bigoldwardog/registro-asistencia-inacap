@@ -1,0 +1,27 @@
+body .site-header {
+    background: #1e1e1e;
+    color: #fff;
+}
+
+.site-brand {
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 2vw, 16px);
+    min-width: 0;
+}
+
+.site-brand img {
+    display: block;
+    width: clamp(110px, 30vw, 178px);
+    height: auto;
+    flex-shrink: 0;
+}
+
+.site-header .site-brand h1 {
+    margin: 0;
+    padding-left: clamp(10px, 2vw, 16px);
+    border-left: 1px solid #777;
+    font-size: clamp(.8125rem, 2vw, 1rem);
+    line-height: 1.25;
+    color: #fff;
+}

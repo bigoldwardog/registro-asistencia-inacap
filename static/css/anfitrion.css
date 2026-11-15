@@ -1,3 +1,5 @@
+@import url("roboto.css");
+
 /* =========================
    Base
 ========================= */
@@ -13,12 +15,7 @@ html {
 body {
     min-height: 100vh;
     margin: 0;
-    font-family:
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+    font-family: Roboto, system-ui, "Segoe UI", sans-serif;
     line-height: 1.5;
     background: #f4f4f4;
     color: #222;
@@ -210,8 +207,9 @@ main {
     text-align: center;
 }
 
-.session-status {
-    margin: 0 !important;
+.qr-section .session-status {
+    margin: .75rem auto 0;
+    text-align: center;
     font-weight: 600;
     color: #444 !important;
 }
@@ -504,9 +502,11 @@ main {
 .dashboard-heading { margin: .25rem 0 1.5rem; }
 .dashboard-heading h2 { margin: .2rem 0 .4rem; font-size: 1.65rem; letter-spacing: -.025em; }
 .dashboard-heading p:last-child { margin: 0; color: #666; font-size: .95rem; }
-.dashboard-tabs { display: flex; gap: .35rem; width: fit-content; max-width: 100%; padding: .3rem; margin-bottom: 1.5rem; background: #e9e9e9; border-radius: .65rem; }
+.dashboard { --new-session-width: 960px; }
+.dashboard-tabs { margin-inline-start: max(0px, calc((100% - var(--new-session-width)) / 2)); flex-wrap: wrap; display: flex; gap: .35rem; width: fit-content; max-width: 100%; padding: .3rem; margin-bottom: 1.5rem; background: #e9e9e9; border-radius: .65rem; }
 .dashboard-tabs [role="tab"] { min-height: 2.8rem; padding: .65rem 1.25rem; border: 0; border-radius: .45rem; color: #555; background: transparent; font-weight: 600; }
 .dashboard-tabs [aria-selected="true"] { background: #222; color: #fff; }
+.dashboard-tabs [role="tab"]:disabled { opacity: .45; cursor: default; }
 .dashboard-tabs [role="tab"]:focus-visible { outline: 2px solid #222; outline-offset: 3px; }
 .dashboard-feedback { padding: .75rem 1rem; border-left: 3px solid #222; margin: 0 0 1.25rem; background: #fff; }
 .dashboard-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
@@ -520,7 +520,7 @@ main {
 .dashboard-columns #development-section p { color: #666; font-size: .85rem; margin: .25rem 0 .75rem; }
 .dashboard-columns #development-fields textarea { min-height: 7rem; }
 #panel-manage .signature-section { margin-top: 1.25rem; }
-#panel-new .session-card { grid-template-columns: minmax(0, 1fr); max-width: 960px; margin-inline: auto; }
+#panel-new .session-card { grid-template-columns: minmax(0, 1fr); max-width: var(--new-session-width); margin-inline: auto; }
 #panel-new #create-session-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: .25rem 1.25rem; }
 #panel-new #create-session-form > p, #panel-new #create-session-form > button, #template-fields, #panel-new #create-session-form > .form-group:first-of-type { grid-column: 1 / -1; }
 #template-fields { display: grid; gap: .25rem 1.25rem; }
@@ -568,3 +568,69 @@ main {
 
 #discard-draft-dialog { width: min(100% - 2rem, 520px); border: 1px solid #ddd; border-radius: .75rem; padding: 1.75rem; color: #222; background: #fff; }
 #discard-draft-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+
+.site-header { background: #111; color: #fff; }
+.site-header a, .site-header .header-label { color: #fff; }
+.primary-button:not(:disabled), .dashboard-tabs button[aria-selected="true"] { background: #cc0000; color: #fff; }
+.session-export-actions { display: flex; gap: 10px; margin: 16px 0; }
+
+/* Distribución del panel anfitrión */
+.host-shell { display: flex; flex-direction: column; }
+.host-shell .site-header .container { width: calc(100% - 3rem); }
+.host-brand { display: flex; align-items: center; gap: 1rem; }
+.host-brand strong { font-size: 1.45rem; padding-right: 1rem; border-right: 1px solid #777; }
+.host-shell .host-brand h1 { font-size: 1rem; }
+.host-layout { display: grid; grid-template-columns: 13rem minmax(0, 1fr); flex: 1; }
+.host-layout .dashboard { width: min(calc(100% - 3rem), 1280px); }
+.host-sidebar { background: #fff; border-right: 1px solid #dedede; padding: 1.25rem .65rem; }
+.host-sidebar a { display: block; padding: .65rem .85rem; border-left: 3px solid transparent; border-radius: 4px; color: #242424; text-decoration: none; }
+.host-sidebar a:hover { background: #f4f4f4; }
+.host-sidebar a[aria-current="page"] { background: #ffebeb; border-color: #cc0000; color: #cc0000; font-weight: 650; }
+.host-shell .dashboard-heading h2 { font-size: clamp(1.75rem, 3vw, 2.25rem); }
+.host-shell .dashboard-tabs { width: 100%; margin-inline: 0; padding: 0; background: transparent; border-radius: 0; border-bottom: 1px solid #ccc; }
+.host-shell .dashboard-tabs [role="tab"] { border-radius: 0; border-bottom: 3px solid transparent; }
+.host-shell .dashboard-tabs [aria-selected="true"] { background: transparent; color: #222; border-bottom-color: #cc0000; }
+.host-shell #panel-new .session-card { max-width: none; }
+.host-shell #create-session-button { justify-self: start; }
+.host-shell .no-sessions { margin: -.5rem 0 1.25rem; color: #555; }
+.host-shell .site-footer { text-align: left; color: #fff; background: #111; }
+
+@media (max-width: 760px) {
+    .host-layout { grid-template-columns: minmax(0, 1fr); }
+    .host-layout .dashboard { width: calc(100% - 2rem); }
+    .host-sidebar { display: flex; flex-wrap: wrap; padding: .5rem; border-right: 0; border-bottom: 1px solid #dedede; }
+}
+
+.host-subnav {
+    flex-basis: 100%;
+    margin: .35rem 0 0 .85rem;
+    padding: 0 0 0 .55rem;
+    border-left: 1px solid #dedede;
+    list-style: none;
+}
+
+.host-subnav button {
+    width: 100%;
+    padding: .45rem .6rem;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #242424;
+    text-align: left;
+    cursor: pointer;
+}
+
+.host-subnav button:hover:not(:disabled),
+.host-subnav button[aria-current="true"] {
+    background: #ffebeb;
+    color: #cc0000;
+}
+
+.host-subnav button[aria-current="true"] {
+    font-weight: 650;
+}
+
+.host-subnav button:disabled {
+    color: #737373;
+    cursor: default;
+}

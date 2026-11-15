@@ -124,8 +124,19 @@ async function loadAttendanceList() {
     }
 }
 
+function updateManageAvailability(hasOpenSession) {
+    const tab = document.getElementById("tab-manage");
+    tab.disabled = !hasOpenSession;
+    document.querySelector('[data-sidebar-tab="manage"]').disabled = !hasOpenSession;
+    if (tab.disabled && tab.getAttribute("aria-selected") === "true") {
+        activateDashboardTab("new");
+    }
+}
+
 async function loadSessions(preferredSessionId = null) {
     sessionSelector.disabled = true;
+    const emptyMessage = document.getElementById("no-sessions");
+    emptyMessage.hidden = true;
 
     try {
         const response = await apiFetch("/api/sesiones/");
@@ -151,6 +162,8 @@ async function loadSessions(preferredSessionId = null) {
 
         sessionSelector.innerHTML = "";
 
+        updateManageAvailability(sessions.some((session) => session.estado === "ABIERTA"));
+        emptyMessage.hidden = sessions.length !== 0;
         if (sessions.length === 0) {
             sessionSelector.add(
                 new Option("No hay sesiones disponibles", "")
@@ -200,6 +213,7 @@ async function loadSessions(preferredSessionId = null) {
         );
 
         resetSessionView();
+        updateManageAvailability(false);
     } finally {
         sessionSelector.disabled =
             sessionSelector.options.length <= 1 &&
@@ -218,6 +232,8 @@ async function selectSession(sessionId, sessions) {
     document.querySelector('#audit-results').replaceChildren();
     signatureHasInk = false;
     sessionState.currentSessionId = sessionId;
+    document.querySelector("#download-poster").disabled = !sessionId;
+    document.querySelectorAll("[data-export-format]").forEach(button => { button.disabled = !sessionId; });
     sessionState.isOpen = false;
     sessionState.attendees = [];
     selectedAttendee = null;
@@ -276,6 +292,8 @@ function resetSessionView() {
     developmentBaseline = {}; currentSessionData = null; signatureHasInk = false;
 
     sessionState.currentSessionId = null;
+    document.querySelector("#download-poster").disabled = true;
+    document.querySelectorAll("[data-export-format]").forEach(button => { button.disabled = true; });
     sessionState.isOpen = false;
     sessionState.attendees = [];
     selectedAttendee = null;
@@ -304,7 +322,7 @@ function renderAttendanceList() {
         name.textContent = attendee.name;
 
         const rut = document.createElement("span");
-        rut.textContent = attendee.cargo || attendee.rut || "";
+        rut.textContent = [attendee.rut, attendee.cargo].filter(Boolean).join(" · ");
 
         info.appendChild(name);
         info.appendChild(rut);
@@ -323,22 +341,11 @@ function renderAttendanceList() {
                 returned.textContent = "Devolución firmada";
                 returned.title = new Date(attendee.returnedAt).toLocaleString("es-CL", {timeZone: "America/Santiago"});
                 article.append(returned);
-            } else if (attendee.status === "FIRMADO" && sessionState.isOpen) {
-                const button = document.createElement("button"); button.type = "button";
-                button.textContent = "Firmar devolución";
-                button.addEventListener("click", () => selectAttendee(attendee.id, "devolucion"));
-                article.append(button);
+            } else if (attendee.status === "FIRMADO") {
+                const pending = document.createElement("span");
+                pending.textContent = "Devolución pendiente";
+                article.append(pending);
             }
-        }
-
-        if (
-            attendee.status === "PENDIENTE_FIRMA" &&
-            sessionState.isOpen
-        ) {
-            article.classList.add("attendance-item-clickable");
-            article.addEventListener("click", () => {
-                selectAttendee(attendee.id);
-            });
         }
 
         if (sessionState.esPanol && attendee.status === 'FIRMADO') {
@@ -628,7 +635,7 @@ async function closeSession() {
         sessionStatus.textContent = "Sesión cerrada";
         closeSessionButton.textContent = "Sesión cerrada";
 
-        await loadAttendanceList();
+        await loadSessions(sessionState.currentSessionId);
 
     } catch (error) {
         alert(error.message);
@@ -838,6 +845,12 @@ document.querySelector("#development-form").addEventListener("submit", async (ev
 
 // Cambiar de pestaña conserva los formularios y la firma en curso.
 function activateDashboardTab(name, focus = false) {
+    const requested = document.querySelector(`[data-dashboard-tab="${name}"]`);
+    if (!requested || requested.disabled) return;
+    for (const item of document.querySelectorAll("[data-sidebar-tab]")) {
+        if (item.dataset.sidebarTab === name) item.setAttribute("aria-current", "true");
+        else item.removeAttribute("aria-current");
+    }
     for (const tab of document.querySelectorAll("[data-dashboard-tab]")) {
         const active = tab.dataset.dashboardTab === name;
         tab.setAttribute("aria-selected", String(active));
@@ -846,10 +859,28 @@ function activateDashboardTab(name, focus = false) {
         if (active && focus) tab.focus();
     }
 }
+for (const item of document.querySelectorAll("[data-sidebar-tab]")) {
+    item.addEventListener("click", () => {
+        activateDashboardTab(item.dataset.sidebarTab);
+        const panel = document.getElementById(item.getAttribute("aria-controls"));
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduceMotion) {
+            panel.scrollIntoView({block: "nearest"});
+            return;
+        }
+        panel.scrollIntoView({behavior: "smooth", block: "nearest"});
+        if (panel.getAnimations().length === 0) {
+            panel.animate([
+                {opacity: 0.6, transform: "translateY(6px)"},
+                {opacity: 1, transform: "translateY(0)"}
+            ], {duration: 180, easing: "ease-out"});
+        }
+    });
+}
 for (const tab of document.querySelectorAll("[data-dashboard-tab]")) {
     tab.addEventListener("click", () => activateDashboardTab(tab.dataset.dashboardTab));
     tab.addEventListener("keydown", (event) => {
-        const tabs = [...document.querySelectorAll("[data-dashboard-tab]")];
+        const tabs = [...document.querySelectorAll("[data-dashboard-tab]:not(:disabled)")];
         const index = tabs.indexOf(tab);
         let next;
         if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
@@ -952,3 +983,18 @@ for (const button of document.querySelectorAll('dialog form[method="dialog"] but
     button.type = 'button';
     button.addEventListener('click', () => button.closest('dialog').close(button.value || 'cancel'));
 }
+
+
+for (const button of document.querySelectorAll("[data-export-format]")) {
+    button.addEventListener("click", () => {
+        if (!sessionState.currentSessionId) return;
+        const ids = encodeURIComponent(sessionState.currentSessionId);
+        window.location.assign(`/api/sesiones/exportar/${button.dataset.exportFormat}/?sesiones=${ids}`);
+    });
+}
+
+
+document.querySelector('#download-poster').addEventListener('click', () => {
+    const id = sessionState.currentSessionId;
+    if (id) window.location.assign(`/api/sesiones/${encodeURIComponent(id)}/afiche.pdf`);
+});

@@ -1,1 +1,88 @@
-/* ========================= Base ========================= */ * { box-sizing: border-box; } html { font-size: 16px; } body { min-height: 100vh; margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5; background: #f4f4f4; color: #222; } button, input { font: inherit; } .container { width: min(100% - 2rem, 1200px); margin-inline: auto; } /* ========================= Header ========================= */ .site-header { padding: 1rem 0; background: #ffffff; border-bottom: 1px solid #ddd; } .site-header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; } /* ========================= Main ========================= */ main { padding-block: 1rem; } /* ========================= Attendance card ========================= */ .attendance-card { width: 100%; margin-inline: auto; padding: 1.25rem; background: #ffffff; border: 1px solid #ddd; border-radius: 0.75rem; } /* ========================= Event information ========================= */ .attendance-card__header { margin-bottom: 1.5rem; } .event-label { margin: 0 0 0.25rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #666; } .attendance-card__header h2 { margin: 0; font-size: 1.4rem; line-height: 1.25; } .event-date { margin: 0.5rem 0 0; color: #666; } /* ========================= Form ========================= */ .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; } .form-group label { font-weight: 600; } .form-group input { width: 100%; min-height: 3rem; padding: 0.75rem; background: #ffffff; border: 1px solid #aaa; border-radius: 0.4rem; color: #222; } .form-group input:focus { outline: 2px solid #222; outline-offset: 1px; border-color: #222; } .form-group input::placeholder { color: #888; } /* ========================= Submit button ========================= */ .submit-button { width: 100%; min-height: 3.25rem; margin-top: 0.5rem; padding: 0.75rem 1rem; border: 0; border-radius: 0.4rem; background: #222; color: #ffffff; font-weight: 600; cursor: pointer; } .submit-button:active { transform: translateY(1px); } /* ========================= Signature notice ========================= */ .signature-notice { margin: 1.25rem 0 0; padding: 0.9rem; background: #f4f4f4; border-radius: 0.4rem; font-size: 0.9rem; color: #555; } /* ========================= Footer ========================= */ .site-footer { padding: 1.5rem 0; text-align: center; font-size: 0.85rem; color: #666; } /* ========================= Tablet ========================= */ @media (min-width: 600px) { .attendance-card { max-width: 600px; padding: 2rem; } .attendance-card__header h2 { font-size: 1.6rem; } } /* ========================= Desktop ========================= */ @media (min-width: 900px) { main { padding-block: 2rem; } .attendance-card { max-width: 650px; } }
+@import url("roboto.css");
+
+/* ========================= Base ========================= */ * { box-sizing: border-box; } html { font-size: 16px; } body { min-height: 100vh; margin: 0; font-family: Roboto, system-ui, "Segoe UI", sans-serif; line-height: 1.5; background: #f4f4f4; color: #222; } button, input { font: inherit; } .container { width: min(100% - 2rem, 1200px); margin-inline: auto; } /* ========================= Header ========================= */ .site-header { padding: 1rem 0; background: #ffffff; border-bottom: 1px solid #ddd; } .site-header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; } /* ========================= Main ========================= */ main { padding-block: 1rem; } /* ========================= Attendance card ========================= */ .attendance-card { width: 100%; margin-inline: auto; padding: 1.25rem; background: #ffffff; border: 1px solid #ddd; border-radius: 0.75rem; } /* ========================= Event information ========================= */ .attendance-card__header { margin-bottom: 1.5rem; } .event-label { margin: 0 0 0.25rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #666; } .attendance-card__header h2 { margin: 0; font-size: 1.4rem; line-height: 1.25; } .event-date { margin: 0.5rem 0 0; color: #666; } /* ========================= Form ========================= */ .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; } .form-group label { font-weight: 600; } .form-group input { width: 100%; min-height: 3rem; padding: 0.75rem; background: #ffffff; border: 1px solid #aaa; border-radius: 0.4rem; color: #222; } .form-group input:focus { outline: 2px solid #222; outline-offset: 1px; border-color: #222; } .form-group input::placeholder { color: #888; } /* ========================= Submit button ========================= */ .submit-button { width: 100%; min-height: 3.25rem; margin-top: 0.5rem; padding: 0.75rem 1rem; border: 0; border-radius: 0.4rem; background: #222; color: #ffffff; font-weight: 600; cursor: pointer; } .submit-button:active { transform: translateY(1px); } /* ========================= Signature notice ========================= */ .signature-notice { margin: 1.25rem 0 0; padding: 0.9rem; background: #f4f4f4; border-radius: 0.4rem; font-size: 0.9rem; color: #555; } /* ========================= Footer ========================= */ .site-footer { padding: 1.5rem 0; text-align: center; font-size: 0.85rem; color: #666; } /* ========================= Tablet ========================= */ @media (min-width: 600px) { .attendance-card { max-width: 600px; padding: 2rem; } .attendance-card__header h2 { font-size: 1.6rem; } } /* ========================= Desktop ========================= */ @media (min-width: 900px) { main { padding-block: 2rem; } .attendance-card { max-width: 650px; } }
+#participant-signature {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px dashed #777;
+    border-radius: 6px;
+    background: white;
+    touch-action: none;
+    margin-bottom: 12px;
+}
+#signature-notice { margin-top: 18px; }
+
+
+.site-header, .site-footer { background: #111; color: #fff; }
+.site-header a, .site-header .header-label { color: #fff; }
+.submit-button:not(:disabled) { background: #cc0000; }
+
+.account-layout {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 1fr);
+    flex: 1;
+}
+.account-sidebar {
+    background: #fff;
+    border-right: 1px solid #dedede;
+    padding: 1.25rem .65rem;
+}
+.account-sidebar a {
+    display: block;
+    padding: .65rem .85rem;
+    border-left: 3px solid transparent;
+    border-radius: 4px;
+    color: #242424;
+    text-decoration: none;
+}
+.account-sidebar a:hover { background: #f4f4f4; }
+.account-sidebar a[aria-current="page"] {
+    background: #ffebeb;
+    border-color: #cc0000;
+    color: #cc0000;
+    font-weight: 650;
+}
+@media (max-width: 760px) {
+    .account-layout { grid-template-columns: minmax(0, 1fr); }
+    .account-sidebar {
+        display: flex;
+        flex-wrap: wrap;
+        padding: .5rem;
+        border-right: 0;
+        border-bottom: 1px solid #dedede;
+    }
+}
+
+.account-panel { display: flex; flex-direction: column; }
+.site-header .account-header, .account-layout main {
+    width: min(calc(100% - 3rem), 1280px);
+}
+.site-header .account-header { width: calc(100% - 3rem); }
+.account-header, .account-brand, .account-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.account-header { justify-content: space-between; flex-wrap: wrap; }
+.account-brand strong { font-size: 1.45rem; padding-right: 1rem; border-right: 1px solid #777; }
+.account-brand h1 { font-size: 1rem; }
+.account-actions button { padding: .65rem 1rem; background: white; border: 1px solid #ddd; border-radius: .4rem; cursor: pointer; }
+.account-heading h2 { margin: 0 0 1.25rem; font-size: clamp(1.75rem, 3vw, 2.25rem); }
+.account-layout .attendance-card { max-width: none; margin: 0; }
+.account-layout .attendance-card form { max-width: 650px; }
+.account-layout .submit-button { width: auto; }
+@media (max-width: 760px) {
+    .site-header .account-header, .account-layout main { width: calc(100% - 2rem); }
+}
+
+#submit-participant-signature {
+    margin-top: 1rem;
+}
+
+#clear-participant-signature.submit-button {
+    background: #111;
+}
+#clear-participant-signature:hover:not(:disabled) { background: #333; }
+#clear-participant-signature:focus-visible { outline: 2px solid #111; outline-offset: 3px; }
+#clear-participant-signature:disabled { opacity: .55; cursor: default; }

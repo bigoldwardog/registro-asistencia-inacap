@@ -7,12 +7,13 @@
     <meta name="description" content="Registro de asistencia a eventos">
     <title>Registro de asistencia</title>
     {% load static %}
-<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<link rel="stylesheet" href="{% static 'css/styles.css' %}?v=firma-botones-roboto-rojo-barra-roja">
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}">
 </head>
 <body>
     <header class="site-header">
-        <div class="container">
-            <h1>Registro de asistencia</h1>
+        <div class="container account-header">
+            {% include "marca_encabezado.html" %}
         </div>
     </header>
 
@@ -35,7 +36,7 @@
                 {% for campo in campos_asistente %}
                 <div class="form-group">
                     <label for="attendee-{{ campo.nombre }}">{{ campo.etiqueta }}{% if not campo.obligatorio %} (opcional){% endif %}</label>
-                    <input id="attendee-{{ campo.nombre }}" name="{{ campo.nombre }}" type="{{ campo.tipo }}" maxlength="500" data-person-field {% if campo.obligatorio %}required{% endif %}>
+                    <input id="attendee-{{ campo.nombre }}" name="{{ campo.nombre }}" type="{{ campo.tipo }}" maxlength="500" data-person-field {% if campo.nombre == 'rut' %}autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="12.345.678-5"{% endif %} {% if campo.obligatorio %}required{% endif %}>
                 </div>
                 {% endfor %}
                 <p><label><input type="checkbox" id="remember-profile"> Recordar mis datos en este dispositivo para próximas actividades.</label></p>
@@ -49,10 +50,16 @@
             <p id="form-message" role="status" aria-live="polite">Cargando el formulario de la actividad…</p>
             <noscript>Activa JavaScript en tu navegador para registrar la asistencia.</noscript>
             <button type="button" class="submit-button" id="register-another" hidden>No soy esa persona / Registrar a otra persona</button>
-            <p class="signature-notice" id="signature-notice" hidden>
-                Después de registrar tus datos, dirígete a la tablet del encargado
-                para realizar tu firma.
-            </p>
+            <section id="signature-notice" hidden aria-labelledby="signature-label">
+                <h3 id="signature-label">Firma de asistencia</h3>
+                <button type="button" class="submit-button" id="start-return" hidden>Firmar devolución de EPP</button>
+                <div id="signature-controls">
+                    <p>Dibuja tu firma en este recuadro.</p>
+                    <canvas id="participant-signature" width="640" height="600" aria-label="Área para dibujar tu firma"></canvas>
+                    <button type="button" class="submit-button" id="clear-participant-signature">Limpiar firma</button>
+                    <button type="button" class="submit-button" id="submit-participant-signature">Confirmar firma</button>
+                </div>
+            </section>
         </section>
     </main>
 
@@ -62,6 +69,6 @@
         </div>
     </footer>
 
-    <script src="{% static 'js/app.js' %}?v=revision-integral-2"></script>
+    <script src="{% static 'js/app.js' %}?v=rut-1"></script>
 </body>
 </html>

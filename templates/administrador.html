@@ -5,31 +5,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel del administrador</title>
-    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=revision-integral-2">
+    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=sesiones-en-curso-2-roboto-rojo-barra-roja">
+    <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=2-barra-roja">
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}">
 </head>
 
-<body>
+<body class="admin-shell">
     <header class="site-header">
         <div class="container header-content">
-            <div>
-                <p class="header-label">Sistema de asistencia</p>
-                <h1>Panel del administrador</h1>
-            </div>
+            {% include "marca_encabezado.html" %}
 
-            <nav class="account-nav" aria-label="Cuenta"><a href="{% url 'anfitrion' %}">Panel anfitrión</a><a href="{% url 'usuarios' %}">Usuarios</a><a href="{% url 'mi_cuenta' %}">Mi cuenta</a><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secondary-button" type="submit">Salir</button></form></nav>
+            {% include "avatar_cuenta.html" with origen="administrador" %}
         </div>
     </header>
 
+    <div class="admin-layout">
+    <nav class="admin-sidebar" aria-label="Navegación principal">
+        <a href="{% url 'administrador' %}" aria-current="page">Sesiones</a>
+        <ul class="admin-subnav" aria-label="Secciones de sesiones">
+            <li><button type="button" data-session-view="current" aria-controls="current-sessions" aria-current="true">Sesiones en curso</button></li>
+            <li><button type="button" data-session-view="search" aria-controls="search-sessions">Buscar sesiones</button></li>
+        </ul>
+        <a href="{% url 'anfitrion' %}">Panel anfitrión</a>
+    </nav>
     <main class="container">
         <section class="page-heading">
             <p class="event-label">Administración</p>
-            <h2>Historial de Sesiones</h2>
-            <p>
-                Consulta las Sesiones realizadas, filtra los resultados
-                y exporta los registros.
-            </p>
+            <h2 id="sessions-title">Sesiones en curso</h2>
+            <p id="sessions-description">Consulta las sesiones abiertas y el avance de sus firmas.</p>
         </section>
 
+        <section id="current-sessions" aria-labelledby="sessions-title">
+            <p id="current-feedback" role="status">Cargando sesiones…</p>
+            <div id="current-cards" class="current-cards"></div>
+        </section>
+
+        <div id="search-sessions" hidden>
         <section class="filter-card" aria-labelledby="filters-title">
             <div class="section-heading">
                 <h2 id="filters-title">Filtros de búsqueda</h2>
@@ -124,7 +135,7 @@
                     class="secondary-button"
                     id="export-xlsx"
                 >
-                    Exportar XLSX
+                    Exportar Excel
                 </button>
             </div>
 
@@ -159,6 +170,8 @@
             </div>
         </section>
 
+        </div>
+
         <section id="session-detail-section" class="history-section" hidden>
             <div class="section-heading results-heading">
                 <div>
@@ -188,8 +201,9 @@
             </div>
         </section>
 
-            <details class="session-audit"><summary>Historial de cambios</summary><button type="button" class="secondary-button" id="admin-load-audit">Cargar historial de la sesión seleccionada</button><div id="admin-audit-results"></div></details>
+            <details class="session-audit" hidden><summary>Historial de cambios</summary><button type="button" class="secondary-button" id="admin-load-audit">Cargar historial de la sesión seleccionada</button><div id="admin-audit-results"></div></details>
     </main>
+    </div>
     <dialog id="signature-preview-dialog" aria-labelledby="signature-preview-title"><h2 id="signature-preview-title">Firma guardada</h2><img id="signature-preview-image" alt="Firma guardada"><form method="dialog"><button class="secondary-button">Cerrar</button></form></dialog>
 
     <footer class="site-footer">
@@ -201,6 +215,6 @@
 
 
 
-    <script src="{% static 'js/administrador.js' %}?v=revision-integral-2" defer></script>
+    <script src="{% static 'js/administrador.js' %}?v=sesiones-en-curso-2" defer></script>
 </body>
 </html>
