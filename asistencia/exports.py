@@ -9,6 +9,7 @@ from openpyxl import Workbook
 from openpyxl.drawing.image import Image as ExcelImage
 from openpyxl.styles import Font, PatternFill, Alignment
 from .access import acceso
+from .permissions import tiene_permiso
 from .domain import ErrorFormulario, fecha_chile, json_guardado
 from .models import Asistencias, Firmas, FirmasDevolucion, FirmasAdicionales
 from .views import errores, obtener_sesion
@@ -37,7 +38,10 @@ def exportar(request, formato):
         raise ErrorFormulario('La selección de sesiones no es válida.')
     if not seleccion:
         raise ErrorFormulario('Selecciona al menos una sesión para exportar.')
-    sesiones = [obtener_sesion(request, sid) for sid in dict.fromkeys(seleccion)]
+    sesiones = [obtener_sesion(request, sid, accion='exportar') for sid in dict.fromkeys(seleccion)]
+    for sesion in sesiones:
+        if not tiene_permiso(request.actor, 'exportar', sesion):
+            raise ErrorFormulario('No tienes permiso para exportar esta sesión.', 403)
     headers = ['ID sesión', 'Sesión', 'Tipo', 'Anfitrión', 'Inicio (Chile)', 'Término (Chile)',
         'Estado sesión', 'Nombre', 'RUT', 'Cargo / Carrera', 'Carrera', 'Jornada', 'Sección',
         'Correo', 'Teléfono', 'Registro (Chile)', 'Estado asistencia', 'Firma recepción (Chile)',
@@ -128,6 +132,6 @@ def exportar(request, formato):
     return response
 
 
-@acceso(admin=True)
+@acceso()
 def exportar_administrador(request, formato):
     return exportar(request, formato)

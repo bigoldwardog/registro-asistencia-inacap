@@ -9,7 +9,8 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from .access import acceso, cuenta_configurada
-from .models import Usuarios
+from .models import Usuarios, AccesoUsuario, RolAcceso
+from .permissions import migrar_cuentas
 from .views import auditar
 
 
@@ -42,6 +43,7 @@ def configuracion_inicial(request):
                     return redirect('login')
                 usuario, _ = Usuarios.objects.update_or_create(correo=correo, defaults={
                     'nombre': nombre, 'rol': 'ADMINISTRADOR', 'activo': 1, 'password_hash': make_password(password)})
+                migrar_cuentas()
                 request.session.flush()
                 request.session['usuario_id'] = usuario.id
                 request.actor = usuario
@@ -49,7 +51,7 @@ def configuracion_inicial(request):
             return redirect('administrador')
         except ValidationError as exc:
             error = ' '.join(exc.messages)
-    return render(request, 'cuenta.html', {'modo': 'inicial', 'titulo': 'Crear cuenta administradora', 'error': error})
+    return render(request, 'cuenta.html', {'modo': 'inicial', 'titulo': 'Crear cuenta de superusuario', 'error': error})
 
 
 def login(request):
@@ -68,7 +70,7 @@ def login(request):
             request.session.flush()
             request.session['usuario_id'] = usuario.id
             request.session.set_expiry(8 * 60 * 60)
-            return redirect('administrador' if usuario.rol == 'ADMINISTRADOR' else 'anfitrion')
+            return redirect('administrador')
         else:
             cache.set(key, intentos + 1, 600)
             error = 'Correo o contraseña incorrectos.'
@@ -85,7 +87,7 @@ def logout(request):
 @never_cache
 def mi_cuenta(request):
     actor = request.actor
-    origen = 'administrador' if request.GET.get('panel') != 'anfitrion' and actor.rol == 'ADMINISTRADOR' else 'anfitrion'
+    origen = 'administrador' if request.GET.get('panel') != 'anfitrion'  else 'anfitrion'
     seccion = 'password' if request.GET.get('seccion') == 'password' else 'informacion'
     error = mensaje = ''
     mostrar_datos = False
@@ -147,4 +149,84 @@ def mi_cuenta(request):
     return render(request, 'perfil.html', {
         'actor': actor, 'origen': origen, 'seccion': seccion,
         'mostrar_datos': mostrar_datos, 'error': error, 'mensaje': mensaje,
+    })
+
+
+@acceso(pagina=True, permiso='superusuario')
+@never_cache
+def roles_permisos(request):
+    from .permissions import PERMISOS, ALCANCES, migrar_cuentas
+    migrar_cuentas()
+    error = mensaje = ''
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                accion = request.POST.get('accion')
+                if accion == 'rol':
+                    nombre = request.POST.get('nombre', '').strip()
+                    if not nombre or len(nombre) > 80 or nombre.casefold() == 'superusuario':
+                        raise ValidationError('Indica un nombre de rol de hasta 80 caracteres distinto de Superusuario.')
+                    rol_id = request.POST.get('rol_id')
+                    rol = RolAcceso.objects.select_for_update().get(pk=rol_id) if rol_id else RolAcceso()
+                    if RolAcceso.objects.filter(nombre__iexact=nombre).exclude(pk=rol.pk).exists():
+                        raise ValidationError('Ya existe un rol con ese nombre. Selecciónalo para modificarlo.')
+                    rol.nombre = nombre
+                    for clave, _ in PERMISOS:
+                        alcance = request.POST.get(clave, 'NINGUNA')
+                        if alcance not in ALCANCES:
+                            raise ValidationError('Selecciona un alcance válido para cada permiso.')
+                        setattr(rol, clave, alcance)
+                    rol.save()
+                    auditar(request, 'GUARDAR_ROL', 'rol', rol.pk,
+                            despues={'nombre': nombre, **{clave: getattr(rol, clave) for clave, _ in PERMISOS}})
+                    mensaje = 'Rol guardado.'
+                elif accion == 'usuario':
+                    nombre = request.POST.get('nombre', '').strip()
+                    correo = request.POST.get('correo', '').strip().lower()
+                    password = request.POST.get('password', '')
+                    if not nombre or len(nombre) > 150:
+                        raise ValidationError('Indica un nombre de hasta 150 caracteres.')
+                    validate_email(correo)
+                    password_valida(password)
+                    if Usuarios.objects.filter(correo__iexact=correo).exists():
+                        raise ValidationError('Ya existe una cuenta con ese correo.')
+                    rol = RolAcceso.objects.get(pk=request.POST.get('rol'))
+                    usuario = Usuarios.objects.create(nombre=nombre, correo=correo,
+                        password_hash=make_password(password), rol='ANFITRION', activo=1)
+                    AccesoUsuario.objects.create(usuario=usuario, rol=rol)
+                    auditar(request, 'CREAR_USUARIO', 'usuario', usuario.pk,
+                            despues={'nombre': nombre, 'correo': correo, 'rol': rol.nombre})
+                    mensaje = 'Cuenta creada. El usuario puede actualizar sus datos y contraseña desde Mi cuenta.'
+                elif accion == 'asignar':
+                    acceso_usuario = AccesoUsuario.objects.select_for_update().get(usuario_id=request.POST.get('usuario'))
+                    if acceso_usuario.superusuario:
+                        raise ValidationError('El superusuario base conserva todos sus permisos.')
+                    rol = RolAcceso.objects.get(pk=request.POST.get('rol'))
+                    acceso_usuario.rol = rol
+                    acceso_usuario.save(update_fields=['rol'])
+                    auditar(request, 'ASIGNAR_ROL', 'usuario', acceso_usuario.usuario_id,
+                            despues={'rol': rol.nombre})
+                    mensaje = 'Rol asignado.'
+                else:
+                    raise ValidationError('Acción no disponible.')
+        except ValidationError as exc:
+            error = ' '.join(exc.messages)
+        except (ValueError, TypeError, RolAcceso.DoesNotExist, AccesoUsuario.DoesNotExist):
+            error = 'Selecciona un usuario y un rol válidos.'
+        except IntegrityError:
+            error = 'No se pudo guardar. Revisa el correo y el nombre del rol.'
+        if not error:
+            from django.contrib import messages
+            messages.success(request, mensaje)
+            return redirect('roles_permisos')
+    roles = list(RolAcceso.objects.order_by('nombre'))
+    for rol in roles:
+        rol.permisos_visibles = [{'clave': clave, 'etiqueta': etiqueta, 'activo': getattr(rol, clave)}
+                                for clave, etiqueta in PERMISOS]
+    return render(request, 'roles_permisos.html', {
+        'actor': request.actor, 'roles': roles, 'permisos': PERMISOS, 'alcances': RolAcceso.ALCANCES,
+        'roles_datos': list(RolAcceso.objects.values('id', 'nombre', *[clave for clave, _ in PERMISOS])),
+        'usuarios_datos': list(AccesoUsuario.objects.values('usuario_id', 'rol_id', 'superusuario')),
+        'cuentas': AccesoUsuario.objects.select_related('usuario', 'rol').order_by('usuario__nombre'),
+        'error': error,
     })

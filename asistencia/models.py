@@ -119,6 +119,28 @@ class Usuarios(models.Model):
     activo = models.IntegerField()
     fecha_creacion = models.TextField(default=fecha_actual)
 
+    @property
+    def es_superusuario(self):
+        from .permissions import permisos_usuario
+        return permisos_usuario(self)['superusuario']
+
+    @property
+    def puede_crear_sesiones(self):
+        from .permissions import permisos_usuario
+        return permisos_usuario(self)['crear'] != 'NINGUNA'
+
+    @property
+    def puede_exportar(self):
+        from .permissions import permisos_usuario
+        permisos = permisos_usuario(self)
+        return permisos['exportar'] != 'NINGUNA'
+
+    @property
+    def puede_gestionar_sesiones(self):
+        from .permissions import permisos_usuario
+        permisos = permisos_usuario(self)
+        return any(permisos[accion] != 'NINGUNA' for accion in ('crear', 'observaciones', 'cerrar'))
+
     class Meta:
         managed = False
         db_table = 'usuarios'
@@ -146,3 +168,30 @@ class FirmasAdicionales(models.Model):
         managed = False
         db_table = 'firmas_adicionales'
         unique_together = [('asistencia', 'tipo')]
+
+
+class RolAcceso(models.Model):
+    nombre = models.CharField(max_length=80, unique=True)
+    ALCANCES = [('NINGUNA', 'Ninguna'), ('PROPIAS', 'Propias'), ('TODAS', 'Todas')]
+    consultar = models.CharField(max_length=8, choices=ALCANCES, default='PROPIAS')
+    crear = models.CharField(max_length=8, choices=ALCANCES, default='NINGUNA')
+    observaciones = models.CharField(max_length=8, choices=ALCANCES, default='NINGUNA')
+    cerrar = models.CharField(max_length=8, choices=ALCANCES, default='NINGUNA')
+    exportar = models.CharField(max_length=8, choices=ALCANCES, default='NINGUNA')
+
+    class Meta:
+        db_table = 'roles_acceso'
+
+
+class AccesoUsuario(models.Model):
+    usuario = models.OneToOneField(Usuarios, models.CASCADE, primary_key=True,
+                                  db_constraint=False, related_name='acceso_configurado')
+    rol = models.ForeignKey(RolAcceso, models.PROTECT)
+    superusuario = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'accesos_usuarios'
+        constraints = [
+            models.UniqueConstraint(fields=['superusuario'], condition=models.Q(superusuario=True),
+                                    name='un_superusuario_base')
+        ]

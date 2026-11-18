@@ -22,6 +22,8 @@ class Command(BaseCommand):
                 c.execute("ALTER TABLE asistencias ADD COLUMN campos_participante_json TEXT NOT NULL DEFAULT '{}'")
         call_command('cargar_plantillas')
         Usuarios.objects.filter(password_hash='HASH_SOLO_PARA_PRUEBAS').update(activo=0)
+        from asistencia.permissions import migrar_cuentas
+        migrar_cuentas()
         conflictos = 0
         for persona in Asistentes.objects.exclude(rut__isnull=True):
             try:

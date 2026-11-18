@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=rojo-barra-roja">
     <link rel="stylesheet" href="{% static 'css/anfitrion.css' %}?v=panel-anfitrion-5-roboto-rojo-barra-roja">
     <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=2-barra-roja">
-    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}">
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=alcances">
 </head>
 
 <body class="host-shell">
@@ -28,16 +28,17 @@
 
     <div class="host-layout">
         <nav class="host-sidebar" aria-label="Navegación principal">
-            {% if actor.rol == 'ADMINISTRADOR' %}
+            {% if actor %}
             <a href="{% url 'administrador' %}">← Administración</a>
             {% endif %}
             <a href="{% url 'anfitrion' %}" aria-current="page">Panel anfitrión</a>
             <ul class="host-subnav" aria-label="Secciones del panel anfitrión">
                 <li><button type="button" data-sidebar-tab="manage" aria-controls="panel-manage" disabled>Gestionar sesión</button></li>
-                <li><button type="button" data-sidebar-tab="new" aria-controls="panel-new" aria-current="true">Nueva sesión</button></li>
+                <li><button type="button" data-sidebar-tab="new" {% if not actor.puede_crear_sesiones %}disabled{% endif %} aria-controls="panel-new" aria-current="true" {% if not actor.puede_crear_sesiones %}disabled{% endif %}>Nueva sesión</button></li>
                 <li><button type="button" data-sidebar-tab="list" aria-controls="panel-list">Lista actual</button></li>
                 <li><button type="button" data-sidebar-tab="development" aria-controls="panel-development">Desarrollo</button></li>
             </ul>
+        {% if actor.es_superusuario %}<a href="{% url 'roles_permisos' %}">Roles y permisos</a>{% endif %}
         </nav>
     <main class="container dashboard">
         <div class="dashboard-heading">
@@ -45,7 +46,7 @@
         </div>
         <div class="dashboard-tabs" role="tablist" aria-label="Secciones del panel">
             <button type="button" role="tab" id="tab-manage" aria-controls="panel-manage" aria-selected="false" tabindex="-1" disabled data-dashboard-tab="manage">Gestionar sesión</button>
-            <button type="button" role="tab" id="tab-new" aria-controls="panel-new" aria-selected="true" data-dashboard-tab="new">Nueva sesión</button>
+            <button type="button" role="tab" id="tab-new" aria-controls="panel-new" aria-selected="true" data-dashboard-tab="new" {% if not actor.puede_crear_sesiones %}disabled{% endif %} {% if not actor.puede_crear_sesiones %}disabled{% endif %}>Nueva sesión</button>
             <button type="button" role="tab" id="tab-list" aria-controls="panel-list" aria-selected="false" tabindex="-1" data-dashboard-tab="list">Lista actual</button>
             <button type="button" role="tab" id="tab-development" aria-controls="panel-development" aria-selected="false" tabindex="-1" data-dashboard-tab="development">Desarrollo</button>
         </div>
@@ -135,7 +136,7 @@
             ></ul>
         </section>
 
-        <div class="session-export-actions">
+        <div class="session-export-actions"{% if not actor.puede_exportar %} hidden{% endif %}>
             <button type="button" class="secondary-button" data-export-format="csv" disabled>Exportar CSV</button>
             <button type="button" class="secondary-button" data-export-format="xlsx" disabled>Exportar Excel</button>
         </div>
@@ -230,6 +231,6 @@
     </footer>
 
 
-    <script src="{% static 'js/anfitrion.js' %}?v=panel-anfitrion-5" defer></script>
+    <script src="{% static 'js/anfitrion.js' %}?v=alcances" defer></script>
 </body>
 </html>

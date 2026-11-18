@@ -82,6 +82,14 @@ async function loadAttendanceList() {
 
         if (requestedSessionId !== sessionState.currentSessionId) return;
 
+        sessionState.permissions = data.sesion.permisos;
+        document.querySelectorAll('[data-export-format]').forEach(button => {
+            button.disabled = !sessionState.permissions.exportar;
+        });
+        document.querySelector('#save-development').disabled = !sessionState.permissions.observaciones;
+        document.querySelectorAll('[data-development-field]').forEach(input => {
+            input.disabled = !sessionState.permissions.observaciones;
+        });
         sessionState.isOpen = data.sesion.estado === "ABIERTA";
         sessionState.esEpp = Boolean(data.sesion.es_epp);
         sessionState.esPanol = Boolean(data.sesion.es_panol);
@@ -108,7 +116,7 @@ async function loadAttendanceList() {
             ? "Sesión abierta"
             : "Sesión cerrada";
 
-        closeSessionButton.disabled = !sessionState.isOpen;
+        closeSessionButton.disabled = !sessionState.isOpen || !sessionState.permissions?.cerrar;
 
         closeSessionButton.textContent = sessionState.isOpen
             ? "Cerrar sesión"
@@ -641,7 +649,7 @@ async function closeSession() {
         alert(error.message);
 
     } finally {
-        closeSessionButton.disabled = !sessionState.isOpen;
+        closeSessionButton.disabled = !sessionState.isOpen || !sessionState.permissions?.cerrar;
     }
 }
 
@@ -753,8 +761,9 @@ async function loadSessionOptions() {
             if (items.length === 1) select.value = String(items[0].id);
         }
         renderTemplateFields();
-        createButton.disabled = !data.plantillas.length || !data.anfitriones.length;
-        if (createButton.disabled) createFeedback.textContent = "Se necesita al menos una plantilla activa y un anfitrión activo.";
+        createButton.disabled = !data.puede_crear || !data.plantillas.length || !data.anfitriones.length;
+        if (!data.puede_crear) createFeedback.textContent = "Tu rol no permite crear sesiones.";
+        else if (createButton.disabled) createFeedback.textContent = "Se necesita al menos una plantilla activa y un anfitrión activo.";
     } catch (error) { createFeedback.textContent = error.message; }
 }
 createForm.addEventListener("submit", async (event) => {
@@ -839,7 +848,7 @@ document.querySelector("#development-form").addEventListener("submit", async (ev
         developmentBaseline = {...data.campos};
         if (currentSessionData) { currentSessionData.campos = data.campos; renderSessionDetails(currentSessionData); }
     } catch (error) { if (requestedId === sessionState.currentSessionId) feedback.textContent = error.message; }
-    finally { button.disabled = false; }
+    finally { button.disabled = !sessionState.permissions?.observaciones; }
 });
 
 
@@ -998,3 +1007,7 @@ document.querySelector('#download-poster').addEventListener('click', () => {
     const id = sessionState.currentSessionId;
     if (id) window.location.assign(`/api/sesiones/${encodeURIComponent(id)}/afiche.pdf`);
 });
+
+if (document.querySelector('#tab-new').disabled) {
+    activateDashboardTab('list');
+}

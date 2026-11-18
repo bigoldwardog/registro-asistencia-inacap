@@ -47,7 +47,7 @@ def cuerpo(request):
     return data
 
 
-def obtener_sesion(request=None, sesion_id=None, token=None, lock=False):
+def obtener_sesion(request=None, sesion_id=None, token=None, lock=False, accion='consultar'):
     query = Sesiones.objects.select_related('plantilla', 'anfitrion')
     if lock:
         query = query.select_for_update()
@@ -55,8 +55,8 @@ def obtener_sesion(request=None, sesion_id=None, token=None, lock=False):
         sesion = query.get(token_qr=token) if token else query.get(id=sesion_id)
     except (Sesiones.DoesNotExist, ValueError, TypeError):
         raise ErrorFormulario('La sesión no existe.', 404)
-    if request and request.actor.rol != 'ADMINISTRADOR' and sesion.anfitrion_id != request.actor.id:
-        raise ErrorFormulario('No tienes acceso a esta sesión.', 403)
+    if request and not tiene_permiso(request.actor, accion, sesion):
+        raise ErrorFormulario('No tienes permiso para realizar esta acción en la sesión.', 403)
     return sesion
 
 
@@ -70,6 +70,9 @@ def auditar(request, accion, entidad, entidad_id, antes=None, despues=None):
 def definicion_sesion(sesion):
     return campos_por_etapa([c for c in json_guardado(sesion.campos_definicion_json, list)
         if isinstance(c, dict) and all(isinstance(c.get(k), str) for k in ('nombre', 'etiqueta', 'tipo'))])
+
+
+from .permissions import tiene_permiso, sesiones_visibles, permisos_usuario
 
 
 def datos_sesion(sesion):
@@ -88,7 +91,7 @@ def datos_asistencia(asistencia):
         fecha_registro=fecha_chile(asistencia.fecha_registro), fecha_firma=fecha_chile(asistencia.fecha_firma))
 
 
-@acceso(admin=True)
+@acceso()
 @require_GET
 @errores
 def historial_sesiones(request):
@@ -97,6 +100,7 @@ def historial_sesiones(request):
     sesiones = Sesiones.objects.select_related('plantilla', 'anfitrion').prefetch_related('asistencias_set').order_by('-id')
     if request.GET.get('estado') == 'ABIERTA':
         sesiones = sesiones.filter(estado='ABIERTA')
+    sesiones = sesiones_visibles(request.actor, sesiones)
     for sesion in sesiones:
         attendees = list(sesion.asistencias_set.all())
         if q and q not in sesion.nombre.casefold() and not any(q in ' '.join([a.nombre_registrado, a.rut_registrado, a.cargo_registrado]).casefold() or q.replace('.', '').replace('-', '') in a.rut_registrado.replace('.', '').replace('-', '').casefold() for a in attendees):
@@ -112,8 +116,7 @@ def historial_sesiones(request):
 @require_GET
 def listar_sesiones(request):
     query = Sesiones.objects.select_related('plantilla', 'anfitrion').order_by('-id')
-    if request.actor.rol != 'ADMINISTRADOR':
-        query = query.filter(anfitrion=request.actor)
+    query = sesiones_visibles(request.actor, query)
     return JsonResponse({'sesiones': [datos_sesion(s) for s in query]})
 
 
@@ -132,6 +135,10 @@ def listar_asistencias(request, sesion_id):
             docente_firmado=a.id in docentes, fecha_firma_docente=docentes.get(a.id), tiene_firma=a.id in firmas)
         rows.append(row)
     data = datos_sesion(sesion)
+    data['permisos'] = {accion: tiene_permiso(request.actor, accion, sesion)
+                        for accion in ('crear', 'observaciones', 'cerrar', 'exportar')}
+    data['permisos'] = {accion: tiene_permiso(request.actor, accion, sesion)
+                        for accion in ('crear', 'observaciones', 'cerrar', 'exportar')}
     data.update(es_epp=sesion.plantilla.nombre == EPP, es_panol=sesion.plantilla.nombre == PANOL,
         campos_asistente=campos_asistente(sesion))
     return JsonResponse({'sesion': data, 'asistencias': rows})
@@ -265,12 +272,12 @@ def pagina_inicio(request):
     return render(request, 'index.html', {'campos_asistente': campos_asistente(sesion)})
 
 
-@acceso(pagina=True)
+@acceso(pagina=True, permiso='panel_anfitrion')
 def pagina_anfitrion(request):
     return render(request, 'anfitrion.html', {'actor': request.actor})
 
 
-@acceso(admin=True, pagina=True)
+@acceso(pagina=True)
 def pagina_administrador(request):
     return render(request, 'administrador.html', {'actor': request.actor})
 
@@ -280,13 +287,13 @@ def obtener_asistencia(request, asistencia_id):
         a = Asistencias.objects.get(id=asistencia_id)
     except Asistencias.DoesNotExist:
         raise ErrorFormulario('La asistencia no existe.', 404)
-    sesion = obtener_sesion(request, a.sesion_id, lock=True)
+    sesion = obtener_sesion(request, a.sesion_id, lock=True, accion='crear')
     if sesion.estado != 'ABIERTA':
         raise ErrorFormulario('La sesión está cerrada. No se pueden guardar firmas.', 409)
     return Asistencias.objects.select_for_update().get(id=a.id), sesion
 
 
-@acceso()
+@acceso(permiso='crear')
 @require_POST
 @errores
 def guardar_firma(request, asistencia_id):
@@ -319,26 +326,26 @@ def firma_extra(request, asistencia_id, docente=False):
     return JsonResponse({'mensaje': 'Firma guardada correctamente.', 'fecha_firma_devolucion': fecha_chile(f.fecha_creacion)}, status=201)
 
 
-@acceso()
+@acceso(permiso='crear')
 @require_POST
 @errores
 def guardar_firma_devolucion(request, asistencia_id):
     return firma_extra(request, asistencia_id)
 
 
-@acceso()
+@acceso(permiso='crear')
 @require_POST
 @errores
 def guardar_firma_docente(request, asistencia_id):
     return firma_extra(request, asistencia_id, True)
 
 
-@acceso()
+@acceso(permiso='cerrar')
 @require_POST
 @errores
 def cerrar_sesion(request, sesion_id):
     with transaction.atomic():
-        s = obtener_sesion(request, sesion_id, lock=True)
+        s = obtener_sesion(request, sesion_id, lock=True, accion='cerrar')
         if s.estado != 'CERRADA':
             s.estado, s.fecha_cierre = 'CERRADA', timezone.now().isoformat()
             s.save(update_fields=['estado', 'fecha_cierre'])
@@ -350,13 +357,12 @@ def cerrar_sesion(request, sesion_id):
 @require_GET
 def opciones_sesion(request):
     query = Usuarios.objects.filter(activo=1)
-    query = query.filter(rol='ANFITRION') if request.actor.rol == 'ADMINISTRADOR' else query.filter(id=request.actor.id)
-    anfitriones = list(query.values('id', 'nombre'))
-    if request.actor.rol == 'ADMINISTRADOR':
-        anfitriones.append({'id': request.actor.id, 'nombre': request.actor.nombre + ' (yo)'})
+    if permisos_usuario(request.actor)['crear'] != 'TODAS':
+        query = query.filter(id=request.actor.id)
+    anfitriones = [{'id': usuario.id, 'nombre': usuario.nombre} for usuario in query]
     return JsonResponse({'plantillas': [{'id': p.id, 'nombre': p.nombre, 'descripcion': p.descripcion,
         'campos': campos_por_etapa(list(p.camposplantilla_set.order_by('orden', 'id').values('nombre', 'etiqueta', 'tipo', 'obligatorio')))}
-        for p in PlantillasSesion.objects.filter(activa=1).prefetch_related('camposplantilla_set').order_by('nombre')], 'anfitriones': anfitriones})
+        for p in PlantillasSesion.objects.filter(activa=1).prefetch_related('camposplantilla_set').order_by('nombre')], 'anfitriones': anfitriones, 'puede_crear': tiene_permiso(request.actor, 'crear')})
 
 
 def validar_campos(campos, valores, apertura=False):
@@ -384,7 +390,7 @@ def validar_campos(campos, valores, apertura=False):
     return resultado
 
 
-@acceso()
+@acceso(permiso='crear')
 @require_POST
 @errores
 def crear_sesion(request):
@@ -399,7 +405,7 @@ def crear_sesion(request):
         anfitrion = Usuarios.objects.get(id=int(str(data.get('anfitrion_id'))), activo=1)
     except (ValueError, TypeError, PlantillasSesion.DoesNotExist, Usuarios.DoesNotExist):
         raise ErrorFormulario('Selecciona una plantilla y un anfitrión activos.')
-    if request.actor.rol != 'ADMINISTRADOR' and anfitrion.id != request.actor.id:
+    if permisos_usuario(request.actor)['crear'] != 'TODAS' and anfitrion.id != request.actor.id:
         raise ErrorFormulario('Solo puedes crear sesiones a tu cargo.', 403)
     campos = campos_por_etapa(list(plantilla.camposplantilla_set.order_by('orden', 'id').values('nombre', 'etiqueta', 'tipo', 'obligatorio', 'orden')))
     valores = validar_campos(campos, data.get('campos', {}), True)
@@ -411,7 +417,7 @@ def crear_sesion(request):
     return JsonResponse({'id': s.id, 'nombre': s.nombre, 'estado': s.estado}, status=201)
 
 
-@acceso()
+@acceso(permiso='observaciones')
 @require_POST
 @errores
 def guardar_desarrollo(request, sesion_id):
@@ -420,7 +426,7 @@ def guardar_desarrollo(request, sesion_id):
     if not isinstance(cambios, dict) or not isinstance(base, dict):
         raise ErrorFormulario('Falta la versión original de las observaciones. Recarga antes de editar.')
     with transaction.atomic():
-        s = obtener_sesion(request, sesion_id, lock=True)
+        s = obtener_sesion(request, sesion_id, lock=True, accion='observaciones')
         campos = [c for c in definicion_sesion(s) if c['etapa'] == 'desarrollo']
         if set(cambios) - {c['nombre'] for c in campos}:
             raise ErrorFormulario('Solo puedes editar campos de desarrollo y cierre.')

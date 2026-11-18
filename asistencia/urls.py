@@ -6,6 +6,7 @@ urlpatterns = [
     path('ingresar/', accounts.login, name='login'),
     path('configuracion-inicial/', accounts.configuracion_inicial, name='configuracion_inicial'),
     path('salir/', accounts.logout, name='logout'),
+    path('roles-permisos/', accounts.roles_permisos, name='roles_permisos'),
     path('mi-cuenta/', accounts.mi_cuenta, name='mi_cuenta'),
     path('anfitrion/', views.pagina_anfitrion, name='anfitrion'),
     path('administrador/', views.pagina_administrador, name='administrador'),

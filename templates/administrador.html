@@ -7,7 +7,7 @@
     <title>Panel del administrador</title>
     <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=sesiones-en-curso-2-roboto-rojo-barra-roja">
     <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=2-barra-roja">
-    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}">
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=botones-2">
 </head>
 
 <body class="admin-shell">
@@ -26,7 +26,8 @@
             <li><button type="button" data-session-view="current" aria-controls="current-sessions" aria-current="true">Sesiones en curso</button></li>
             <li><button type="button" data-session-view="search" aria-controls="search-sessions">Buscar sesiones</button></li>
         </ul>
-        <a href="{% url 'anfitrion' %}">Panel anfitrión</a>
+        {% if actor.puede_gestionar_sesiones %}<a href="{% url 'anfitrion' %}">Panel anfitrión</a>{% endif %}
+        {% if actor.es_superusuario %}<a href="{% url 'roles_permisos' %}">Roles y permisos</a>{% endif %}
     </nav>
     <main class="container">
         <section class="page-heading">
@@ -121,7 +122,7 @@
                 </span>
             </div>
 
-            <div class="export-actions">
+            <div class="export-actions"{% if not actor.puede_exportar %} hidden{% endif %}>
                 <button
                     type="button"
                     class="secondary-button"
@@ -186,7 +187,7 @@
             </div>
 
             <dl id="detail-activity-fields"></dl>
-            <div class="export-actions"><button class="secondary-button" type="button" id="detail-export-csv">Exportar asistentes CSV</button><button class="secondary-button" type="button" id="detail-export-xlsx">Exportar Excel con firmas</button></div>
+            <div class="export-actions"{% if not actor.puede_exportar %} hidden{% endif %}><button class="secondary-button" type="button" id="detail-export-csv">Exportar asistentes CSV</button><button class="secondary-button" type="button" id="detail-export-xlsx">Exportar Excel con firmas</button></div>
             <p id="detail-feedback" class="feedback-message" role="status" hidden></p>
 
             <div class="table-container">

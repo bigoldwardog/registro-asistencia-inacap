@@ -2,7 +2,7 @@
 
 Aplicación web Django para anfitriones, asistentes y administración. Los asistentes se registran mediante un QR y firman desde su propio dispositivo. Los registros de cada actividad se pueden consultar y exportar. Las capturas de la interfaz están en [la galería](docs/capturas/GALERIA.html).
 
-La galería conserva las capturas de la primera versión y muestra la interfaz actual con Roboto, el logo de INACAP y las vistas de sesiones en curso y búsqueda. La [demo interactiva](docs/propuesta-asistencia/index.html) usa datos ficticios e incluye la propuesta de roles y permisos.
+La galería conserva las capturas de la primera versión y muestra la interfaz actual con Roboto, el logo de INACAP y las vistas de sesiones en curso y búsqueda. La [demo interactiva](docs/propuesta-asistencia/index.html) usa datos ficticios.
 
 ## Primer uso en este computador
 
@@ -28,6 +28,14 @@ python -m venv .venv
 También puedes ejecutar `./INSTALAR.ps1`. Este crea el entorno si falta, instala dependencias y prepara el esquema. Si ya hay una base, crea primero un respaldo SQLite.
 
 `preparar_sistema` se puede repetir: aplica las migraciones internas de Django, crea o adapta las tablas de asistencia y carga las diez plantillas. No carga estudiantes, reuniones ni usuarios de ejemplo. No uses `database/seed.sql` para instalar: ese archivo se conserva únicamente como referencia histórica de pruebas.
+
+## Cuentas, roles y permisos
+
+La primera cuenta creada en configuración inicial es el superusuario base. Solo esta cuenta puede entrar a **Roles y permisos**, crear cuentas con nombre, correo y contraseña inicial, editar roles y asignarlos. Las personas pueden cambiar su correo, teléfono opcional y contraseña desde **Mi cuenta**.
+
+Cada rol configura cinco acciones independientes —consultar, crear, modificar observaciones, cerrar y exportar— con alcance Ninguna, Propias o Todas. El alcance de consulta debe incluir las sesiones que se pueden modificar, cerrar o exportar. Crear con alcance Todas permite seleccionar otro anfitrión. Las comprobaciones se realizan en el servidor en cada solicitud y los cambios se aplican también a las cuentas que ya iniciaron sesión.
+
+Al actualizar una instalación anterior, ejecuta el iniciador habitual o `python manage.py preparar_sistema`. Este aplica las migraciones, convierte al administrador activo más antiguo con contraseña válida en superusuario base y conserva las capacidades operativas de las demás cuentas en roles editables.
 
 ## Flujo
 

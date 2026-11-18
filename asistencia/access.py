@@ -22,7 +22,7 @@ def cuenta_configurada():
     return False
 
 
-def acceso(admin=False, pagina=False):
+def acceso(admin=False, pagina=False, permiso=None):
     def decorador(view):
         @wraps(view)
         def wrapped(request, *args, **kwargs):
@@ -31,10 +31,11 @@ def acceso(admin=False, pagina=False):
                 if pagina:
                     return redirect('login' if cuenta_configurada() else 'configuracion_inicial')
                 return JsonResponse({'error': 'Inicia sesión para continuar.'}, status=401)
-            if admin and usuario.rol != 'ADMINISTRADOR':
+            from .permissions import tiene_permiso
+            if (admin and not tiene_permiso(usuario, 'consultar')) or (permiso and not tiene_permiso(usuario, permiso)):
                 if pagina:
-                    return redirect('anfitrion')
-                return JsonResponse({'error': 'Se requiere acceso de administrador.'}, status=403)
+                    return redirect('administrador')
+                return JsonResponse({'error': 'No tienes permiso para realizar esta acción.'}, status=403)
             request.actor = usuario
             return view(request, *args, **kwargs)
         return wrapped

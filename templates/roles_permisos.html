@@ -1,0 +1,95 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Roles y permisos</title>
+    <link rel="stylesheet" href="{% static 'css/administrador.css' %}">
+    <link rel="stylesheet" href="{% static 'css/perfil.css' %}">
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=alcances">
+    <script src="{% static 'js/roles.js' %}?v=alcances" defer></script>
+</head>
+<body class="admin-shell">
+<header class="site-header">
+    <div class="container header-content">
+        {% include "marca_encabezado.html" %}
+        {% include "avatar_cuenta.html" with origen="administrador" %}
+    </div>
+</header>
+<div class="admin-layout">
+    <nav class="admin-sidebar" aria-label="Navegación principal">
+        <a href="{% url 'administrador' %}">Sesiones</a>
+        <a href="{% url 'anfitrion' %}">Panel anfitrión</a>
+        <a href="{% url 'roles_permisos' %}" aria-current="page">Roles y permisos</a>
+    </nav>
+    <main class="container">
+        <section class="page-heading">
+            <h2>Roles y permisos</h2>
+            <p>El superusuario crea las cuentas, configura los roles y asigna sus permisos.</p>
+        </section>
+        {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+        {% for message in messages %}<p role="status">{{ message }}</p>{% endfor %}
+        <div class="role-grid">
+            <section class="filter-card">
+                <h3>Configurar rol</h3>
+                <label for="editar-rol">Rol</label>
+                <select id="editar-rol">
+                    <option value="">Crear un rol</option>
+                    {% for rol in roles %}<option value="{{ rol.pk }}">{{ rol.nombre }}</option>{% endfor %}
+                </select>
+                <form method="post" id="rol-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="rol">
+                    <input type="hidden" name="rol_id" id="rol-id">
+                    <label>Nombre del rol<input name="nombre" id="rol-nombre" maxlength="80" required></label>
+                    <p>Define qué sesiones puede consultar o gestionar este rol.</p>
+                    {% for clave, etiqueta in permisos %}
+                    <label>{{ etiqueta }}<select name="{{ clave }}" required>
+                        {% for valor, texto in alcances %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
+                    </select></label>
+                    {% endfor %}
+                    <button class="primary-button">Guardar rol</button>
+                </form>
+            </section>
+            <section class="filter-card">
+                <h3>Crear cuenta</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="usuario">
+                    <label>Nombre<input name="nombre" autocomplete="off" maxlength="150" required></label>
+                    <label>Correo inicial<input type="email" name="correo" autocomplete="off" required></label>
+                    <label>Contraseña inicial<input type="password" name="password" autocomplete="new-password" maxlength="256" minlength="8" required></label>
+                    <label>Rol<select name="rol" required>
+                        <option value="">Selecciona un rol</option>
+                        {% for rol in roles %}<option value="{{ rol.pk }}">{{ rol.nombre }}</option>{% endfor %}
+                    </select></label>
+                    <p>La persona podrá cambiar su correo y contraseña desde Mi cuenta.</p>
+                    <button class="primary-button">Crear cuenta</button>
+                </form>
+            </section>
+            <section class="filter-card">
+                <h3>Usuarios registrados</h3>
+                <form method="post" id="asignacion-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="asignar">
+                    <label>Usuario<select name="usuario" id="usuario-select">
+                        {% for cuenta in cuentas %}
+                        <option value="{{ cuenta.usuario_id }}">{{ cuenta.usuario.nombre }} · {{ cuenta.usuario.correo }}</option>
+                        {% endfor %}
+                    </select></label>
+                    <p id="rol-actual" aria-live="polite"></p>
+                    <ul id="permisos-usuario"></ul>
+                    <label>Asignar rol<select name="rol" id="asignar-rol">
+                        {% for rol in roles %}<option value="{{ rol.pk }}">{{ rol.nombre }}</option>{% endfor %}
+                    </select></label>
+                    <button class="primary-button" id="asignar-boton">Asignar rol</button>
+                </form>
+            </section>
+        </div>
+    </main>
+</div>
+{{ roles_datos|json_script:"roles-datos" }}
+{{ usuarios_datos|json_script:"usuarios-datos" }}
+</body>
+</html>

@@ -157,7 +157,7 @@ class SistemaTests(TransactionTestCase):
         s = self.crear()
         self.assertEqual(self.client.get('/anfitrion/').status_code, 302)
         self.assertEqual(self.client.get('/api/sesiones/').status_code, 401)
-        self.assertEqual(self.h.get('/api/administrador/historial/').status_code, 403)
+        self.assertEqual([item['id'] for item in self.h.get('/api/administrador/historial/').json()['sesiones']], [s.id])
         self.assertEqual(self.o.get(f'/api/sesiones/{s.id}/asistencias/lista/').status_code, 403)
         self.assertEqual(self.o.post(f'/api/sesiones/{s.id}/cerrar/').status_code, 403)
         self.assertEqual(self.a.get(f'/api/sesiones/{s.id}/asistencias/lista/').status_code, 200)
@@ -268,7 +268,7 @@ class SistemaTests(TransactionTestCase):
         self.assertEqual(sheet['H2'].value, '=FORMULA()'); self.assertEqual(sheet['H2'].data_type, 's')
         self.assertEqual(len(sheet._images), 2)
         self.assertIn('Actividades', book.sheetnames)
-        self.assertEqual(self.h.get('/api/administrador/exportar/csv/', query).status_code, 403)
+        self.assertEqual(self.h.get('/api/administrador/exportar/csv/', query).status_code, 200)
         self.assertEqual(self.client.get('/api/administrador/exportar/xlsx/', query).status_code, 401)
 
     def test_qr_local_sin_cdn_y_datos_antiguos(self):
@@ -302,3 +302,117 @@ class SistemaTests(TransactionTestCase):
         self.assertEqual(result.status_code, 409)
         s.refresh_from_db()
         self.assertEqual(s.campos_valores_json, 'contenido antiguo ilegible')
+
+
+    def test_roles_configurables_y_cuentas_solo_superusuario(self):
+        from .models import AccesoUsuario, RolAcceso
+        from .permissions import migrar_cuentas
+        from django.contrib.auth.hashers import check_password
+        migrar_cuentas()
+        self.assertTrue(AccesoUsuario.objects.get(usuario=self.admin).superusuario)
+        self.assertFalse(AccesoUsuario.objects.get(usuario=self.host).superusuario)
+        self.assertEqual(self.h.post('/roles-permisos/', {'accion': 'rol', 'nombre': 'Intruso'}).status_code, 302)
+        self.assertFalse(RolAcceso.objects.filter(nombre='Intruso').exists())
+        self.assertEqual(self.a.get('/roles-permisos/').status_code, 200)
+        response = self.a.post('/roles-permisos/', {
+            'accion': 'rol', 'nombre': 'Solo consulta', 'consultar': 'TODAS'})
+        self.assertEqual(response.status_code, 302)
+        rol = RolAcceso.objects.get(nombre='Solo consulta')
+        response = self.a.post('/roles-permisos/', {
+            'accion': 'usuario', 'nombre': 'Docente nuevo', 'correo': 'nuevo@example.com',
+            'password': 'Clave-inicial-valida-2026!', 'rol': rol.id})
+        self.assertEqual(response.status_code, 302)
+        usuario = Usuarios.objects.get(correo='nuevo@example.com')
+        self.assertTrue(check_password('Clave-inicial-valida-2026!', usuario.password_hash))
+        self.assertFalse(AccesoUsuario.objects.get(usuario=usuario).superusuario)
+        self.assertEqual(self.a.post('/roles-permisos/', {
+            'accion': 'asignar', 'usuario': self.admin.id, 'rol': rol.id}).status_code, 200)
+        self.assertTrue(AccesoUsuario.objects.get(usuario=self.admin).superusuario)
+
+    def test_roles_revocacion_efectiva_en_servidor(self):
+        from .models import AccesoUsuario, RolAcceso
+        from .permissions import migrar_cuentas
+        migrar_cuentas()
+        sesion = self.crear()
+        consulta = RolAcceso.objects.get(nombre='Consulta propia')
+        self.a.post('/roles-permisos/', {'accion': 'asignar', 'usuario': self.host.id, 'rol': consulta.id})
+        self.assertEqual(self.h.post(f'/api/sesiones/{sesion.id}/cerrar/').status_code, 403)
+        self.assertEqual(self.h.post('/api/sesiones/crear/', {}, content_type='application/json').status_code, 403)
+        self.assertEqual(self.h.get('/api/administrador/exportar/csv/', {'sesiones': sesion.id}).status_code, 403)
+        self.assertEqual(self.h.get(f'/api/sesiones/{sesion.id}/asistencias/lista/').status_code, 200)
+        self.assertEqual(self.o.get(f'/api/sesiones/{sesion.id}/asistencias/lista/').status_code, 403)
+        consulta.consultar = 'TODAS'
+        consulta.save()
+        self.assertEqual(self.h.get('/roles-permisos/').status_code, 302)
+        self.a.post('/roles-permisos/', {'accion': 'asignar', 'usuario': self.other.id, 'rol': consulta.id})
+        self.assertEqual(self.o.get(f'/api/sesiones/{sesion.id}/asistencias/lista/').status_code, 200)
+        self.assertEqual(self.o.get('/api/administrador/exportar/csv/', {'sesiones': sesion.id}).status_code, 403)
+        self.assertEqual(self.o.post(f'/api/sesiones/{sesion.id}/cerrar/').status_code, 403)
+
+    def test_rol_duplicado_y_correo_duplicado_no_cambian_cuentas(self):
+        from .models import RolAcceso, AccesoUsuario
+        from .permissions import migrar_cuentas
+        migrar_cuentas()
+        rol = RolAcceso.objects.get(nombre='Docente')
+        self.assertEqual(self.a.post('/roles-permisos/', {
+            'accion': 'rol', 'nombre': 'docente'}).status_code, 200)
+        rol.refresh_from_db()
+        self.assertEqual(rol.crear, 'PROPIAS')
+        cantidad = Usuarios.objects.count()
+        self.a.post('/roles-permisos/', {
+            'accion': 'usuario', 'nombre': 'Duplicado', 'correo': self.host.correo.upper(),
+            'password': 'Clave-inicial-valida-2026!', 'rol': rol.id})
+        self.assertEqual(Usuarios.objects.count(), cantidad)
+        self.a.post('/roles-permisos/', {
+            'accion': 'rol', 'rol_id': rol.id, 'nombre': rol.nombre, 'consultar': 'PROPIAS', 'exportar': 'PROPIAS'})
+        rol.refresh_from_db()
+        self.assertEqual(rol.crear, 'NINGUNA')
+        self.assertEqual(rol.exportar, 'PROPIAS')
+        self.assertEqual(self.h.post('/api/sesiones/crear/', {}, content_type='application/json').status_code, 403)
+
+
+    def test_matriz_alcances_por_accion(self):
+        from .models import RolAcceso, AccesoUsuario
+        from .permissions import migrar_cuentas
+        migrar_cuentas()
+        propia = self.crear()
+        ajena = self.crear()
+        ajena.anfitrion = self.other
+        ajena.save(update_fields=['anfitrion'])
+        rol = RolAcceso.objects.create(nombre='Matriz', consultar='TODAS')
+        AccesoUsuario.objects.filter(usuario=self.host).update(rol=rol)
+        for accion in ('observaciones', 'cerrar', 'exportar'):
+            for alcance in ('NINGUNA', 'PROPIAS', 'TODAS'):
+                setattr(rol, accion, alcance)
+                rol.save()
+                for sesion in (propia, ajena):
+                    with self.subTest(accion=accion, alcance=alcance, propia=sesion.id == propia.id):
+                        if accion == 'observaciones':
+                            respuesta = self.h.post(f'/api/sesiones/{sesion.id}/desarrollo/',
+                                                    {'campos': {}, 'base': {}}, content_type='application/json')
+                        elif accion == 'cerrar':
+                            respuesta = self.h.post(f'/api/sesiones/{sesion.id}/cerrar/')
+                        else:
+                            respuesta = self.h.get('/api/sesiones/exportar/csv/', {'sesiones': sesion.id})
+                        permitido = alcance == 'TODAS' or (alcance == 'PROPIAS' and sesion.id == propia.id)
+                        self.assertEqual(respuesta.status_code, 200 if permitido else 403, respuesta.content)
+                setattr(rol, accion, 'NINGUNA')
+                rol.save()
+        for alcance, ids in [('NINGUNA', []), ('PROPIAS', [propia.id]), ('TODAS', [ajena.id, propia.id])]:
+            rol.consultar = alcance
+            rol.save()
+            self.assertEqual([s['id'] for s in self.h.get('/api/sesiones/').json()['sesiones']], ids)
+            esperado = 200 if alcance == 'TODAS' else 403
+            self.assertEqual(self.h.get(f'/api/sesiones/{ajena.id}/asistencias/lista/').status_code, esperado)
+        rol.consultar = 'TODAS'
+        for alcance in ('NINGUNA', 'PROPIAS', 'TODAS'):
+            rol.crear = alcance
+            rol.save()
+            for anfitrion in (self.host, self.other):
+                plantilla = PlantillasSesion.objects.get(nombre='Acta de reunión')
+                valores = {c.nombre: 'Dato de prueba' for c in plantilla.camposplantilla_set.all()}
+                respuesta = self.h.post('/api/sesiones/crear/', {
+                    'nombre': 'Prueba de alcance', 'plantilla_id': plantilla.id,
+                    'anfitrion_id': anfitrion.id, 'campos': valores}, content_type='application/json')
+                permitido = alcance == 'TODAS' or (alcance == 'PROPIAS' and anfitrion.id == self.host.id)
+                self.assertEqual(respuesta.status_code, 201 if permitido else 403, respuesta.content)
