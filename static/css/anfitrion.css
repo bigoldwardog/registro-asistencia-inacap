@@ -663,3 +663,9 @@ main {
 .attendance-states { align-items: flex-end; text-align: right; justify-self: end; }
 .attendance-actions { grid-column: 1 / -1; }
 .attendance-actions:empty { display: none; }
+
+#inicio-actividad { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+#inicio-actividad label { display: block; margin: 12px 0 6px; }
+#inicio-actividad input, #inicio-actividad select { width: 100%; padding: 10px; box-sizing: border-box; }
+#firma-inicio { width: 100%; height: 200px; border: 1px dashed #aaa; background: white; touch-action: none; display: block; margin-bottom: 16px; }
+#confirmar-inicio, #limpiar-firma-inicio { width: 100%; margin-top: 12px; }

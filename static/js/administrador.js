@@ -58,7 +58,15 @@ async function openSessionDetail(session){
     $('session-detail-section').hidden = false;
     document.querySelector('.session-audit').hidden = false;
     $('detail-session-title').textContent=session.nombre;
-    $('detail-session-info').textContent=`${session.plantilla} · ${session.anfitrion} · ${session.estado}`;
+    const informacion = $('detail-session-info');
+    informacion.replaceChildren();
+    const descripcion = document.createElement('span');
+    descripcion.textContent = `${session.plantilla} · ${session.anfitrion}`;
+    const estado = document.createElement('span');
+    estado.className = 'detail-state-badge';
+    estado.textContent = {ABIERTA: 'Abierta', CERRADA: 'Cerrada', PROGRAMADA: 'Programada'}[session.estado] || session.estado;
+    estado.dataset.estado = session.estado;
+    informacion.append(descripcion, estado);
     $('detail-feedback').hidden=false;$('detail-feedback').textContent='Cargando asistentes…';
     $('attendees-table-body').replaceChildren();
     try{
@@ -82,7 +90,7 @@ async function openSessionDetail(session){
             $('attendees-table-body').append(row);
         }
         const details=$('detail-activity-fields');details.replaceChildren();
-        for(const [label,value] of [['Sede', data.sesion.sede], ['Área académica', data.sesion.area], ['Inicio',formatDate(data.sesion.fecha_inicio)],['Término',formatDate(data.sesion.fecha_cierre)],...(data.sesion.campos_definicion||[]).map(f=>[f.etiqueta,data.sesion.campos[f.nombre]])]){
+        for(const [label,value] of [['Sede', data.sesion.sede], ['Área académica', data.sesion.area], ['Creada por',data.sesion.creador],['Programada para',formatDate(data.sesion.fecha_programada)],['Inicio real',formatDate(data.sesion.fecha_inicio)],['Término',formatDate(data.sesion.fecha_cierre)],...(data.sesion.campos_definicion||[]).map(f=>[f.etiqueta,data.sesion.campos[f.nombre]])]){
             if(!value)continue;const group=document.createElement('div');const term=document.createElement('dt');term.textContent=label;const text=document.createElement('dd');text.textContent=value;group.append(term,text);details.append(group);
         }
         $('attendees-empty-message').hidden=data.asistencias.length>0;$('detail-feedback').hidden=true;
@@ -117,20 +125,20 @@ async function loadCurrentSessions() {
     cards.replaceChildren();
     feedback.textContent = 'Cargando sesiones…';
     try {
-        const response = await api('/api/administrador/historial/?estado=ABIERTA');
+        const response = await api('/api/administrador/historial/?estado=' + (sessionView === 'scheduled' ? 'PROGRAMADA' : 'ABIERTA'));
         const {sesiones} = await response.json();
         for (const session of sesiones) {
             const card = document.createElement('article');
             card.className = 'current-card';
             const status = document.createElement('span');
             status.className = 'current-badge';
-            status.textContent = 'En curso';
+            status.textContent = session.estado === 'PROGRAMADA' ? 'Programada' : 'En curso';
             const title = document.createElement('h3');
             title.textContent = session.nombre;
             const type = document.createElement('p');
             type.textContent = session.plantilla + ' · ' + session.sede + ' · ' + session.area;
             const start = document.createElement('p');
-            start.textContent = `${session.anfitrion} · ${formatDate(session.fecha_inicio, {dateStyle: 'short', timeStyle: 'short'})}`;
+            start.textContent = `${session.anfitrion} · ${formatDate(session.fecha_inicio || session.fecha_programada, {dateStyle: 'short', timeStyle: 'short'})}`;
             const count = document.createElement('p');
             const total = session.total_firmadas + session.total_pendientes;
             count.textContent = `${session.total_firmadas} de ${total} firmas · ${session.total_pendientes} pendientes`;
@@ -146,7 +154,7 @@ async function loadCurrentSessions() {
             card.append(status, title, type, start, progress, count, detail);
             cards.append(card);
         }
-        feedback.textContent = sesiones.length ? '' : 'No hay sesiones en curso.';
+        feedback.textContent = sesiones.length ? '' : sessionView === 'scheduled' ? 'No hay actividades programadas.' : 'No hay sesiones en curso.';
     } catch (error) {
         feedback.textContent = error.message;
     }
@@ -155,16 +163,14 @@ async function loadCurrentSessions() {
 function showSessionView(view) {
     sessionView = view;
     currentDetail = null;
-    const current = view === 'current';
+    const current = view !== 'search';
     $('current-sessions').hidden = !current;
     $('search-sessions').hidden = current;
     $('session-detail-section').hidden = true;
     document.querySelector('.session-audit').hidden = true;
-    $('sessions-title').textContent = current ? 'Sesión / Actividad en curso' : 'Buscar sesión / actividad';
-    $('sessions-description').textContent = current
-        ? 'Consulta las sesiones abiertas y el avance de sus firmas.'
-        : 'Consulta actividades, revisa las firmas y exporta los registros.';
-    $('back-to-history').textContent = current ? 'Volver a sesiones en curso' : 'Volver a buscar sesiones';
+    $('sessions-title').textContent = view === 'scheduled' ? 'Actividades programadas' : current ? 'Sesión / Actividad en curso' : 'Buscar sesión / actividad';
+    $('sessions-description').hidden = true;
+    $('back-to-history').textContent = view === 'scheduled' ? 'Volver a programadas' : current ? 'Volver a sesiones en curso' : 'Volver a buscar sesiones';
     for (const button of document.querySelectorAll('[data-session-view]')) {
         button.disabled = button.dataset.sessionView === view;
         if (button.dataset.sessionView === view) button.setAttribute('aria-current', 'true');

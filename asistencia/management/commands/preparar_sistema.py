@@ -13,6 +13,7 @@ class Command(BaseCommand):
         connection.ensure_connection()
         connection.connection.executescript((Path(settings.BASE_DIR) / 'database/schema.sql').read_text(encoding='utf-8-sig'))
         call_command('actualizar_formularios')
+        call_command('actualizar_programacion')
         with connection.cursor() as c:
             c.execute('PRAGMA table_info(usuarios)')
             if 'telefono' not in {r[1] for r in c.fetchall()}:

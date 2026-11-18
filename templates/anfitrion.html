@@ -13,9 +13,9 @@
     <title>Panel del encargado</title>
 
     <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=rojo-barra-roja">
-    <link rel="stylesheet" href="{% static 'css/anfitrion.css' %}?v=estado-derecha-1?v=panel-anfitrion-5-roboto-rojo-barra-roja">
+    <link rel="stylesheet" href="{% static 'css/anfitrion.css' %}?v=programacion-3">
     <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=2-barra-roja">
-    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=menu-cuenta-1">
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=salida-unificada-1">
 </head>
 
 <body class="host-shell">
@@ -42,7 +42,7 @@
         </nav>
     <main class="container dashboard">
         <div class="dashboard-heading">
-            <div><p class="header-label">Panel del anfitrión</p><h2>Sesiones y asistencia</h2><p>Crea una actividad y gestiona su asistencia.</p></div>
+            <div><p class="header-label">Panel anfitrión</p><h2>Sesiones y asistencia</h2></div>
         </div>
         <div class="dashboard-tabs" role="tablist" aria-label="Secciones del panel">
             <button type="button" role="tab" id="tab-manage" aria-controls="panel-manage" aria-selected="false" tabindex="-1" disabled data-dashboard-tab="manage">Gestionar sesión</button>
@@ -60,6 +60,7 @@
             </div>
         <section class="session-card">
             <div class="session-info">
+                <p id="programacion-detalle"></p>
                 <label for="session-selector">Seleccionar sesión</label>
 
                 <div class="session-selector-row">
@@ -70,6 +71,22 @@
                 <span id="selected-session-state" class="session-state-badge" aria-live="polite" hidden></span>
                 </div>
 
+                <section id="inicio-actividad" hidden>
+                    <h3>Iniciar actividad</h3>
+                    <form id="inicio-actividad-form">
+                        {% csrf_token %}
+                        <label for="anfitrion-efectivo">Anfitrión presente</label>
+                        <select id="anfitrion-efectivo" required></select>
+                        <p id="anfitrion-efectivo-datos"></p>
+                        <label for="anfitrion-rut">RUT del anfitrión</label>
+                        <input id="anfitrion-rut" maxlength="14" required placeholder="12.345.678-5">
+                        <p>El anfitrión debe firmar antes de abrir el registro de asistentes.</p>
+                        <canvas id="firma-inicio" width="900" height="300" aria-label="Firma del anfitrión"></canvas>
+                        <button type="button" class="secondary-button" id="limpiar-firma-inicio">Limpiar firma</button>
+                        <button type="submit" class="primary-button" id="confirmar-inicio">Firmar e iniciar actividad</button>
+                        <p id="inicio-actividad-feedback" role="status"></p>
+                    </form>
+                </section>
                 <h2 id="selected-session-title">Sin sesión seleccionada</h2>
 
                 <div class="session-date" aria-label="Horarios registrados"></div>
@@ -202,14 +219,15 @@
                         <select id="new-session-template" required><option value="">Cargando...</option></select>
                     </div>
                     <div class="form-group">
-                        <label for="new-session-host">Anfitrión a cargo</label>
-                        <select id="new-session-host" required><option value="">Cargando...</option></select>
+                        <label for="new-session-host">Anfitrión previsto (opcional)</label>
+                        <select id="new-session-host"><option value="">Cargando...</option></select>
                     </div>
-                    <p>La fecha y hora de inicio se registran al crear la sesión. La hora de término se registra al cerrarla.</p>
+                    <div class="form-group"><label for="fecha-programada">Fecha y hora programadas</label><input type="datetime-local" id="fecha-programada" required></div>
+                    <p>El QR se genera ahora. El anfitrión efectivo y la hora real se registran al iniciar la actividad con su firma.</p>
                     <p id="template-description"></p>
                     <div id="template-fields"></div>
                     <p id="organizacion-sesion" aria-live="polite"></p>
-                    <button id="create-session-button" class="primary-button" type="submit" disabled>Crear sesión y generar QR</button>
+                    <button id="create-session-button" class="primary-button" type="submit" disabled>Programar actividad y generar QR</button>
                     <p id="create-session-feedback" role="status" aria-live="polite"></p>
                 </form>
             </div>
@@ -236,6 +254,7 @@
     </footer>
 
 
-    <script src="{% static 'js/anfitrion.js' %}?v=selector-solo-nombre-2" defer></script>
+    <script src="{% static 'js/anfitrion.js' %}?v=programacion-3" defer></script>
+<script src="{% static 'js/inicio-actividad.js' %}?v=2" defer></script>
 </body>
 </html>

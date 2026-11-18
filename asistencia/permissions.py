@@ -1,5 +1,6 @@
 from django.contrib.auth.hashers import identify_hasher
 from django.db import transaction
+from django.db.models import Q
 from .models import AccesoUsuario, RolAcceso, Usuarios
 
 PERMISOS = (
@@ -49,7 +50,7 @@ def tiene_permiso(usuario, accion, sesion=None):
         return any(permisos[clave] != 'NINGUNA' for clave in ('crear', 'observaciones', 'cerrar'))
     alcance = permisos.get(accion, 'NINGUNA')
     permitido = alcance == 'TODAS' or (alcance == 'PROPIAS' and
-                                       (sesion is None or sesion.anfitrion_id == usuario.id))
+                                       (sesion is None or ((sesion.anfitrion_id == usuario.id or (getattr(sesion, 'programacion', None) and sesion.programacion.creador_id == usuario.id)) or getattr(getattr(sesion, 'programacion', None), 'creador_id', None) == usuario.id)))
     if not permitido or sesion is None or permisos['superusuario']:
         return permitido
     from .organizacion import permite_contexto
@@ -64,7 +65,7 @@ def sesiones_visibles(usuario, query):
         return query.none()
     from .organizacion import filtro_organizacion
     query = query.filter(filtro_organizacion(usuario, 'consultar'))
-    return query if alcance == 'TODAS' else query.filter(anfitrion_id=usuario.id)
+    return query if alcance == 'TODAS' else query.filter(Q(anfitrion_id=usuario.id) | Q(programacion__creador_id=usuario.id))
 
 
 @transaction.atomic

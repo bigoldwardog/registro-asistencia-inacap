@@ -57,8 +57,10 @@ class SistemaTests(TransactionTestCase):
     def crear(self, nombre='Entrevista con estudiante', client=None):
         plantilla = PlantillasSesion.objects.get(nombre=nombre)
         values = {c.nombre: {'fecha': timezone.localdate().isoformat(), 'hora': '10:00', 'email': 'test@example.com', 'numero': '1'}.get(c.tipo, 'Dato de prueba') for c in plantilla.camposplantilla_set.all()}
-        response = (client or self.h).post('/api/sesiones/crear/', {'nombre': 'Actividad ' + nombre, 'plantilla_id': plantilla.id, 'anfitrion_id': self.host.id, 'campos': values}, content_type='application/json')
+        response = (client or self.h).post('/api/sesiones/crear/', {'nombre': 'Actividad ' + nombre, 'plantilla_id': plantilla.id, 'anfitrion_id': self.host.id, 'fecha_programada': '2026-11-20T10:00', 'campos': values}, content_type='application/json')
         self.assertEqual(response.status_code, 201, response.content)
+        inicio = (client or self.h).post(f"/api/sesiones/{response.json()['id']}/iniciar/", {'anfitrion_id': self.host.pk, 'rut': '12345678-5', 'firma': self.png}, content_type='application/json')
+        self.assertEqual(inicio.status_code, 200, inicio.content)
         return Sesiones.objects.get(id=response.json()['id'])
 
     def registrar(self, sesion, **extra):
@@ -263,7 +265,7 @@ class SistemaTests(TransactionTestCase):
         self.assertEqual(response.json()['sesiones'][0]['fecha_local'], '2026-10-30')
         self.assertEqual(fecha_chile('2026-10-31T00:30:00+00:00', True), '2026-10-30')
         listado = self.a.get(f'/api/sesiones/{s.id}/asistencias/lista/').json()
-        self.assertEqual(listado['asistencias'][0]['cargo'], 'CEO')
+        self.assertEqual(listado['asistencias'][1]['cargo'], 'CEO')
         self.assertEqual([f['nombre'] for f in listado['sesion']['campos_asistente']], ['nombre', 'cargo'])
         self.assertEqual(self.a.get('/api/administrador/historial/', {'q': 'No existe'}).json()['sesiones'], [])
 
@@ -387,6 +389,8 @@ class SistemaTests(TransactionTestCase):
         migrar_cuentas()
         propia = self.crear()
         ajena = self.crear()
+        ajena.programacion.creador = self.other
+        ajena.programacion.save()
         ajena.anfitrion = self.other
         ajena.save(update_fields=['anfitrion'])
         rol = RolAcceso.objects.create(nombre='Matriz', consultar='TODAS')
@@ -422,9 +426,9 @@ class SistemaTests(TransactionTestCase):
                 plantilla = PlantillasSesion.objects.get(nombre='Acta de reunión')
                 valores = {c.nombre: 'Dato de prueba' for c in plantilla.camposplantilla_set.all()}
                 respuesta = self.h.post('/api/sesiones/crear/', {
-                    'nombre': 'Prueba de alcance', 'plantilla_id': plantilla.id,
+                    'nombre': 'Prueba de alcance', 'fecha_programada': '2026-11-20T10:00', 'plantilla_id': plantilla.id,
                     'anfitrion_id': anfitrion.id, 'campos': valores}, content_type='application/json')
-                permitido = alcance == 'TODAS' or (alcance == 'PROPIAS' and anfitrion.id == self.host.id)
+                permitido = alcance != 'NINGUNA'
                 self.assertEqual(respuesta.status_code, 201 if permitido else 403, respuesta.content)
 
 
@@ -475,9 +479,11 @@ class SistemaTests(TransactionTestCase):
         rol.save()
         plantilla = PlantillasSesion.objects.get(nombre='Acta de reunión')
         respuesta = self.h.post('/api/sesiones/crear/', {
-            'nombre': 'Fuera del área', 'plantilla_id': plantilla.id,
-            'anfitrion_id': self.other.id, 'campos': {}}, content_type='application/json')
-        self.assertEqual(respuesta.status_code, 403)
+            'nombre': 'Fuera del área', 'fecha_programada': '2026-11-20T10:00', 'plantilla_id': plantilla.id,
+            'anfitrion_id': self.other.id, 'campos': {c.nombre: 'Dato' for c in plantilla.camposplantilla_set.all()}}, content_type='application/json')
+        self.assertEqual(respuesta.status_code, 201)
+        inicio = self.h.post(f"/api/sesiones/{respuesta.json()['id']}/iniciar/", {'anfitrion_id': self.other.pk, 'rut': '12345678-5', 'firma': self.png}, content_type='application/json')
+        self.assertEqual(inicio.status_code, 400)
 
     def test_guardar_varias_sedes_y_areas_de_rol(self):
         from .models import RolAcceso, SedeAcademica, AreaAcademica
@@ -546,7 +552,7 @@ class SistemaTests(TransactionTestCase):
                 libro = load_workbook(io.BytesIO(excel.content))
                 self.assertEqual(len(libro.worksheets), 1)
                 hoja = libro.active
-                self.assertEqual(len(hoja._images), 1 if sesion.plantilla.nombre == 'Registro de asistencia' else 2)
+                self.assertEqual(len(hoja._images), 2 if sesion.plantilla.nombre == 'Registro de asistencia' else 3)
                 self.assertEqual(hoja.page_setup.fitToWidth, 1)
                 self.assertEqual(hoja.page_setup.fitToHeight, 0)
                 self.assertTrue(hoja.print_area)
@@ -565,8 +571,8 @@ class SistemaTests(TransactionTestCase):
         import re
         self.assertGreater(len(re.findall(rb'/Type /Page\b',pdf)), 1)
         hoja = load_workbook(io.BytesIO(xlsx_documentos([doc]))).active
-        self.assertEqual(len(hoja._images), 60)
-        self.assertEqual(hoja['B68'].value, 'Asistente 60')
+        self.assertEqual(len(hoja._images), 61)
+        self.assertEqual(hoja['B69'].value, 'Asistente 60')
         self.assertEqual(hoja.print_title_rows, '$1:$8')
         sesion = self.crear('Entrevista con estudiante')
         sesion.campos_valores_json = json.dumps({'desarrollo_de_la_entrevista': 'Observación extensa. ' * 450})
@@ -602,3 +608,51 @@ class SistemaTests(TransactionTestCase):
         self.assertContains(self.h.post('/mi-cuenta/',datos),'Selecciona una sede y un área académica válidas.')
         perfil.refresh_from_db()
         self.assertEqual(perfil.area_id,area.pk)
+
+    def test_programar_cambiar_anfitrion_firmar_y_conservar_qr(self):
+        from .models import ProgramacionSesion
+        plantilla = PlantillasSesion.objects.get(nombre='Registro de asistencia')
+        datos = {'nombre': 'Charla del viernes', 'plantilla_id': plantilla.pk, 'anfitrion_id': self.host.pk,
+                 'fecha_programada': '2026-11-20T10:00', 'campos': {'tema':'Redes','lugar':'Auditorio'}}
+        respuesta = self.h.post('/api/sesiones/crear/', datos, content_type='application/json')
+        self.assertEqual(respuesta.status_code,201,respuesta.content)
+        s = Sesiones.objects.get(pk=respuesta.json()['id'])
+        qr = s.token_qr
+        self.assertEqual(s.estado,'PROGRAMADA')
+        self.assertIsNone(s.fecha_inicio)
+        self.assertIsNone(s.anfitrion_id)
+        self.assertEqual(s.programacion.creador_id,self.host.pk)
+        self.assertEqual(self.h.get(f'/api/sesiones/{s.pk}/afiche.pdf').status_code,200)
+        publico = self.client.get(f'/api/sesiones/{qr}/').json()
+        self.assertEqual(publico['estado'],'PROGRAMADA')
+        self.assertEqual(self.registrar(s)[0].status_code,409)
+        self.assertEqual(self.h.post(f'/api/sesiones/{s.pk}/cerrar/').status_code,409)
+        sin_firma = self.h.post(f'/api/sesiones/{s.pk}/iniciar/', {'anfitrion_id':self.other.pk,'rut':'12345678-5'}, content_type='application/json')
+        self.assertEqual(sin_firma.status_code,400)
+        s.refresh_from_db(); self.assertEqual(s.estado,'PROGRAMADA')
+        # Un usuario ajeno no puede iniciar la programación de otro.
+        self.assertEqual(self.o.post(f'/api/sesiones/{s.pk}/iniciar/', {'anfitrion_id':self.other.pk,'rut':'12345678-5','firma':self.png}, content_type='application/json').status_code,403)
+        inicio = self.h.post(f'/api/sesiones/{s.pk}/iniciar/', {'anfitrion_id':self.other.pk,'rut':'12345678-5','firma':self.png}, content_type='application/json')
+        self.assertEqual(inicio.status_code,200,inicio.content)
+        s.refresh_from_db()
+        self.assertEqual(s.anfitrion_id,self.other.pk)
+        self.assertEqual(s.token_qr,qr)
+        self.assertTrue(s.fecha_inicio)
+        self.assertEqual(s.programacion.creador_id,self.host.pk)
+        self.assertEqual(s.programacion.iniciada_por_id,self.host.pk)
+        self.assertTrue(s.programacion.firma_anfitrion)
+        self.assertEqual(self.h.post(f'/api/sesiones/{s.pk}/iniciar/', {'anfitrion_id':self.host.pk,'rut':'12345678-5','firma':self.png}, content_type='application/json').status_code,409)
+        self.assertEqual(self.o.get(f'/api/sesiones/{s.pk}/asistencias/lista/').status_code,200)
+        respuesta,_ = self.registrar(s)
+        self.assertEqual(respuesta.status_code,201)
+        listado = self.h.get(f'/api/sesiones/{s.pk}/asistencias/lista/').json()['asistencias']
+        self.assertTrue(listado[0]['es_anfitrion'])
+        self.assertEqual(listado[0]['nombre'],self.other.nombre)
+        self.assertEqual(listado[0]['estado'],'FIRMADO')
+        from .documentos import construir_documento
+        documento = construir_documento(s)
+        self.assertEqual(documento['asistentes'][0].nombre_registrado,self.other.nombre)
+        self.assertEqual(documento['asistentes'][0].cargo_registrado,'Anfitrión')
+        self.assertEqual(len(documento['asistentes']),2)
+        self.assertEqual(self.h.get('/api/sesiones/exportar/pdf/',{'sesiones':s.pk}).status_code,200)
+        self.assertEqual(self.h.get('/api/sesiones/exportar/xlsx/',{'sesiones':s.pk}).status_code,200)

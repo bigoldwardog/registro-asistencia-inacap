@@ -16,6 +16,7 @@ urlpatterns = [
     path('api/sesiones/<int:sesion_id>/asistencias/lista/', views.listar_asistencias),
     path('api/sesiones/<int:sesion_id>/desarrollo/', views.guardar_desarrollo),
     path('api/sesiones/<int:sesion_id>/historial/', views.historial_cambios),
+    path('api/sesiones/<int:sesion_id>/iniciar/', views.iniciar_sesion),
     path('api/sesiones/<int:sesion_id>/cerrar/', views.cerrar_sesion),
     path('api/sesiones/<int:sesion_id>/qr.png', views.codigo_qr),
     path('api/sesiones/<int:sesion_id>/afiche.pdf', views.afiche_qr),

@@ -95,9 +95,9 @@ class PlantillasSesion(models.Model):
 
 class Sesiones(models.Model):
     plantilla = models.ForeignKey(PlantillasSesion, models.DO_NOTHING)
-    anfitrion = models.ForeignKey('Usuarios', models.DO_NOTHING)
+    anfitrion = models.ForeignKey('Usuarios', models.DO_NOTHING, null=True, blank=True)
     nombre = models.TextField()
-    fecha_inicio = models.TextField()
+    fecha_inicio = models.TextField(null=True, blank=True)
     fecha_cierre = models.TextField(blank=True, null=True)
     estado = models.TextField()
     token_qr = models.TextField(unique=True)
@@ -226,3 +226,14 @@ class ContextoSesion(models.Model):
                                  db_constraint=False, related_name='contexto')
     sede = models.ForeignKey(SedeAcademica, models.PROTECT)
     area = models.ForeignKey(AreaAcademica, models.PROTECT)
+
+
+class ProgramacionSesion(models.Model):
+    sesion = models.OneToOneField(Sesiones, models.CASCADE, primary_key=True, db_constraint=False, related_name='programacion')
+    creador = models.ForeignKey(Usuarios, models.PROTECT, db_constraint=False, related_name='+')
+    fecha_programada = models.DateTimeField()
+    anfitrion_previsto = models.ForeignKey(Usuarios, models.PROTECT, null=True, blank=True, db_constraint=False, related_name='+')
+    iniciada_por = models.ForeignKey(Usuarios, models.PROTECT, null=True, blank=True, db_constraint=False, related_name='+')
+    firma_anfitrion = models.BinaryField(null=True, blank=True)
+    datos_anfitrion_json = models.TextField(default='{}')
+    fecha_firma = models.DateTimeField(null=True, blank=True)

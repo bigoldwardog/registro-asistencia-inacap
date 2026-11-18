@@ -200,3 +200,18 @@ body.host-shell .site-footer { background: #111; color: #fff; }
 #confirmar-salida::backdrop { background: rgb(0 0 0 / 40%); }
 #confirmar-salida form { display: flex; align-items: center; justify-content: center; gap: 12px; }
 #confirmar-salida button { width: auto; margin: 0; }
+
+/* Confirmación de salida y casillas con el color institucional. */
+#confirmar-salida button { border-radius: 1.25rem; min-height: 2.5rem; padding: .45rem 1.6rem; font: inherit; cursor: pointer; }
+#confirmar-salida #cancelar-salida { background: #cc0000; color: #fff; border: 1px solid #cc0000; }
+#confirmar-salida #cancelar-salida:hover { background: #ad0000; border-color: #ad0000; }
+input[type="checkbox"] { accent-color: #cc0000; }
+
+/* Apariencia uniforme de la confirmación de salida en todos los paneles y roles. */
+#confirmar-salida button[type="submit"],
+#confirmar-salida button[type="submit"]:hover {
+    background: #e9e9ed;
+    color: #111;
+    border: 1px solid #888;
+    box-shadow: none;
+}

@@ -196,7 +196,7 @@ async function loadSession() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'No se pudo cargar la actividad.');
         title.textContent = data.nombre;
-        eventDate.textContent = data.fecha_inicio ? `Inicio: ${new Date(data.fecha_inicio).toLocaleString('es-CL', {timeZone:'America/Santiago'})}` : '';
+        eventDate.textContent = data.estado === 'PROGRAMADA' && data.fecha_programada ? `Programada: ${new Date(data.fecha_programada).toLocaleString('es-CL', {timeZone:'America/Santiago'})}` : data.fecha_inicio ? `Inicio: ${new Date(data.fecha_inicio).toLocaleString('es-CL', {timeZone:'America/Santiago'})}` : '';
         sessionIsOpen = data.estado === 'ABIERTA';
         entregaEpp = Boolean(data.entrega_epp);
         const pending = parse(read(pendingKey));
@@ -218,7 +218,7 @@ async function loadSession() {
             }
             remove(successKey);
         }
-        if (!sessionIsOpen) { message.textContent = 'Esta sesión está cerrada y no admite nuevos registros ni firmas.'; return; }
+        if (!sessionIsOpen) { message.textContent = data.estado === 'PROGRAMADA' ? 'Esta actividad está programada. El registro se habilitará cuando el anfitrión la inicie.' : 'Esta sesión está cerrada y no admite nuevos registros ni firmas.'; return; }
         if (pending?.datos && pending.registro_token) {
             submissionToken = pending.registro_token; fill(pending.datos); showForm();
             message.textContent = 'Se recuperó un envío pendiente. Puedes reintentarlo sin duplicar tu registro.';

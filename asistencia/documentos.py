@@ -47,6 +47,15 @@ def construir_documento(sesion):
     area = contexto.area.nombre if contexto else valores.get('area_o_tematica', '')
     asistentes = list(Asistencias.objects.filter(sesion=sesion).order_by('fecha_registro', 'id'))
     firmas = {f.asistencia_id: bytes(f.imagen) for f in Firmas.objects.filter(asistencia__sesion=sesion)}
+    programacion = getattr(sesion, 'programacion', None)
+    if programacion and programacion.fecha_firma:
+        from types import SimpleNamespace
+        datos = json_guardado(programacion.datos_anfitrion_json, dict)
+        anfitrion_firmante = SimpleNamespace(id=-sesion.pk, nombre_registrado=datos.get('nombre',''),
+            rut_registrado=datos.get('rut',''), cargo_registrado='Anfitrión', correo_registrado=datos.get('correo',''),
+            telefono_registrado=datos.get('telefono',''), campos_participante_json='{}', estado='FIRMADO')
+        asistentes.insert(0, anfitrion_firmante)
+        firmas[anfitrion_firmante.id] = bytes(programacion.firma_anfitrion)
     bloques = []
     def titulo(texto): bloques.append({'tipo': 'titulo', 'texto': texto})
     def tabla(filas, anchos=None, cabecera=False, firma=False):
@@ -108,7 +117,7 @@ def construir_documento(sesion):
             bloques.append({'tipo': 'pagina'})
             titulo('NÓMINA DE ESTUDIANTES')
         parrafo('ÁREA ' + area); parrafo('INACAP - ' + sede)
-        campos([('Lugar', valores.get('lugar', '')), ('Docente', valores.get('docente') or sesion.anfitrion.nombre), ('Fecha', fecha(sesion.fecha_inicio)), ('Horario', horario), ('Empresa', valores.get('empresa', ''))])
+        campos([('Lugar', valores.get('lugar', '')), ('Docente', valores.get('docente') or (sesion.anfitrion.nombre if sesion.anfitrion else '')), ('Fecha', fecha(sesion.fecha_inicio)), ('Horario', horario), ('Empresa', valores.get('empresa', ''))])
         participantes('visita')
     elif nombre == 'Solicitud de seguro para proyecto de título':
         titulo('DATOS DE LA EMPRESA'); campos([('Nombre o Razón Social', valores.get('razon_social', '')), ('R.U.T.', valores.get('rut_empresa', '')), ('Dirección', valores.get('direccion_empresa', '')), ('Giro', valores.get('giro', ''))])

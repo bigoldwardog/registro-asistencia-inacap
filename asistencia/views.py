@@ -76,12 +76,18 @@ from .permissions import tiene_permiso, sesiones_visibles, permisos_usuario
 
 
 def datos_sesion(sesion):
+    programacion = getattr(sesion, 'programacion', None)
     contexto = getattr(sesion, 'contexto', None)
+    programacion = getattr(sesion, 'programacion', None)
     return dict(sede=contexto.sede.nombre if contexto else 'Sin clasificar',
         area=contexto.area.nombre if contexto else 'Sin clasificar', id=sesion.id, nombre=sesion.nombre, estado=sesion.estado,
         fecha_inicio=fecha_chile(sesion.fecha_inicio), fecha_cierre=fecha_chile(sesion.fecha_cierre),
-        fecha_local=fecha_chile(sesion.fecha_inicio, True), token_qr=sesion.token_qr,
-        plantilla=sesion.plantilla.nombre, anfitrion=sesion.anfitrion.nombre,
+        fecha_programada=fecha_chile(programacion.fecha_programada) if programacion else '',
+        creador=programacion.creador.nombre if programacion else 'No registrado en la versión anterior',
+        anfitrion_previsto=programacion.anfitrion_previsto.nombre if programacion and programacion.anfitrion_previsto else '',
+        firma_anfitrion_registrada=bool(programacion and programacion.fecha_firma),
+        fecha_local=fecha_chile(sesion.fecha_inicio or (programacion.fecha_programada if programacion else None), True), token_qr=sesion.token_qr,
+        plantilla=sesion.plantilla.nombre, anfitrion=sesion.anfitrion.nombre if sesion.anfitrion else 'Por confirmar al iniciar',
         campos_definicion=definicion_sesion(sesion), campos=json_guardado(sesion.campos_valores_json, dict))
 
 
@@ -100,15 +106,16 @@ def historial_sesiones(request):
     q = request.GET.get('q', '').strip().casefold()
     results = []
     sesiones = Sesiones.objects.select_related('plantilla', 'anfitrion').prefetch_related('asistencias_set').order_by('-id')
-    if request.GET.get('estado') == 'ABIERTA':
-        sesiones = sesiones.filter(estado='ABIERTA')
+    if request.GET.get('estado') in ('PROGRAMADA', 'ABIERTA', 'CERRADA'):
+        sesiones = sesiones.filter(estado=request.GET['estado'])
     sesiones = sesiones_visibles(request.actor, sesiones)
     for sesion in sesiones:
         attendees = list(sesion.asistencias_set.all())
         if q and q not in sesion.nombre.casefold() and not any(q in ' '.join([a.nombre_registrado, a.rut_registrado, a.cargo_registrado]).casefold() or q.replace('.', '').replace('-', '') in a.rut_registrado.replace('.', '').replace('-', '').casefold() for a in attendees):
             continue
         row = datos_sesion(sesion)
-        row.update(total_asistencias=len(attendees), total_firmadas=sum(a.estado == 'FIRMADO' for a in attendees),
+        firma_anfitrion = int(bool(getattr(sesion, 'programacion', None) and sesion.programacion.fecha_firma))
+        row.update(total_asistencias=len(attendees) + firma_anfitrion, total_firmadas=sum(a.estado == 'FIRMADO' for a in attendees) + firma_anfitrion,
             total_pendientes=sum(a.estado == 'PENDIENTE_FIRMA' for a in attendees))
         results.append(row)
     return JsonResponse({'sesiones': results})
@@ -136,6 +143,13 @@ def listar_asistencias(request, sesion_id):
         row.update(devolucion_firmada=a.id in devoluciones, fecha_firma_devolucion=devoluciones.get(a.id),
             docente_firmado=a.id in docentes, fecha_firma_docente=docentes.get(a.id), tiene_firma=a.id in firmas)
         rows.append(row)
+    programacion = getattr(sesion, 'programacion', None)
+    if programacion and programacion.fecha_firma:
+        datos = json_guardado(programacion.datos_anfitrion_json, dict)
+        rows.insert(0, dict(id=-sesion.pk, nombre=datos.get('nombre',''), cargo='Anfitrión',
+            rut=datos.get('rut',''), correo=datos.get('correo',''), telefono=datos.get('telefono',''), campos={},
+            estado='FIRMADO', fecha_registro=fecha_chile(programacion.fecha_firma), fecha_firma=fecha_chile(programacion.fecha_firma),
+            tiene_firma=True, es_anfitrion=True, devolucion_firmada=False, docente_firmado=False))
     data = datos_sesion(sesion)
     data['permisos'] = {accion: tiene_permiso(request.actor, accion, sesion)
                         for accion in ('crear', 'observaciones', 'cerrar', 'exportar')}
@@ -151,6 +165,7 @@ def listar_asistencias(request, sesion_id):
 def consultar_sesion(request, token):
     s = obtener_sesion(token=token)
     return JsonResponse(dict(id=s.id, nombre=s.nombre, estado=s.estado,
+        fecha_programada=fecha_chile(s.programacion.fecha_programada) if hasattr(s, 'programacion') else '',
         fecha_inicio=fecha_chile(s.fecha_inicio), fecha_cierre=fecha_chile(s.fecha_cierre), campos_asistente=campos_asistente(s), entrega_epp=s.plantilla.nombre == EPP))
 
 
@@ -348,6 +363,8 @@ def guardar_firma_docente(request, asistencia_id):
 def cerrar_sesion(request, sesion_id):
     with transaction.atomic():
         s = obtener_sesion(request, sesion_id, lock=True, accion='cerrar')
+        if s.estado == 'PROGRAMADA':
+            raise ErrorFormulario('La actividad todavía no ha iniciado.', 409)
         if s.estado != 'CERRADA':
             s.estado, s.fecha_cierre = 'CERRADA', timezone.now().isoformat()
             s.save(update_fields=['estado', 'fecha_cierre'])
@@ -359,13 +376,11 @@ def cerrar_sesion(request, sesion_id):
 @require_GET
 def opciones_sesion(request):
     query = Usuarios.objects.filter(activo=1)
-    if permisos_usuario(request.actor)['crear'] != 'TODAS':
-        query = query.filter(id=request.actor.id)
     from .organizacion import datos_perfil
     anfitriones = [{'id': usuario.id, 'nombre': usuario.nombre, **datos_perfil(usuario)} for usuario in query]
     return JsonResponse({'plantillas': [{'id': p.id, 'nombre': p.nombre, 'descripcion': p.descripcion,
         'campos': campos_por_etapa(list(p.camposplantilla_set.order_by('orden', 'id').values('nombre', 'etiqueta', 'tipo', 'obligatorio')))}
-        for p in PlantillasSesion.objects.filter(activa=1).prefetch_related('camposplantilla_set').order_by('nombre')], 'anfitriones': anfitriones, 'puede_crear': tiene_permiso(request.actor, 'crear')})
+        for p in PlantillasSesion.objects.filter(activa=1).prefetch_related('camposplantilla_set').order_by('nombre')], 'anfitriones': anfitriones, 'organizacion_creador': datos_perfil(request.actor), 'puede_crear': tiene_permiso(request.actor, 'crear')})
 
 
 def validar_campos(campos, valores, apertura=False):
@@ -401,29 +416,31 @@ def crear_sesion(request):
     nombre = data.get('nombre', '')
     if not isinstance(nombre, str) or not nombre.strip() or len(nombre) > 200:
         raise ErrorFormulario('Indica un nombre de hasta 200 caracteres.')
-    try:
-        if isinstance(data.get('plantilla_id'), bool) or isinstance(data.get('anfitrion_id'), bool):
-            raise ValueError()
-        plantilla = PlantillasSesion.objects.get(id=int(str(data.get('plantilla_id'))), activa=1)
-        anfitrion = Usuarios.objects.get(id=int(str(data.get('anfitrion_id'))), activo=1)
-    except (ValueError, TypeError, PlantillasSesion.DoesNotExist, Usuarios.DoesNotExist):
-        raise ErrorFormulario('Selecciona una plantilla y un anfitrión activos.')
-    if permisos_usuario(request.actor)['crear'] != 'TODAS' and anfitrion.id != request.actor.id:
-        raise ErrorFormulario('Solo puedes crear sesiones a tu cargo.', 403)
+    from datetime import datetime
+    from .domain import CHILE
+    from .models import ContextoSesion, ProgramacionSesion
     from .organizacion import datos_perfil, permite_contexto
-    from .models import ContextoSesion
-    perfil = datos_perfil(anfitrion)
+    try:
+        plantilla = PlantillasSesion.objects.get(id=int(str(data.get('plantilla_id'))), activa=1)
+        programada = datetime.fromisoformat(data.get('fecha_programada', ''))
+        if programada.tzinfo is None: programada = programada.replace(tzinfo=CHILE)
+        previsto_id = data.get('anfitrion_id')
+        previsto = Usuarios.objects.get(id=int(str(previsto_id)), activo=1) if previsto_id else None
+    except (ValueError, TypeError, PlantillasSesion.DoesNotExist, Usuarios.DoesNotExist):
+        raise ErrorFormulario('Selecciona una plantilla, una fecha y hora programadas válidas y, opcionalmente, un anfitrión previsto.')
+    perfil = datos_perfil(request.actor)
     if not perfil['sede_id'] or not perfil['area_id']:
-        raise ErrorFormulario('El superusuario debe asignar sede y área al anfitrión antes de crear sesiones.')
+        raise ErrorFormulario('Completa tu sede y área en Mi cuenta antes de programar actividades.')
     if not permite_contexto(request.actor, 'crear', perfil['sede_id'], perfil['area_id']):
-        raise ErrorFormulario('No puedes crear sesiones en la sede o área del anfitrión seleccionado.', 403)
+        raise ErrorFormulario('No puedes programar en esta sede o área.', 403)
     campos = campos_por_etapa(list(plantilla.camposplantilla_set.order_by('orden', 'id').values('nombre', 'etiqueta', 'tipo', 'obligatorio', 'orden')))
     valores = validar_campos(campos, data.get('campos', {}), True)
     with transaction.atomic():
-        s = Sesiones.objects.create(plantilla=plantilla, anfitrion=anfitrion, nombre=nombre.strip(), estado='ABIERTA',
-            fecha_inicio=timezone.now().isoformat(), token_qr=uuid.uuid4().hex,
+        s = Sesiones.objects.create(plantilla=plantilla, anfitrion=None, nombre=nombre.strip(), estado='PROGRAMADA',
+            fecha_inicio=None, token_qr=uuid.uuid4().hex,
             campos_definicion_json=json.dumps(campos, ensure_ascii=False), campos_valores_json=json.dumps(valores, ensure_ascii=False))
         ContextoSesion.objects.create(sesion=s, sede_id=perfil['sede_id'], area_id=perfil['area_id'])
+        ProgramacionSesion.objects.create(sesion=s, creador=request.actor, fecha_programada=programada, anfitrion_previsto=previsto)
         auditar(request, 'CREAR_SESION', 'sesion', s.id, despues=datos_sesion(s))
     return JsonResponse({'id': s.id, 'nombre': s.nombre, 'estado': s.estado}, status=201)
 
@@ -569,7 +586,9 @@ def afiche_qr(request, sesion_id):
     y = texto_centrado(sesion.plantilla.nombre, y + 20, 38, gris, max_lineas=2)
     if tema:
         y = texto_centrado(tema, y + 4, 34, gris, max_lineas=2)
-    y = texto_centrado(f'Anfitrión: {sesion.anfitrion.nombre}', y + 8, 32, gris, max_lineas=2)
+    if hasattr(sesion, 'programacion'):
+        y = texto_centrado('Programada: ' + fecha_chile(sesion.programacion.fecha_programada).replace('T', ' ')[:16], y + 8, 30, gris)
+    y = texto_centrado(f'Anfitrión: {sesion.anfitrion.nombre if sesion.anfitrion else "Se confirma al iniciar"}', y + 8, 32, gris, max_lineas=2)
 
     codigo = qrcode.QRCode(border=4)
     codigo.add_data(url)
@@ -591,3 +610,43 @@ def afiche_qr(request, sesion_id):
     response['Content-Disposition'] = f'attachment; filename="afiche-asistencia-{sesion.id}.pdf"'
     response['Cache-Control'] = 'private, no-store'
     return response
+
+
+@acceso(permiso='crear')
+@require_POST
+@errores
+def iniciar_sesion(request, sesion_id):
+    from .models import ProgramacionSesion
+    from .organizacion import datos_perfil, permite_contexto
+    data = cuerpo(request)
+    with transaction.atomic():
+        s = obtener_sesion(request, sesion_id, lock=True, accion='crear')
+        if s.estado != 'PROGRAMADA':
+            raise ErrorFormulario('La actividad ya inició o está cerrada. No se reemplazó el anfitrión ni su firma.', 409)
+        try:
+            anfitrion = Usuarios.objects.get(id=int(str(data.get('anfitrion_id'))), activo=1)
+        except (ValueError, TypeError, Usuarios.DoesNotExist):
+            raise ErrorFormulario('Selecciona el anfitrión que está presente.')
+        contexto = s.contexto
+        perfil = datos_perfil(anfitrion)
+        if (perfil['sede_id'],perfil['area_id']) != (contexto.sede_id,contexto.area_id):
+            raise ErrorFormulario('El anfitrión debe pertenecer a la sede y área de esta actividad.')
+        firma = validar_png(data.get('firma'))
+        if not isinstance(data.get('rut'), str):
+            raise ErrorFormulario('Indica un RUT válido para el anfitrión.')
+        rut = normalizar_rut(data.get('rut', ''))
+        ahora = timezone.now()
+        programacion = ProgramacionSesion.objects.select_for_update().get(sesion=s)
+        programacion.iniciada_por = request.actor
+        programacion.firma_anfitrion = firma
+        programacion.fecha_firma = ahora
+        programacion.datos_anfitrion_json = json.dumps({'nombre': anfitrion.nombre, 'rut': rut,
+            'correo': anfitrion.correo, 'telefono': anfitrion.telefono, 'cargo': 'Anfitrión'}, ensure_ascii=False)
+        programacion.save()
+        s.anfitrion = anfitrion
+        s.estado = 'ABIERTA'
+        s.fecha_inicio = ahora.isoformat()
+        s.save(update_fields=['anfitrion','estado','fecha_inicio'])
+        auditar(request, 'INICIAR_ACTIVIDAD', 'sesion', s.pk,
+                despues={'creador_id': programacion.creador_id, 'anfitrion_id': anfitrion.pk, 'inicio_real': s.fecha_inicio})
+    return JsonResponse(datos_sesion(s))

@@ -91,6 +91,8 @@ async function loadAttendanceList() {
             input.disabled = !sessionState.permissions.observaciones;
         });
         sessionState.isOpen = data.sesion.estado === "ABIERTA";
+        window.dispatchEvent(new CustomEvent("sesion-cargada", {detail: data.sesion}));
+        showSessionTimes(data.sesion);
         mostrarEstadoSesion(data.sesion.estado);
         sessionState.esEpp = Boolean(data.sesion.es_epp);
         sessionState.esPanol = Boolean(data.sesion.es_panol);
@@ -110,18 +112,19 @@ async function loadAttendanceList() {
             returnedAt: item.fecha_firma_devolucion,
             teacherSigned: item.docente_firmado,
             hasSignature: item.tiene_firma,
+            isHost: Boolean(item.es_anfitrion),
             status: item.estado
         }));
 
         sessionStatus.textContent = sessionState.isOpen
             ? "Sesión abierta"
-            : "Sesión cerrada";
+            : data.sesion.estado === "PROGRAMADA" ? "Actividad programada" : "Sesión cerrada";
 
         closeSessionButton.disabled = !sessionState.isOpen || !sessionState.permissions?.cerrar;
 
         closeSessionButton.textContent = sessionState.isOpen
             ? "Cerrar sesión"
-            : "Sesión cerrada";
+            : data.sesion.estado === "PROGRAMADA" ? "Actividad programada" : "Sesión cerrada";
 
         renderAttendanceList();
 
@@ -171,7 +174,7 @@ async function loadSessions(preferredSessionId = null) {
 
         sessionSelector.innerHTML = "";
 
-        updateManageAvailability(sessions.some((session) => session.estado === "ABIERTA"));
+        updateManageAvailability(sessions.some((session) => session.estado !== "CERRADA"));
         emptyMessage.hidden = sessions.length !== 0;
         if (sessions.length === 0) {
             sessionSelector.add(
@@ -350,7 +353,7 @@ function renderAttendanceList() {
         const actions = document.createElement('div');
         actions.className = 'attendance-actions';
         article.append(states, actions);
-        if (sessionState.esEpp) {
+        if (sessionState.esEpp && !attendee.isHost) {
             status.textContent = attendee.status === "FIRMADO" ? "Recepción firmada" : getStatusText(attendee.status);
             if (attendee.returned) {
                 const returned = document.createElement("span"); returned.className = "return-confirmed";
@@ -364,7 +367,7 @@ function renderAttendanceList() {
             }
         }
 
-        if (sessionState.esPanol && attendee.status === 'FIRMADO') {
+        if (sessionState.esPanol && !attendee.isHost && attendee.status === 'FIRMADO') {
             if (attendee.teacherSigned) {
                 const signed = document.createElement('span'); signed.textContent = 'Docente firmado'; states.append(signed);
             } else if (sessionState.isOpen) {
@@ -760,7 +763,7 @@ async function loadSessionOptions() {
         const data = await response.json();
         const selectorAnfitrion = document.querySelector('#new-session-host');
         const mostrarOrganizacion = () => {
-            const perfil = data.anfitriones.find(item => String(item.id) === selectorAnfitrion.value);
+            const perfil = data.organizacion_creador;
             document.querySelector('#organizacion-sesion').textContent = perfil
                 ? 'Sede · ' + perfil.sede + ' / Área · ' + perfil.area : '';
         };
@@ -770,7 +773,7 @@ async function loadSessionOptions() {
             const select = document.querySelector(selector);
             select.replaceChildren(new Option(items.length ? "Selecciona una opción" : "No hay opciones disponibles", ""));
             items.forEach((item) => select.add(new Option(item.nombre, item.id)));
-            if (items.length === 1) select.value = String(items[0].id);
+            if (items.length === 1 && selector !== "#new-session-host") select.value = String(items[0].id);
         }
         mostrarOrganizacion();
         renderTemplateFields();
@@ -791,6 +794,7 @@ createForm.addEventListener("submit", async (event) => {
             headers: {"Content-Type": "application/json", "X-CSRFToken": createForm.querySelector('[name="csrfmiddlewaretoken"]').value},
             body: JSON.stringify({
                 nombre: document.querySelector("#new-session-name").value,
+                fecha_programada: document.querySelector("#fecha-programada").value,
                 plantilla_id: document.querySelector("#new-session-template").value,
                 anfitrion_id: document.querySelector("#new-session-host").value,
                 campos: Object.fromEntries([...document.querySelectorAll("[data-template-field]")].map((input) => [input.dataset.templateField, input.value]))
@@ -804,9 +808,9 @@ createForm.addEventListener("submit", async (event) => {
         createFeedback.textContent = "";
         const dashboardFeedback = document.querySelector("#dashboard-feedback");
         dashboardFeedback.hidden = false;
-        dashboardFeedback.textContent = "Sesión creada. Comparte el QR para recibir a los asistentes.";
+        dashboardFeedback.textContent = "Actividad programada. Puedes imprimir el QR; el registro se habilita al iniciar con la firma del anfitrión.";
         activateDashboardTab("manage", true);
-        document.querySelector(".dashboard").scrollIntoView({behavior: "smooth", block: "start"});
+        window.scrollTo({top: 0, left: 0, behavior: 'instant'});
     } catch (error) { createFeedback.textContent = error.message; }
     finally { createButton.disabled = false; }
 });
@@ -815,12 +819,12 @@ loadSessionOptions();
 
 function showSessionTimes(session) {
     currentStartTime = session.fecha_inicio;
-    const format = (value) => value ? new Date(value).toLocaleString("es-CL", {timeZone: "America/Santiago"}) : "Pendiente de cierre";
+    const format = (value) => value ? new Date(value).toLocaleString("es-CL", {timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit", hour: "numeric", minute: "2-digit", hour12: true}).replace(/a\.\s*m\./gi, "A.M.").replace(/p\.\s*m\./gi, "P.M.") : "Pendiente de cierre";
     sessionDate.replaceChildren();
     for (const [label, value] of [["Inicio", session.fecha_inicio], ["Término", session.fecha_cierre]]) {
         const item = document.createElement("div"); item.className = "session-time";
         const caption = document.createElement("span"); caption.textContent = label;
-        const timestamp = document.createElement("strong"); timestamp.textContent = format(value);
+        const timestamp = document.createElement("strong"); timestamp.textContent = value ? format(value) : label === "Inicio" ? "Pendiente de inicio" : "Pendiente de cierre";
         item.append(caption, timestamp); sessionDate.append(item);
     }
 }
@@ -1030,6 +1034,6 @@ if (document.querySelector('#tab-new').disabled) {
 function mostrarEstadoSesion(estado) {
     const etiqueta = document.getElementById('selected-session-state');
     etiqueta.hidden = !estado;
-    etiqueta.textContent = estado === 'ABIERTA' ? 'Abierta' : 'Cerrada';
+    etiqueta.textContent = estado === 'PROGRAMADA' ? 'Programada' : estado === 'ABIERTA' ? 'Abierta' : 'Cerrada';
     etiqueta.classList.toggle('cerrada', estado !== 'ABIERTA');
 }

@@ -64,7 +64,7 @@ def exportar(request, formato):
             f = firmas.get(a.id) if a else None
             d = devoluciones.get(a.id) if a else None
             docente = docentes.get(a.id) if a else None
-            rows.append([s.id, s.nombre, s.plantilla.nombre, s.anfitrion.nombre,
+            rows.append([s.id, s.nombre, s.plantilla.nombre, s.anfitrion.nombre if s.anfitrion else '',
                 fecha_chile(s.fecha_inicio), fecha_chile(s.fecha_cierre), s.estado,
                 a.nombre_registrado if a else '', a.rut_registrado if a else '', a.cargo_registrado if a else '',
                 datos.get('carrera', ''), datos.get('jornada', ''), datos.get('seccion', ''),

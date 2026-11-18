@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel del administrador</title>
-    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=fechas-alineadas-1">
+    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=estado-detalle-etiqueta-1">
     <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=2-barra-roja">
-    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=menu-cuenta-1">
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=salida-unificada-1">
 </head>
 
 <body class="admin-shell">
@@ -24,6 +24,7 @@
         <a role="link" aria-current="page" aria-disabled="true" tabindex="-1">Panel administración</a>
         <ul class="admin-subnav" aria-label="Secciones de sesiones">
             <li><button type="button" data-session-view="current" aria-controls="current-sessions" aria-current="true">Sesión / Actividad en curso</button></li>
+            <li><button type="button" data-session-view="scheduled" aria-controls="current-sessions">Programadas</button></li>
             <li><button type="button" data-session-view="search" aria-controls="search-sessions">Buscar sesión / actividad</button></li>
         </ul>
         {% if actor.puede_gestionar_sesiones %}<a href="{% url 'anfitrion' %}">Panel anfitrión</a>{% endif %}
@@ -33,7 +34,7 @@
         <section class="page-heading">
             <p class="event-label">Panel administración</p>
             <h2 id="sessions-title">Sesión / Actividad en curso</h2>
-            <p id="sessions-description">Consulta las sesiones abiertas y el avance de sus firmas.</p>
+            <p id="sessions-description" hidden></p>
         </section>
 
         <section id="current-sessions" aria-labelledby="sessions-title">
@@ -215,6 +216,6 @@
 
 
 
-    <script src="{% static 'js/administrador.js' %}?v=fechas-alineadas-1" defer></script>
+    <script src="{% static 'js/administrador.js' %}?v=estado-detalle-etiqueta-1" defer></script>
 </body>
 </html>

@@ -31,7 +31,7 @@ También puedes ejecutar `./INSTALAR.ps1`. Este crea el entorno si falta, instal
 
 ## Cuentas, roles y permisos
 
-La primera cuenta creada en configuración inicial es el superusuario base. Solo esta cuenta puede entrar a **Roles y permisos**, crear cuentas con nombre, correo y contraseña inicial, editar roles y asignarlos. Las personas pueden cambiar su correo, teléfono opcional y contraseña desde **Mi cuenta**.
+La primera cuenta creada en configuración inicial es el superusuario base. Esta cuenta y los roles con facultades de superusuario pueden entrar a **Roles y permisos**, crear cuentas con nombre, correo y contraseña inicial, editar roles y asignarlos. Las personas pueden cambiar su correo, teléfono opcional y contraseña desde **Mi cuenta**.
 
 Cada rol configura cinco acciones independientes —consultar, crear, modificar observaciones, cerrar y exportar— con alcance Ninguna, Propias o Todas. El alcance de consulta debe incluir las sesiones que se pueden modificar, cerrar o exportar. Crear con alcance Todas permite seleccionar otro anfitrión. Las comprobaciones se realizan en el servidor en cada solicitud y los cambios se aplican también a las cuentas que ya iniciaron sesión.
 
@@ -94,11 +94,11 @@ Variables opcionales: `DJANGO_DATABASE_PATH`, `DJANGO_ALLOWED_HOSTS` (separadas 
 
 ## Sedes y áreas académicas
 
-Cada cuenta tiene una sede y un área académica de pertenencia, asignadas exclusivamente por el superusuario. Al crear una sesión se guarda una clasificación independiente con la sede y el área del anfitrión. Cambiar el perfil después no reclasifica sesiones existentes.
+Cada cuenta tiene una sede y un área académica de pertenencia, asignadas al crear la cuenta y modificables desde Mi cuenta con confirmación de contraseña. Al crear una sesión se guarda una clasificación independiente con la sede y el área del creador. Cambiar el perfil después no reclasifica sesiones existentes.
 
 Cada acción del rol combina su alcance de sesiones con dos ámbitos adicionales: sede del perfil, sedes seleccionadas o todas; área del perfil, áreas seleccionadas o todas. La propiedad y ambos ámbitos se comprueban en el servidor, también en exportaciones, firmas, consultas directas y modificaciones. Por ejemplo, un coordinador puede consultar todas las sesiones de varias áreas permitidas, mientras un docente consulta solo las propias dentro de esas áreas.
 
-Las cuentas anteriores necesitan que el superusuario complete su sede y área en **Roles y permisos**. Cada sesión nueva guarda la sede y el área del anfitrión al crearla. Cambiar su perfil después no modifica esa clasificación.
+Las cuentas anteriores necesitan que el superusuario complete su sede y área en **Roles y permisos**. Cada sesión nueva guarda la sede y el área del creador al programarla. Cambiar su perfil después no modifica esa clasificación.
 
 El catálogo inicial se almacena en `database/catalogo_organizacion.json`, revisado el 18 de noviembre de 2026 desde el [directorio de sedes](https://portal.inacap.cl/sedes) y el [selector oficial de áreas](https://widgets.inacap.cl/widgetsportalcarreras/template.php). Incluye Campus Digital y Sede Central (Vitacura). Los roles pueden agrupar varias áreas oficiales, por ejemplo una coordinación EEARTIC.
 
@@ -109,3 +109,14 @@ Las facultades de superusuario también pueden delegarse mediante roles: selecci
 Subsesiones: pendiente de implementación. El caso confirmado consiste en una actividad principal con una lista compartida y varias charlas con distintos anfitriones. La firma de la lista principal no debe duplicarse ni presentarse como una firma nueva por charla. EPP/pañol se adaptarán después de acordar este flujo.
 
 Cada usuario puede modificar su sede y área desde Mi cuenta, confirmando su contraseña actual. Los permisos cuyo ámbito es Del perfil siguen la nueva afiliación; las selecciones explícitas de áreas/sedes del rol no cambian y las sesiones creadas conservan su clasificación original.
+
+
+### Programación e inicio firmado
+
+Las actividades nuevas se crean en estado **PROGRAMADA**, con fecha y hora previstas, creador registrado y anfitrión previsto opcional. El anfitrión efectivo y la hora real de inicio permanecen vacíos. El QR y su afiche PDF están disponibles desde ese momento y conservan su dirección al iniciar.
+
+Desde **Gestionar sesión**, el creador o una cuenta con permiso de crear sobre esa actividad elige el anfitrión presente, registra su RUT y exige su firma. Solo un inicio válido cambia el estado a **ABIERTA**, guarda el instante real y habilita los registros del QR. La identidad y firma del anfitrión se conservan como instantánea y encabezan la lista y las exportaciones generales. No se agregan firmas repetidas al intentar iniciar de nuevo. La fecha prevista no fuerza un inicio automático ni impide iniciar antes o después de ella.
+
+La cuenta del anfitrión debe estar activa y pertenecer a la sede y área de la actividad. El creador mantiene su acceso tras la sustitución, sujeto a los alcances de su rol; el anfitrión efectivo tiene acceso propio sujeto a sus permisos. La clasificación organizacional de la actividad no cambia. Administración dispone de **Programadas** además de las actividades en curso y la búsqueda.
+
+Ejecuta `python manage.py preparar_sistema` al actualizar: aplica la tabla de programación y adapta el esquema SQLite sin eliminar sesiones, asistentes ni firmas. Las sesiones anteriores conservan su estado y fechas; no se inventa para ellas un creador histórico ni una firma de anfitrión.

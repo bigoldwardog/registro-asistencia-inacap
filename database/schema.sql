@@ -73,14 +73,14 @@ CREATE TABLE IF NOT EXISTS sesiones (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
     plantilla_id INTEGER NOT NULL,
-    anfitrion_id INTEGER NOT NULL,
+    anfitrion_id INTEGER,
 
     nombre TEXT NOT NULL,
-    fecha_inicio TEXT NOT NULL,
+    fecha_inicio TEXT,
     fecha_cierre TEXT,
 
     estado TEXT NOT NULL DEFAULT 'ABIERTA'
-        CHECK (estado IN ('ABIERTA', 'CERRADA')),
+        CHECK (estado IN ('PROGRAMADA', 'ABIERTA', 'CERRADA')),
 
     token_qr TEXT NOT NULL UNIQUE,
 
