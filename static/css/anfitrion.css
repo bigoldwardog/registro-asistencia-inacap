@@ -634,3 +634,32 @@ main {
     color: #737373;
     cursor: default;
 }
+
+/* El desarrollo utiliza todo el espacio interior de su tarjeta. */
+#panel-development #development-section { grid-template-columns: minmax(0, 1fr); }
+#development-section .session-info,
+#development-form,
+#development-fields { width: 100%; min-width: 0; }
+#development-fields textarea,
+#development-fields input { width: 100%; box-sizing: border-box; }
+
+.session-selector-row { display: flex; align-items: center; gap: 12px; width: 100%; }
+.session-selector-row #session-selector { flex: 1; min-width: 0; }
+.session-state-badge { flex: 0 0 auto; padding: 5px 14px; border-radius: 20px; background: #f0f2f1; color: #324d41; font-size: 12px; font-weight: 500; }
+.session-state-badge.cerrada { background: #f2f2f2; color: #666; }
+.session-state-badge[hidden] { display: none; }
+
+.attendance-item { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, 1fr) minmax(130px, 1fr); align-items: center; gap: 16px; }
+.attendance-info { min-width: 0; overflow-wrap: anywhere; }
+.attendance-states { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.attendance-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
+@media (max-width: 600px) {
+    .attendance-item { grid-template-columns: minmax(0, 1fr) 120px; }
+    .attendance-actions { grid-column: 1 / -1; }
+}
+
+/* Estado al extremo derecho; las acciones especiales quedan en una fila propia. */
+.attendance-item { grid-template-columns: minmax(0, 1fr) minmax(130px, auto); }
+.attendance-states { align-items: flex-end; text-align: right; justify-self: end; }
+.attendance-actions { grid-column: 1 / -1; }
+.attendance-actions:empty { display: none; }

@@ -149,3 +149,25 @@ body .site-header {
 .permiso-total span { display: block; font-size: 13px; color: #555; line-height: 1.6; }
 
 .permiso-resumen .permiso-alcance { box-sizing: border-box; width: 82px; text-align: center; }
+
+.role-grid.roles-secciones { display: block; }
+.roles-secciones > .roles-panel[hidden] { display: none; }
+.roles-secciones > .roles-panel { min-width: 0; }
+.roles-secciones .roles-panel > form, .roles-secciones #editar-rol { width: 100%; max-width: none; box-sizing: border-box; }
+.roles-secciones #rol-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.roles-secciones #rol-form > :not(.ambito-accion) { grid-column: 1 / -1; }
+.roles-secciones #rol-form .ambito-accion { margin: 0; }
+.roles-secciones form > .primary-button { margin-top: 24px; }
+@media (max-width: 720px) { .roles-secciones #rol-form { grid-template-columns: 1fr; } }
+
+/* Mismo tono en los encabezados y pies de los paneles. */
+body.admin-shell .site-header,
+body.admin-shell .site-footer,
+body.host-shell .site-header,
+body.host-shell .site-footer { background: #111; color: #fff; }
+
+.admin-sidebar a[aria-disabled="true"],
+.host-sidebar a[aria-disabled="true"] { cursor: default; }
+
+.admin-subnav button[aria-current="true"]:disabled,
+.host-subnav button[aria-current="true"]:disabled { opacity: 1; cursor: default; color: #cc0000; background: #ffebeb; }

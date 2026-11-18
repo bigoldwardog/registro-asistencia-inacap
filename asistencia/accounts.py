@@ -238,12 +238,15 @@ def roles_permisos(request):
             if accion == 'rol':
                 from django.urls import reverse
                 return redirect(reverse('roles_permisos') + '?rol=' + str(rol.pk))
-            return redirect('roles_permisos')
+            from django.urls import reverse
+            seccion = 'crear' if accion == 'usuario' else 'usuarios'
+            return redirect(reverse('roles_permisos') + '?seccion=' + seccion)
     roles = list(RolAcceso.objects.order_by('nombre'))
     for rol in roles:
         rol.permisos_visibles = [{'clave': clave, 'etiqueta': etiqueta, 'activo': getattr(rol, clave)}
                                 for clave, etiqueta in PERMISOS]
     return render(request, 'roles_permisos.html', {
+        'seccion_roles': ({'usuario': 'crear', 'asignar': 'usuarios', 'perfil': 'usuarios'}.get(request.POST.get('accion'), 'configuracion') if request.method == 'POST' else request.GET.get('seccion', 'configuracion')),
         'actor': request.actor, 'roles': roles, 'permisos': PERMISOS, 'alcances': RolAcceso.ALCANCES,
         'roles_datos': [{**{clave: getattr(rol, clave) for clave in ('id', 'nombre', 'superusuario', *[p[0] for p in PERMISOS])},
                          'ambitos': serializar_ambitos(rol)} for rol in roles],

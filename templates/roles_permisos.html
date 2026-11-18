@@ -7,8 +7,8 @@
     <title>Roles y permisos</title>
     <link rel="stylesheet" href="{% static 'css/administrador.css' %}">
     <link rel="stylesheet" href="{% static 'css/perfil.css' %}">
-    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=organizacion-8">
-    <script src="{% static 'js/roles.js' %}?v=organizacion-8" defer></script>
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=subseccion-activa-1">
+    <script src="{% static 'js/roles.js' %}?v=subseccion-activa-1" defer></script>
 </head>
 <body class="admin-shell">
 <header class="site-header">
@@ -19,20 +19,24 @@
 </header>
 <div class="admin-layout">
     <nav class="admin-sidebar" aria-label="Navegación principal">
-        <a href="{% url 'administrador' %}">Sesiones</a>
+        <a href="{% url 'administrador' %}">Panel administración</a>
         <a href="{% url 'anfitrion' %}">Panel anfitrión</a>
-        <a href="{% url 'roles_permisos' %}" aria-current="page">Roles y permisos</a>
+        <a role="link" aria-current="page" aria-disabled="true" tabindex="-1">Roles y permisos</a>
+        <ul class="admin-subnav" aria-label="Secciones de roles y permisos">
+            <li><button type="button" data-roles-seccion="configuracion" aria-controls="roles-configuracion">Configuración</button></li>
+            <li><button type="button" data-roles-seccion="crear" aria-controls="roles-crear">Crear cuenta</button></li>
+            <li><button type="button" data-roles-seccion="usuarios" aria-controls="roles-usuarios">Usuarios registrados</button></li>
+        </ul>
     </nav>
     <main class="container">
         <section class="page-heading">
             <h2>Roles y permisos</h2>
-            <p>El superusuario crea las cuentas, configura los roles y asigna sus permisos.</p>
         </section>
         {% if error %}<p role="alert">{{ error }}</p>{% endif %}
         {% for message in messages %}<p role="status">{{ message }}</p>{% endfor %}
-        <div class="role-grid">
-            <section class="filter-card">
-                <h3>Configurar rol</h3>
+        <div class="role-grid roles-secciones" data-seccion-inicial="{{ seccion_roles }}">
+            <section class="filter-card roles-panel" id="roles-configuracion" data-roles-panel="configuracion" aria-labelledby="titulo-configuracion">
+                <h3 id="titulo-configuracion">Configurar rol</h3>
                 <label for="editar-rol">Rol</label>
                 <select id="editar-rol">
                     <option value="">Crear un rol</option>
@@ -46,7 +50,7 @@
                     <label><input type="checkbox" name="superusuario" id="rol-superusuario"> Facultades de superusuario</label>
                     <p id="descripcion-superusuario" hidden>Concede acceso completo a todas las sesiones, sedes y áreas, y permite crear cuentas y administrar roles y permisos. Prevalece sobre los límites configurados debajo.</p>
                     {% for clave, etiqueta in permisos %}
-                    <fieldset class="ambito-accion"><legend>{{ etiqueta }}</legend><label>Sesiones<select name="{{ clave }}" required>
+                    <fieldset class="ambito-accion"><legend>{{ etiqueta }}</legend><label>Sesión / Actividad<select name="{{ clave }}" required>
                         {% for valor, texto in alcances %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
                     </select></label>
                     <details><summary>Sedes y áreas autorizadas</summary><label>Sedes<select name="{{ clave }}_sedes_modo" data-ambito-modo="{{ clave }}_sedes">
@@ -68,8 +72,8 @@
                     <button class="primary-button">Guardar rol</button>
                 </form>
             </section>
-            <section class="filter-card">
-                <h3>Crear cuenta</h3>
+            <section class="filter-card roles-panel" id="roles-crear" data-roles-panel="crear" aria-labelledby="titulo-crear">
+                <h3 id="titulo-crear">Crear cuenta</h3>
                 <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="accion" value="usuario">
@@ -85,8 +89,8 @@
                     <button class="primary-button">Crear cuenta</button>
                 </form>
             </section>
-            <section class="filter-card">
-                <h3>Usuarios registrados</h3>
+            <section class="filter-card roles-panel" id="roles-usuarios" data-roles-panel="usuarios" aria-labelledby="titulo-usuarios">
+                <h3 id="titulo-usuarios">Usuarios registrados</h3>
                 <form method="post" id="asignacion-form">
                     {% csrf_token %}
                     <input type="hidden" name="accion" value="asignar">
@@ -97,10 +101,6 @@
                     </select></label>
                     <p id="rol-actual" aria-live="polite"></p>
                     <ul id="permisos-usuario"></ul>
-                    <label>Asignar rol<select name="rol" id="asignar-rol">
-                        {% for rol in roles %}<option value="{{ rol.pk }}">{{ rol.nombre }}</option>{% endfor %}
-                    </select></label>
-                    <button class="primary-button" id="asignar-boton">Asignar rol</button>
                 </form>
                 <hr>
                 <form method="post" id="organizacion-form">
@@ -110,6 +110,16 @@
                     <h3>Sede y área del usuario</h3>
                     {% include 'campos_organizacion.html' %}
                     <button class="primary-button">Guardar sede y área</button>
+                </form>
+                <hr>
+                <form method="post" id="asignacion-rol-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="asignar">
+                    <input type="hidden" name="usuario" id="asignacion-usuario">
+                    <label>Asignar rol<select name="rol" id="asignar-rol">
+                        {% for rol in roles %}<option value="{{ rol.pk }}">{{ rol.nombre }}</option>{% endfor %}
+                    </select></label>
+                    <button class="primary-button" id="asignar-boton">Asignar rol</button>
                 </form>
             </section>
         </div>

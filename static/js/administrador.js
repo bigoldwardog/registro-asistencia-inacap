@@ -159,12 +159,13 @@ function showSessionView(view) {
     $('search-sessions').hidden = current;
     $('session-detail-section').hidden = true;
     document.querySelector('.session-audit').hidden = true;
-    $('sessions-title').textContent = current ? 'Sesiones en curso' : 'Buscar sesiones';
+    $('sessions-title').textContent = current ? 'Sesión / Actividad en curso' : 'Buscar sesión / actividad';
     $('sessions-description').textContent = current
         ? 'Consulta las sesiones abiertas y el avance de sus firmas.'
         : 'Consulta actividades, revisa las firmas y exporta los registros.';
     $('back-to-history').textContent = current ? 'Volver a sesiones en curso' : 'Volver a buscar sesiones';
     for (const button of document.querySelectorAll('[data-session-view]')) {
+        button.disabled = button.dataset.sessionView === view;
         if (button.dataset.sessionView === view) button.setAttribute('aria-current', 'true');
         else button.removeAttribute('aria-current');
     }

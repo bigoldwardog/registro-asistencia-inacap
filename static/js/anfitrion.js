@@ -91,6 +91,7 @@ async function loadAttendanceList() {
             input.disabled = !sessionState.permissions.observaciones;
         });
         sessionState.isOpen = data.sesion.estado === "ABIERTA";
+        mostrarEstadoSesion(data.sesion.estado);
         sessionState.esEpp = Boolean(data.sesion.es_epp);
         sessionState.esPanol = Boolean(data.sesion.es_panol);
         if (!sessionState.isOpen) {
@@ -135,7 +136,7 @@ async function loadAttendanceList() {
 function updateManageAvailability(hasOpenSession) {
     const tab = document.getElementById("tab-manage");
     tab.disabled = !hasOpenSession;
-    document.querySelector('[data-sidebar-tab="manage"]').disabled = !hasOpenSession;
+    document.querySelector('[data-sidebar-tab="manage"]').disabled = !hasOpenSession || tab.getAttribute('aria-selected') === 'true';
     if (tab.disabled && tab.getAttribute("aria-selected") === "true") {
         activateDashboardTab("new");
     }
@@ -185,7 +186,7 @@ async function loadSessions(preferredSessionId = null) {
         sessions.forEach((session) => {
             sessionSelector.add(
                 new Option(
-                    `${session.nombre} — ${session.estado}`,
+                    session.nombre,
                     session.id
                 )
             );
@@ -261,6 +262,7 @@ async function selectSession(sessionId, sessions) {
     
     if (session) {
         sessionTitle.textContent = session.nombre;
+        mostrarEstadoSesion(session.estado);
         showSessionTimes(session);
         currentSessionData = session;
         renderDevelopment(session);
@@ -307,6 +309,7 @@ function resetSessionView() {
     selectedAttendee = null;
 
     sessionTitle.textContent = "No hay una sesión seleccionada";
+    mostrarEstadoSesion(null);
     sessionDate.textContent = "";
     sessionStatus.textContent = "Selecciona una sesión.";
     attendanceList.innerHTML = "";
@@ -341,32 +344,34 @@ function renderAttendanceList() {
         status.textContent = getStatusText(attendee.status);
 
         article.appendChild(info);
-        article.appendChild(status);
+        const states = document.createElement('div');
+        states.className = 'attendance-states';
+        states.append(status);
+        const actions = document.createElement('div');
+        actions.className = 'attendance-actions';
+        article.append(states, actions);
         if (sessionState.esEpp) {
             status.textContent = attendee.status === "FIRMADO" ? "Recepción firmada" : getStatusText(attendee.status);
             if (attendee.returned) {
                 const returned = document.createElement("span"); returned.className = "return-confirmed";
                 returned.textContent = "Devolución firmada";
                 returned.title = new Date(attendee.returnedAt).toLocaleString("es-CL", {timeZone: "America/Santiago"});
-                article.append(returned);
+                states.append(returned);
             } else if (attendee.status === "FIRMADO") {
                 const pending = document.createElement("span");
                 pending.textContent = "Devolución pendiente";
-                article.append(pending);
+                states.append(pending);
             }
         }
 
         if (sessionState.esPanol && attendee.status === 'FIRMADO') {
             if (attendee.teacherSigned) {
-                const signed = document.createElement('span'); signed.textContent = 'Docente firmado'; article.append(signed);
+                const signed = document.createElement('span'); signed.textContent = 'Docente firmado'; states.append(signed);
             } else if (sessionState.isOpen) {
                 const sign = document.createElement('button'); sign.type = 'button'; sign.textContent = 'Firma docente';
-                sign.addEventListener('click', () => selectAttendee(attendee.id, 'docente')); article.append(sign);
+                sign.addEventListener('click', () => selectAttendee(attendee.id, 'docente')); actions.append(sign);
             }
         }
-        if (attendee.hasSignature) addSignatureLink(article, attendee, 'recepcion', 'Ver firma');
-        if (attendee.returned) addSignatureLink(article, attendee, 'devolucion', 'Ver devolución');
-        if (attendee.teacherSigned) addSignatureLink(article, attendee, 'docente', 'Ver firma docente');
         attendanceList.appendChild(article);
     });
 
@@ -865,6 +870,7 @@ function activateDashboardTab(name, focus = false) {
     const requested = document.querySelector(`[data-dashboard-tab="${name}"]`);
     if (!requested || requested.disabled) return;
     for (const item of document.querySelectorAll("[data-sidebar-tab]")) {
+        item.disabled = item.dataset.sidebarTab === name || (item.dataset.sidebarTab === 'manage' && document.getElementById('tab-manage').disabled);
         if (item.dataset.sidebarTab === name) item.setAttribute("aria-current", "true");
         else item.removeAttribute("aria-current");
     }
@@ -873,8 +879,9 @@ function activateDashboardTab(name, focus = false) {
         tab.setAttribute("aria-selected", String(active));
         tab.tabIndex = active ? 0 : -1;
         document.getElementById(tab.getAttribute("aria-controls")).hidden = !active;
-        if (active && focus) tab.focus();
+        if (active && focus) tab.focus({preventScroll: true});
     }
+    window.scrollTo({top: 0, left: 0, behavior: 'instant'});
 }
 for (const item of document.querySelectorAll("[data-sidebar-tab]")) {
     item.addEventListener("click", () => {
@@ -882,10 +889,8 @@ for (const item of document.querySelectorAll("[data-sidebar-tab]")) {
         const panel = document.getElementById(item.getAttribute("aria-controls"));
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         if (reduceMotion) {
-            panel.scrollIntoView({block: "nearest"});
             return;
         }
-        panel.scrollIntoView({behavior: "smooth", block: "nearest"});
         if (panel.getAnimations().length === 0) {
             panel.animate([
                 {opacity: 0.6, transform: "translateY(6px)"},
@@ -967,15 +972,6 @@ async function apiFetch(...args) {
     if (response.status === 403 && !response.headers.get('Content-Type')?.includes('application/json')) throw new Error('El formulario venció. Recarga el panel antes de volver a guardar.');
     return response;
 }
-function addSignatureLink(parent, attendee, type, text) {
-    const button = document.createElement('button'); button.type = 'button'; button.textContent = text;
-    button.addEventListener('click', event => {
-        event.stopPropagation();
-        document.querySelector('#signature-preview-title').textContent = `${text}: ${attendee.name}`;
-        document.querySelector('#signature-preview-image').src = `/api/asistencias/${attendee.id}/imagen/${type}/`;
-        document.querySelector('#signature-preview-dialog').showModal();
-    }); parent.append(button);
-}
 document.querySelector('#load-audit').addEventListener('click', async () => {
     const id = sessionState.currentSessionId; const results = document.querySelector('#audit-results');
     if (!id) return;
@@ -1018,4 +1014,11 @@ document.querySelector('#download-poster').addEventListener('click', () => {
 
 if (document.querySelector('#tab-new').disabled) {
     activateDashboardTab('list');
+}
+
+function mostrarEstadoSesion(estado) {
+    const etiqueta = document.getElementById('selected-session-state');
+    etiqueta.hidden = !estado;
+    etiqueta.textContent = estado === 'ABIERTA' ? 'Abierta' : 'Cerrada';
+    etiqueta.classList.toggle('cerrada', estado !== 'ABIERTA');
 }

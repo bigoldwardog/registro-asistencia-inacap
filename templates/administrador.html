@@ -7,7 +7,7 @@
     <title>Panel del administrador</title>
     <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=sesiones-en-curso-2-roboto-rojo-barra-roja">
     <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=2-barra-roja">
-    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=botones-2">
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=subseccion-activa-1">
 </head>
 
 <body class="admin-shell">
@@ -21,18 +21,18 @@
 
     <div class="admin-layout">
     <nav class="admin-sidebar" aria-label="Navegación principal">
-        <a href="{% url 'administrador' %}" aria-current="page">Sesiones</a>
+        <a role="link" aria-current="page" aria-disabled="true" tabindex="-1">Panel administración</a>
         <ul class="admin-subnav" aria-label="Secciones de sesiones">
-            <li><button type="button" data-session-view="current" aria-controls="current-sessions" aria-current="true">Sesiones en curso</button></li>
-            <li><button type="button" data-session-view="search" aria-controls="search-sessions">Buscar sesiones</button></li>
+            <li><button type="button" data-session-view="current" aria-controls="current-sessions" aria-current="true">Sesión / Actividad en curso</button></li>
+            <li><button type="button" data-session-view="search" aria-controls="search-sessions">Buscar sesión / actividad</button></li>
         </ul>
         {% if actor.puede_gestionar_sesiones %}<a href="{% url 'anfitrion' %}">Panel anfitrión</a>{% endif %}
         {% if actor.es_superusuario %}<a href="{% url 'roles_permisos' %}">Roles y permisos</a>{% endif %}
     </nav>
     <main class="container">
         <section class="page-heading">
-            <p class="event-label">Administración</p>
-            <h2 id="sessions-title">Sesiones en curso</h2>
+            <p class="event-label">Panel administración</p>
+            <h2 id="sessions-title">Sesión / Actividad en curso</h2>
             <p id="sessions-description">Consulta las sesiones abiertas y el avance de sus firmas.</p>
         </section>
 
@@ -216,6 +216,6 @@
 
 
 
-    <script src="{% static 'js/administrador.js' %}?v=organizacion-1" defer></script>
+    <script src="{% static 'js/administrador.js' %}?v=subseccion-activa-1" defer></script>
 </body>
 </html>

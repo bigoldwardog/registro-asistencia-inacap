@@ -33,6 +33,7 @@ function mostrarUsuario() {
     const rol = roles.find(item => item.id === usuario.rol_id);
     const organizacion = document.getElementById('organizacion-form');
     document.getElementById('organizacion-usuario').value = usuario.usuario_id;
+    document.getElementById('asignacion-usuario').value = usuario.usuario_id;
     organizacion.elements.sede.value = usuario.sede_id || '';
     organizacion.elements.area.value = usuario.area_id || '';
     document.getElementById('rol-actual').textContent = 'Rol actual · ' +
@@ -151,3 +152,28 @@ function actualizarDescripcionSuperusuario() {
 }
 document.getElementById('rol-superusuario').addEventListener('change', actualizarDescripcionSuperusuario);
 actualizarDescripcionSuperusuario();
+
+const navegacionRoles = document.querySelectorAll('[data-roles-seccion]');
+const panelesRoles = document.querySelectorAll('[data-roles-panel]');
+function mostrarSeccionRoles(clave, animar = false) {
+    if (![...panelesRoles].some(panel => panel.dataset.rolesPanel === clave)) clave = 'configuracion';
+    for (const boton of navegacionRoles) {
+        boton.disabled = boton.dataset.rolesSeccion === clave;
+        boton.setAttribute('aria-current', String(boton.dataset.rolesSeccion === clave));
+    }
+    for (const panel of panelesRoles) {
+        panel.hidden = panel.dataset.rolesPanel !== clave;
+        if (!panel.hidden && animar && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            panel.animate([{opacity: 0, transform: 'translateY(8px)'}, {opacity: 1, transform: 'translateY(0)'}], {duration: 180, easing: 'ease-out'});
+        }
+    }
+}
+for (const boton of navegacionRoles) {
+    boton.addEventListener('click', () => {
+        const clave = boton.dataset.rolesSeccion;
+        mostrarSeccionRoles(clave, true);
+        history.replaceState(null, '', '#' + clave);
+    });
+}
+mostrarSeccionRoles(location.hash.slice(1) || document.querySelector('.roles-secciones').dataset.seccionInicial);
+window.addEventListener('hashchange', () => mostrarSeccionRoles(location.hash.slice(1), true));
