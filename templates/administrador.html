@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel del administrador</title>
-    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=sesiones-en-curso-2-roboto-rojo-barra-roja">
+    <link rel="stylesheet" href="{% static 'css/administrador.css' %}?v=fechas-alineadas-1">
     <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=2-barra-roja">
-    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=subseccion-activa-1">
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=menu-cuenta-1">
 </head>
 
 <body class="admin-shell">
@@ -126,9 +126,9 @@
                 <button
                     type="button"
                     class="secondary-button"
-                    id="export-csv"
+                    id="export-pdf"
                 >
-                    Exportar CSV
+                    Exportar PDF
                 </button>
 
                 <button
@@ -187,7 +187,7 @@
             </div>
 
             <dl id="detail-activity-fields"></dl>
-            <div class="export-actions"{% if not actor.puede_exportar %} hidden{% endif %}><button class="secondary-button" type="button" id="detail-export-csv">Exportar asistentes CSV</button><button class="secondary-button" type="button" id="detail-export-xlsx">Exportar Excel con firmas</button></div>
+            <div class="export-actions"{% if not actor.puede_exportar %} hidden{% endif %}><button class="secondary-button" type="button" id="detail-export-pdf">Exportar PDF</button><button class="secondary-button" type="button" id="detail-export-xlsx">Exportar Excel con firmas</button></div>
             <p id="detail-feedback" class="feedback-message" role="status" hidden></p>
 
             <div class="table-container">
@@ -205,7 +205,6 @@
             <details class="session-audit" hidden><summary>Historial de cambios</summary><button type="button" class="secondary-button" id="admin-load-audit">Cargar historial de la sesión seleccionada</button><div id="admin-audit-results"></div></details>
     </main>
     </div>
-    <dialog id="signature-preview-dialog" aria-labelledby="signature-preview-title"><h2 id="signature-preview-title">Firma guardada</h2><img id="signature-preview-image" alt="Firma guardada"><form method="dialog"><button class="secondary-button">Cerrar</button></form></dialog>
 
     <footer class="site-footer">
         <div class="container">
@@ -216,6 +215,6 @@
 
 
 
-    <script src="{% static 'js/administrador.js' %}?v=subseccion-activa-1" defer></script>
+    <script src="{% static 'js/administrador.js' %}?v=fechas-alineadas-1" defer></script>
 </body>
 </html>

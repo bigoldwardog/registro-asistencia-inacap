@@ -7,8 +7,17 @@ async function api(url) {
     if (!response.ok) { const data = await response.json(); throw new Error(data.error || 'No se pudo completar la operación.'); }
     return response;
 }
-function formatDate(value, options = {}) {
-    return value ? new Date(value).toLocaleString('es-CL', {timeZone: 'America/Santiago', ...options}) : '—';
+function formatDate(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    const parts = new Intl.DateTimeFormat('es-CL', {
+        timeZone: 'America/Santiago', day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true
+    }).formatToParts(date);
+    const part = type => parts.find(item => item.type === type)?.value || '';
+    const period = part('dayPeriod').toLowerCase().startsWith('p') ? 'P.M.' : 'A.M.';
+    return `${part('day')}-${part('month')}-${part('year')}, ${part('hour')}:${part('minute')} ${period}`;
 }
 function appendCell(row, text) { const cell = document.createElement('td'); cell.textContent = text ?? '—'; row.append(cell); return cell; }
 function populateFilters() {
@@ -42,14 +51,6 @@ async function loadSessions(){
 }
 $('filters-form').addEventListener('submit',event=>{event.preventDefault();loadSessions();});
 $('clear-filters').addEventListener('click',()=>{$('filters-form').reset();loadSessions();});
-function signatureButton(cell, attendee, type, label){
-    const button=document.createElement('button');button.type='button';button.className='secondary-button';button.textContent=label;
-    button.addEventListener('click',()=>{
-        $('signature-preview-title').textContent=`${label}: ${attendee.nombre}`;
-        $('signature-preview-image').src=`/api/asistencias/${attendee.id}/imagen/${type}/`;
-        $('signature-preview-dialog').showModal();
-    });cell.append(button);
-}
 async function openSessionDetail(session){
     currentDetail=session;
     $('current-sessions').hidden = true;
@@ -75,9 +76,9 @@ async function openSessionDetail(session){
             appendCell(row,formatDate(a.fecha_registro));
             appendCell(row,a.estado==='FIRMADO'?'Firmado':a.estado==='ANULADO'?'Anulado':'Pendiente');
             const primary=appendCell(row,'');
-            if(a.tiene_firma){signatureButton(primary,a,'recepcion','Ver firma');const date=document.createElement('p');date.textContent=formatDate(a.fecha_firma);primary.append(date);}else primary.textContent='Pendiente';
-            if(data.sesion.es_epp){const cell=appendCell(row,'');if(a.devolucion_firmada){signatureButton(cell,a,'devolucion','Ver devolución');const date=document.createElement('p');date.textContent=formatDate(a.fecha_firma_devolucion);cell.append(date);}else cell.textContent='Pendiente';}
-            if(data.sesion.es_panol){const cell=appendCell(row,'');if(a.docente_firmado){signatureButton(cell,a,'docente','Ver firma docente');const date=document.createElement('p');date.textContent=formatDate(a.fecha_firma_docente);cell.append(date);}else cell.textContent='Pendiente';}
+            primary.textContent=a.tiene_firma?formatDate(a.fecha_firma):'Pendiente';
+            if(data.sesion.es_epp){const cell=appendCell(row,'');cell.textContent=a.devolucion_firmada?formatDate(a.fecha_firma_devolucion):'Pendiente';}
+            if(data.sesion.es_panol){const cell=appendCell(row,'');cell.textContent=a.docente_firmado?formatDate(a.fecha_firma_docente):'Pendiente';}
             $('attendees-table-body').append(row);
         }
         const details=$('detail-activity-fields');details.replaceChildren();
@@ -98,11 +99,11 @@ async function exportData(format,detail=false){
         const response=await api(`/api/administrador/exportar/${format}/?sesiones=${ids.join(',')}`);
         const blob=await response.blob();const url=URL.createObjectURL(blob);const link=document.createElement('a');
         link.href=url;link.download=`registros-asistencia.${format}`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-        feedback.textContent=format==='xlsx'?'Excel generado con datos y firmas disponibles.':'CSV generado con los datos de asistentes. Las imágenes de firmas se incluyen en Excel.';
+        feedback.textContent=format==='xlsx'?'Excel generado con datos y firmas disponibles.':'PDF generado con el documento y las firmas disponibles.';
     }catch(error){feedback.textContent=error.message;}
 }
-$('export-csv').addEventListener('click',()=>exportData('csv'));$('export-xlsx').addEventListener('click',()=>exportData('xlsx'));
-$('detail-export-csv').addEventListener('click',()=>exportData('csv',true));$('detail-export-xlsx').addEventListener('click',()=>exportData('xlsx',true));
+$('export-pdf').addEventListener('click',()=>exportData('pdf'));$('export-xlsx').addEventListener('click',()=>exportData('xlsx'));
+$('detail-export-pdf').addEventListener('click',()=>exportData('pdf',true));$('detail-export-xlsx').addEventListener('click',()=>exportData('xlsx',true));
 $('admin-load-audit').addEventListener('click',async()=>{
     if(!currentDetail)return;const id=currentDetail.id,results=$('admin-audit-results');results.textContent='Cargando…';
     try{const data=await(await api(`/api/sesiones/${id}/historial/`)).json();if(currentDetail?.id!==id)return;results.replaceChildren();

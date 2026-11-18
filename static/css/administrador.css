@@ -341,8 +341,8 @@ tbody tr:hover {
 #detail-activity-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-block: 1rem; }
 #detail-activity-fields dt { font-size: .85rem; color: #666; }
 #detail-activity-fields dd { margin: .25rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-#attendees-table-body td { vertical-align: top; }
-#attendees-table-body td p { font-size: .8rem; }
+#attendees-table-body td { vertical-align: middle; }
+#attendees-table-body td p { margin: 0; font: inherit; }
 
 /* Panel de sesiones */
 .admin-shell { display: flex; flex-direction: column; }

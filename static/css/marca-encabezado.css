@@ -171,3 +171,32 @@ body.host-shell .site-footer { background: #111; color: #fff; }
 
 .admin-subnav button[aria-current="true"]:disabled,
 .host-subnav button[aria-current="true"]:disabled { opacity: 1; cursor: default; color: #cc0000; background: #ffebeb; }
+
+/* El separador de la marca comparte el eje del borde de la barra lateral. */
+@media (min-width: 761px) {
+    body.admin-shell, body.host-shell, body.account-panel { --panel-sidebar-width: 13rem; --panel-header-inset: 1.5rem; }
+    .admin-layout, .host-layout, .account-layout { grid-template-columns: var(--panel-sidebar-width) minmax(0, 1fr); }
+    body.admin-shell .site-header .container,
+    body.host-shell .site-header .container,
+    body.account-panel .site-header .container { width: calc(100% - 2 * var(--panel-header-inset)); margin-inline: var(--panel-header-inset); max-width: none; }
+    .admin-shell .site-brand, .host-shell .site-brand, .account-panel .site-brand { gap: 0; }
+    .admin-shell .site-brand img, .host-shell .site-brand img, .account-panel .site-brand img {
+        box-sizing: border-box;
+        width: calc(var(--panel-sidebar-width) - var(--panel-header-inset) - 1px);
+        padding-right: 1rem;
+    }
+}
+
+.perfil-desplegable { position: relative; }
+.perfil-boton { display: flex; align-items: center; gap: .8rem; padding: 4px 8px; border-radius: 8px; color: #fff; cursor: pointer; list-style: none; font: inherit; }
+.perfil-boton::-webkit-details-marker { display: none; }
+.perfil-boton:hover, .perfil-desplegable[open] .perfil-boton { background: #333; }
+.perfil-boton:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+.perfil-opciones { position: absolute; top: calc(100% + 8px); right: 0; z-index: 50; min-width: 180px; padding: 6px; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 6px 20px #0002; }
+.site-header .perfil-opciones a { display: block; color: #222; padding: 10px 14px; border-radius: 5px; text-decoration: none; }
+.site-header .perfil-opciones a:hover, .site-header .perfil-opciones a:focus-visible { background: #f3f3f3; }
+.site-header .perfil-opciones #solicitar-salida { color: #cc0000; }
+#confirmar-salida { color: #222; background: white; width: min(420px, calc(100% - 2rem)); border: 1px solid #ddd; border-radius: 12px; padding: 24px; }
+#confirmar-salida::backdrop { background: rgb(0 0 0 / 40%); }
+#confirmar-salida form { display: flex; align-items: center; justify-content: center; gap: 12px; }
+#confirmar-salida button { width: auto; margin: 0; }

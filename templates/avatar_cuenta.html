@@ -1,4 +1,22 @@
+{% load static %}
 <div class="perfil-encabezado">
-    <span>{{ actor.nombre }}</span>
-    <a class="perfil-avatar" href="{% url 'mi_cuenta' %}?panel={{ origen }}" aria-label="Mi cuenta" title="Mi cuenta"></a>
+    <details class="perfil-desplegable" id="menu-perfil">
+        <summary class="perfil-boton" aria-label="Opciones de {{ actor.nombre }}">
+            <span>{{ actor.nombre }}</span>
+            <span class="perfil-avatar" aria-hidden="true"></span>
+        </summary>
+        <div class="perfil-opciones">
+            <a href="{% url 'mi_cuenta' %}?panel={{ origen }}">Mi cuenta</a>
+            <a id="solicitar-salida" href="{% url 'mi_cuenta' %}?panel={{ origen }}&amp;confirmar_salida=1">Cerrar sesión</a>
+        </div>
+    </details>
 </div>
+<dialog id="confirmar-salida" aria-labelledby="titulo-salida">
+    <h2 id="titulo-salida">¿Cerrar sesión?</h2>
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button id="cancelar-salida" type="button" autofocus>Cancelar</button>
+        <button class="submit-button" type="submit">Cerrar sesión</button>
+    </form>
+</dialog>
+<script src="{% static 'js/menu-cuenta.js' %}?v=1" defer></script>

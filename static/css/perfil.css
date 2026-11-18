@@ -55,3 +55,10 @@
 }
 .perfil-ojo:hover { background: #eee; }
 .perfil-ojo[aria-pressed="true"] .perfil-ojo-tachado { display: none; }
+
+.account-panel .form-group select { display: block; width: 100%; min-height: 3rem; padding: .65rem .75rem; border: 1px solid #aaa; border-radius: .4rem; font: inherit; background: #fff; color: #222; }
+
+#confirmar-cambios { width: min(440px, calc(100% - 2rem)); box-sizing: border-box; border: 1px solid #ddd; border-radius: 12px; padding: 24px; }
+#confirmar-cambios::backdrop { background: rgb(0 0 0 / 40%); }
+.perfil-confirmar-acciones { display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 20px; flex-wrap: wrap; }
+.perfil-confirmar-acciones .submit-button { margin-top: 0; }

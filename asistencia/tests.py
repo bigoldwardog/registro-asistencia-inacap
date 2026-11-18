@@ -197,7 +197,7 @@ class SistemaTests(TransactionTestCase):
         self.assertEqual(self.host.telefono, numero)
         self.assertEqual(self.host.correo, datos['correo'])
         self.assertEqual(self.admin.telefono, '')
-        self.assertNotContains(self.h.get(url), numero)
+        self.assertContains(self.h.get(url), numero)
         self.assertContains(self.h.post(url, {'accion': 'ver', 'actual': datos['actual']}), numero)
         self.h.post(url, datos)
         self.host.refresh_from_db()
@@ -267,19 +267,18 @@ class SistemaTests(TransactionTestCase):
         self.assertEqual([f['nombre'] for f in listado['sesion']['campos_asistente']], ['nombre', 'cargo'])
         self.assertEqual(self.a.get('/api/administrador/historial/', {'q': 'No existe'}).json()['sesiones'], [])
 
-    def test_exportar_excel_con_imagenes_y_csv_seguro(self):
+    def test_excel_especial_con_firmas_y_csv_retirado(self):
         s = self.crear(EPP); r, _ = self.registrar(s, nombre='=FORMULA()'); aid = r.json()['asistencia_id']; self.firmar(aid)
         self.h.post(f'/api/asistencias/{aid}/devolucion/firma/', {'firma': self.png}, content_type='application/json')
         query = {'sesiones': str(s.id)}
-        csv = self.a.get('/api/administrador/exportar/csv/', query)
-        self.assertEqual(csv.status_code, 200); self.assertIn("'=FORMULA()", csv.content.decode('utf-8-sig'))
+        self.assertEqual(self.a.get('/api/administrador/exportar/csv/', query).status_code, 404)
         xlsx = self.a.get('/api/administrador/exportar/xlsx/', query)
         self.assertEqual(xlsx.status_code, 200)
         book = load_workbook(io.BytesIO(xlsx.content)); sheet = book['Asistencias']
         self.assertEqual(sheet['H2'].value, '=FORMULA()'); self.assertEqual(sheet['H2'].data_type, 's')
         self.assertEqual(len(sheet._images), 2)
         self.assertIn('Actividades', book.sheetnames)
-        self.assertEqual(self.h.get('/api/administrador/exportar/csv/', query).status_code, 200)
+        self.assertEqual(self.h.get('/api/administrador/exportar/pdf/', query).status_code, 409)
         self.assertEqual(self.client.get('/api/administrador/exportar/xlsx/', query).status_code, 401)
 
     def test_qr_local_sin_cdn_y_datos_antiguos(self):
@@ -349,7 +348,7 @@ class SistemaTests(TransactionTestCase):
         self.a.post('/roles-permisos/', {'accion': 'asignar', 'usuario': self.host.id, 'rol': consulta.id})
         self.assertEqual(self.h.post(f'/api/sesiones/{sesion.id}/cerrar/').status_code, 403)
         self.assertEqual(self.h.post('/api/sesiones/crear/', {}, content_type='application/json').status_code, 403)
-        self.assertEqual(self.h.get('/api/administrador/exportar/csv/', {'sesiones': sesion.id}).status_code, 403)
+        self.assertEqual(self.h.get('/api/administrador/exportar/pdf/', {'sesiones': sesion.id}).status_code, 403)
         self.assertEqual(self.h.get(f'/api/sesiones/{sesion.id}/asistencias/lista/').status_code, 200)
         self.assertEqual(self.o.get(f'/api/sesiones/{sesion.id}/asistencias/lista/').status_code, 403)
         consulta.consultar = 'TODAS'
@@ -357,7 +356,7 @@ class SistemaTests(TransactionTestCase):
         self.assertEqual(self.h.get('/roles-permisos/').status_code, 302)
         self.a.post('/roles-permisos/', {'accion': 'asignar', 'usuario': self.other.id, 'rol': consulta.id})
         self.assertEqual(self.o.get(f'/api/sesiones/{sesion.id}/asistencias/lista/').status_code, 200)
-        self.assertEqual(self.o.get('/api/administrador/exportar/csv/', {'sesiones': sesion.id}).status_code, 403)
+        self.assertEqual(self.o.get('/api/administrador/exportar/pdf/', {'sesiones': sesion.id}).status_code, 403)
         self.assertEqual(self.o.post(f'/api/sesiones/{sesion.id}/cerrar/').status_code, 403)
 
     def test_rol_duplicado_y_correo_duplicado_no_cambian_cuentas(self):
@@ -404,7 +403,7 @@ class SistemaTests(TransactionTestCase):
                         elif accion == 'cerrar':
                             respuesta = self.h.post(f'/api/sesiones/{sesion.id}/cerrar/')
                         else:
-                            respuesta = self.h.get('/api/sesiones/exportar/csv/', {'sesiones': sesion.id})
+                            respuesta = self.h.get('/api/sesiones/exportar/pdf/', {'sesiones': sesion.id})
                         permitido = alcance == 'TODAS' or (alcance == 'PROPIAS' and sesion.id == propia.id)
                         self.assertEqual(respuesta.status_code, 200 if permitido else 403, respuesta.content)
                 setattr(rol, accion, 'NINGUNA')
@@ -446,13 +445,13 @@ class SistemaTests(TransactionTestCase):
         self.assertEqual(self.o.get('/api/sesiones/').json()['sesiones'], [])
         self.assertEqual(self.o.get(f'/api/sesiones/{sesion.id}/asistencias/lista/').status_code, 403)
         self.assertEqual(self.o.post(f'/api/sesiones/{sesion.id}/cerrar/').status_code, 403)
-        self.assertEqual(self.o.get('/api/administrador/exportar/csv/', {'sesiones': sesion.id}).status_code, 403)
+        self.assertEqual(self.o.get('/api/administrador/exportar/pdf/', {'sesiones': sesion.id}).status_code, 403)
         for ambito in rol.ambitos.all():
             ambito.modo_areas = 'SELECCION'
             ambito.save()
             ambito.areas.add(self.area)
         self.assertEqual(self.o.get(f'/api/sesiones/{sesion.id}/asistencias/lista/').status_code, 200)
-        self.assertEqual(self.o.get('/api/administrador/exportar/csv/', {'sesiones': sesion.id}).status_code, 200)
+        self.assertEqual(self.o.get('/api/administrador/exportar/pdf/', {'sesiones': sesion.id}).status_code, 200)
         acceso.sede = otra_sede
         acceso.save()
         self.assertEqual(self.o.get(f'/api/sesiones/{sesion.id}/asistencias/lista/').status_code, 403)
@@ -529,3 +528,77 @@ class SistemaTests(TransactionTestCase):
         self.assertFalse(rol.superusuario)
         self.assertEqual(self.h.get('/roles-permisos/').status_code, 302)
         self.assertFalse(tiene_permiso(Usuarios.objects.get(pk=self.host.pk), 'superusuario'))
+
+    def test_documentos_pdf_y_excel_ocho_plantillas(self):
+        from .documentos import construir_documento
+        for nombre, _, _ in CATALOGO:
+            if nombre in (EPP, PANOL): continue
+            with self.subTest(plantilla=nombre):
+                sesion = self.crear(nombre)
+                respuesta, _ = self.registrar(sesion)
+                self.firmar(respuesta.json()['asistencia_id'])
+                query = {'sesiones': sesion.pk}
+                pdf = self.h.get('/api/sesiones/exportar/pdf/', query)
+                self.assertEqual(pdf.status_code, 200, pdf.content[:200])
+                self.assertTrue(pdf.content.startswith(b'%PDF-'))
+                excel = self.h.get('/api/sesiones/exportar/xlsx/', query)
+                self.assertEqual(excel.status_code, 200)
+                libro = load_workbook(io.BytesIO(excel.content))
+                self.assertEqual(len(libro.worksheets), 1)
+                hoja = libro.active
+                self.assertEqual(len(hoja._images), 1 if sesion.plantilla.nombre == 'Registro de asistencia' else 2)
+                self.assertEqual(hoja.page_setup.fitToWidth, 1)
+                self.assertEqual(hoja.page_setup.fitToHeight, 0)
+                self.assertTrue(hoja.print_area)
+                self.assertTrue(any('Persona de prueba' in str(c.value) for fila in hoja for c in fila))
+
+    def test_documento_sesenta_asistentes_y_observacion_extensa(self):
+        from .documentos import construir_documento, pdf_documentos, xlsx_documentos
+        sesion = self.crear('Registro de asistencia')
+        for i in range(60):
+            persona = Asistentes.objects.create(nombre=f'Asistente {i+1}', telefono='', correo='')
+            a = Asistencias.objects.create(sesion=sesion, asistente=persona, nombre_registrado=persona.nombre,
+                rut_registrado='', correo_registrado='', telefono_registrado='', estado='FIRMADO')
+            Firmas.objects.create(asistencia=a, imagen=base64.b64decode(self.png.split(',')[1]), formato='image/png')
+        doc = construir_documento(sesion)
+        pdf = pdf_documentos([doc])
+        import re
+        self.assertGreater(len(re.findall(rb'/Type /Page\b',pdf)), 1)
+        hoja = load_workbook(io.BytesIO(xlsx_documentos([doc]))).active
+        self.assertEqual(len(hoja._images), 60)
+        self.assertEqual(hoja['B68'].value, 'Asistente 60')
+        self.assertEqual(hoja.print_title_rows, '$1:$8')
+        sesion = self.crear('Entrevista con estudiante')
+        sesion.campos_valores_json = json.dumps({'desarrollo_de_la_entrevista': 'Observación extensa. ' * 450})
+        self.assertTrue(pdf_documentos([construir_documento(sesion)]).startswith(b'%PDF-'))
+
+    def test_mi_cuenta_visible_sin_reconfirmar_pero_cambios_protegidos(self):
+        respuesta = self.h.get('/mi-cuenta/')
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, self.host.correo)
+        self.assertContains(respuesta, 'Guardar cambios')
+        self.assertNotContains(respuesta, 'Ver información')
+        respuesta = self.h.post('/mi-cuenta/', {'accion': 'guardar', 'nombre': 'Cambio no autorizado', 'correo': 'otro@example.org'})
+        self.host.refresh_from_db()
+        self.assertNotEqual(self.host.nombre, 'Cambio no autorizado')
+        self.assertContains(respuesta, 'La contraseña actual no es correcta.')
+        self.assertEqual(self.client.get('/mi-cuenta/').status_code, 302)
+
+    def test_cambiar_sede_area_en_mi_cuenta(self):
+        from .models import SedeAcademica, AreaAcademica, AccesoUsuario
+        sede = SedeAcademica.objects.exclude(pk=self.sede.pk).first()
+        area = AreaAcademica.objects.exclude(pk=self.area.pk).first()
+        datos = {'accion': 'guardar', 'nombre': self.host.nombre, 'correo': self.host.correo,
+                 'actual': 'Prueba-valida-2026!', 'sede': sede.pk, 'area': area.pk}
+        sesion = self.crear()
+        respuesta = self.h.post('/mi-cuenta/', datos)
+        self.assertContains(respuesta, 'Información actualizada.')
+        perfil = AccesoUsuario.objects.get(usuario=self.host)
+        self.assertEqual((perfil.sede_id,perfil.area_id),(sede.pk,area.pk))
+        self.assertFalse(perfil.superusuario)
+        sesion.refresh_from_db()
+        self.assertEqual(sesion.contexto.area_id,self.area.pk)
+        datos['area'] = '9999999'
+        self.assertContains(self.h.post('/mi-cuenta/',datos),'Selecciona una sede y un área académica válidas.')
+        perfil.refresh_from_db()
+        self.assertEqual(perfil.area_id,area.pk)

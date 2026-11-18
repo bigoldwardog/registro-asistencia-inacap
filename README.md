@@ -52,7 +52,7 @@ Al actualizar una instalación anterior, ejecuta el iniciador habitual o `python
 
 Administración permite buscar por nombre, RUT, cargo o actividad y filtrar por plantilla, anfitrión y fecha de Chile. El detalle muestra campos del participante, datos de la actividad y firmas disponibles. Los botones de firma abren la imagen original.
 
-CSV contiene una fila por asistencia con datos del participante, contexto de sesión, estados y horarios. No incorpora imágenes. XLSX incluye esos datos, fechas de Excel, imágenes de recepción/asistencia, devolución y docente cuando existen, y una segunda hoja con los campos de las actividades. Desde Administración se puede exportar una sesión o todas las que coincidan con los filtros. El anfitrión puede exportar sus propias sesiones desde **Lista actual**.
+**PDF** es la exportación principal para archivar e imprimir. **XLSX** ofrece una versión imprimible editable, con firmas incrustadas y ajuste a una página de ancho. CSV se retiró. Los documentos distinguen las ocho plantillas generales y repiten las cabeceras de las listas cuando continúan en otra página. Registro de asistencia conserva como base el Excel original del cliente. Los diseños trasladados desde Word deben validarse con el cliente; no se declara equivalencia exacta ni firma de una autoridad institucional que el sistema no haya capturado. EPP y pañol conservan por ahora su Excel anterior; su PDF está pendiente y devuelve un aviso explícito. Selecciona estas actividades por separado. Desde Administración se puede exportar una sesión o las que coincidan con los filtros, respetando los permisos; el anfitrión puede exportar desde **Lista actual**.
 
 Las imágenes se validan con Pillow antes de almacenarse. Los valores introducidos por personas se exportan como texto, sin ejecutar fórmulas.
 
@@ -104,3 +104,8 @@ El catálogo inicial se almacena en `database/catalogo_organizacion.json`, revis
 
 
 Las facultades de superusuario también pueden delegarse mediante roles: selecciona el rol **Superusuario** o marca **Facultades de superusuario** al configurar otro rol. Este permiso otorga administración de cuentas y roles y acceso completo, sin restricciones de propiedad, sede o área. Al quitarlo del rol, se revoca para todas sus cuentas en la siguiente petición. La cuenta inicial conserva sus facultades independientemente del rol y no admite reasignación.
+
+
+Subsesiones: pendiente de implementación. El caso confirmado consiste en una actividad principal con una lista compartida y varias charlas con distintos anfitriones. La firma de la lista principal no debe duplicarse ni presentarse como una firma nueva por charla. EPP/pañol se adaptarán después de acordar este flujo.
+
+Cada usuario puede modificar su sede y área desde Mi cuenta, confirmando su contraseña actual. Los permisos cuyo ámbito es Del perfil siguen la nueva afiliación; las selecciones explícitas de áreas/sedes del rol no cambian y las sesiones creadas conservan su clasificación original.

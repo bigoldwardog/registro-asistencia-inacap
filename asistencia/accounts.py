@@ -96,7 +96,7 @@ def mi_cuenta(request):
     origen = 'administrador' if request.GET.get('panel') != 'anfitrion'  else 'anfitrion'
     seccion = 'password' if request.GET.get('seccion') == 'password' else 'informacion'
     error = mensaje = ''
-    mostrar_datos = False
+    mostrar_datos = seccion == 'informacion'
     if request.method == 'POST':
         clave = request.POST.get('actual', '')
         clave_intentos = f'cuenta:confirmacion:{actor.id}'
@@ -134,6 +134,7 @@ def mi_cuenta(request):
                     if telefono and (len(telefono) > 32 or any(c not in '0123456789+ ()-' for c in telefono)
                                      or not any(c.isdigit() for c in telefono)):
                         raise ValidationError('Indica un teléfono válido o deja el campo vacío.')
+                    organizacion_nueva = elegir_perfil(request.POST) if ('sede' in request.POST or 'area' in request.POST) else None
                     with transaction.atomic():
                         if Usuarios.objects.filter(correo__iexact=correo).exclude(pk=actor.pk).exists():
                             raise ValidationError('Ya existe una cuenta con ese correo.')
@@ -143,7 +144,11 @@ def mi_cuenta(request):
                             actor.telefono = telefono
                             campos.append('telefono')
                         actor.save(update_fields=campos)
-                        auditar(request, 'ACTUALIZAR_CUENTA', 'usuario', actor.id)
+                        if organizacion_nueva:
+                            sede, area = organizacion_nueva
+                            AccesoUsuario.objects.filter(usuario=actor).update(sede=sede, area=area)
+                        auditar(request, 'ACTUALIZAR_CUENTA', 'usuario', actor.id,
+                                despues={'sede_id': sede.pk, 'area_id': area.pk} if organizacion_nueva else None)
                     mensaje = 'Información actualizada.'
             else:
                 raise ValidationError('Acción no disponible.')
@@ -154,6 +159,7 @@ def mi_cuenta(request):
             error = 'No se pudo guardar la información. Comprueba el correo e inténtalo de nuevo.'
     return render(request, 'perfil.html', {
         'actor': actor, 'origen': origen, 'seccion': seccion,
+        'sedes': SedeAcademica.objects.order_by('nombre'), 'areas': AreaAcademica.objects.order_by('nombre'),
         'organizacion': datos_perfil(actor), 'mostrar_datos': mostrar_datos, 'error': error, 'mensaje': mensaje,
     })
 

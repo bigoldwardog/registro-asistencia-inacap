@@ -99,7 +99,7 @@ async function loadAttendanceList() {
             selectedAttendee = null;
         }
         const selectedOption = sessionSelector.selectedOptions[0];
-        if (selectedOption) selectedOption.textContent = `${data.sesion.nombre} — ${data.sesion.estado}`;
+        if (selectedOption) selectedOption.textContent = data.sesion.nombre;
 
         sessionState.attendees = data.asistencias.map((item) => ({
             id: item.id,
@@ -999,13 +999,24 @@ for (const button of document.querySelectorAll('dialog form[method="dialog"] but
 
 
 for (const button of document.querySelectorAll("[data-export-format]")) {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
         if (!sessionState.currentSessionId) return;
-        const ids = encodeURIComponent(sessionState.currentSessionId);
-        window.location.assign(`/api/sesiones/exportar/${button.dataset.exportFormat}/?sesiones=${ids}`);
+        const feedback = document.getElementById('session-export-feedback');
+        feedback.textContent = 'Preparando documento…';
+        button.disabled = true;
+        try {
+            const ids = encodeURIComponent(sessionState.currentSessionId);
+            const response = await apiFetch(`/api/sesiones/exportar/${button.dataset.exportFormat}/?sesiones=${ids}`);
+            if (!response.ok) { const data = await response.json(); throw new Error(data.error || 'No se pudo exportar el documento.'); }
+            const url = URL.createObjectURL(await response.blob());
+            const enlace = document.createElement('a'); enlace.href = url;
+            enlace.download = `registros-asistencia.${button.dataset.exportFormat}`;
+            enlace.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+            feedback.textContent = 'Documento generado.';
+        } catch (error) { feedback.textContent = error.message; }
+        finally { button.disabled = !sessionState.currentSessionId || !sessionState.permissions.exportar; }
     });
 }
-
 
 document.querySelector('#download-poster').addEventListener('click', () => {
     const id = sessionState.currentSessionId;

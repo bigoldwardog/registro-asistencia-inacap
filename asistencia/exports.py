@@ -1,6 +1,5 @@
 import io
 import json
-import csv
 import re
 from datetime import datetime
 from django.http import HttpResponse
@@ -20,16 +19,11 @@ def texto_excel(valor):
     return re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F]', '', str(valor or ''))
 
 
-def texto_csv(valor):
-    valor = texto_excel(valor)
-    return "'" + valor if valor.lstrip().startswith(('=', '+', '-', '@')) else valor
-
-
 @acceso()
 @require_GET
 @errores
 def exportar(request, formato):
-    if formato not in ('csv', 'xlsx'):
+    if formato not in ('pdf', 'xlsx'):
         raise ErrorFormulario('Formato de exportación no disponible.', 404)
     ids = request.GET.get('sesiones', '')
     try:
@@ -42,6 +36,19 @@ def exportar(request, formato):
     for sesion in sesiones:
         if not tiene_permiso(request.actor, 'exportar', sesion):
             raise ErrorFormulario('No tienes permiso para exportar esta sesión.', 403)
+    from .domain import EPP, PANOL
+    from .documentos import construir_documento, pdf_documentos, xlsx_documentos
+    especiales = any(s.plantilla.nombre in (EPP, PANOL) for s in sesiones)
+    if especiales and any(s.plantilla.nombre not in (EPP, PANOL) for s in sesiones):
+        raise ErrorFormulario('Exporta pañol y EPP por separado de las demás actividades mientras se adapta su formato.', 409)
+    if formato == 'pdf' or not especiales:
+        documentos = [construir_documento(s) for s in sesiones]
+        contenido = pdf_documentos(documentos) if formato == 'pdf' else xlsx_documentos(documentos)
+        tipo = 'application/pdf' if formato == 'pdf' else 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response = HttpResponse(contenido, content_type=tipo)
+        response['Content-Disposition'] = f'attachment; filename="registros-asistencia.{formato}"'
+        response['Cache-Control'] = 'private, no-store'
+        return response
     headers = ['ID sesión', 'Sesión', 'Tipo', 'Anfitrión', 'Inicio (Chile)', 'Término (Chile)',
         'Estado sesión', 'Nombre', 'RUT', 'Cargo / Carrera', 'Carrera', 'Jornada', 'Sección',
         'Correo', 'Teléfono', 'Registro (Chile)', 'Estado asistencia', 'Firma recepción (Chile)',
@@ -68,65 +75,58 @@ def exportar(request, formato):
                 json.dumps(json_guardado(s.campos_valores_json, dict), ensure_ascii=False),
                 json.dumps(datos, ensure_ascii=False) if a else ''])
             images.append([f, d, docente])
-    if formato == 'csv':
-        output = io.StringIO(newline='')
-        writer = csv.writer(output, delimiter=';', lineterminator='\r\n')
-        writer.writerow(headers)
-        writer.writerows([[texto_csv(v) for v in row] for row in rows])
-        response = HttpResponse('\ufeff' + output.getvalue(), content_type='text/csv; charset=utf-8')
-    else:
-        workbook = Workbook()
-        sheet = workbook.active
-        sheet.title = 'Asistencias'
-        sheet.append(headers + ['Imagen recepción', 'Imagen devolución', 'Imagen docente'])
-        from openpyxl.utils import get_column_letter
-        for index, row in enumerate(rows, start=2):
-            for col, value in enumerate(row, start=1):
-                cell = sheet.cell(index, col, texto_excel(value))
-                cell.data_type = 's'
-                if col in (5, 6, 16, 18, 19, 20) and value:
-                    cell.value = datetime.fromisoformat(str(value)).replace(tzinfo=None)
-                    cell.number_format = 'dd-mm-yyyy hh:mm:ss'
-                cell.alignment = Alignment(vertical='center', wrap_text=True)
-            for offset, firma in enumerate(images[index - 2], start=len(headers) + 1):
-                if firma:
-                    try:
-                        image = ExcelImage(io.BytesIO(bytes(firma.imagen)))
-                        ratio = min(180 / image.width, 85 / image.height, 1)
-                        image.width *= ratio
-                        image.height *= ratio
-                        sheet.add_image(image, f'{get_column_letter(offset)}{index}')
-                    except (OSError, ValueError, SyntaxError):
-                        sheet.cell(index, offset, 'Imagen anterior ilegible: requiere revisión')
-            sheet.row_dimensions[index].height = 75 if any(images[index - 2]) else 34
-        for cell in sheet[1]:
-            cell.font = Font(bold=True, color='FFFFFF')
-            cell.fill = PatternFill('solid', fgColor='222222')
-            cell.alignment = Alignment(wrap_text=True, vertical='center')
-        sheet.row_dimensions[1].height = 34
-        for col in range(1, len(headers) + 4):
-            sheet.column_dimensions[get_column_letter(col)].width = 28 if col > 1 else 12
-        sheet.column_dimensions['U'].width = 65
-        sheet.column_dimensions['V'].width = 45
-        sheet.freeze_panes = 'H2'
-        sheet.auto_filter.ref = sheet.dimensions
-        # Hoja separada para leer campos de cada actividad sin interpretar JSON.
-        activity = workbook.create_sheet('Actividades')
-        activity.append(['ID', 'Actividad', 'Campo', 'Valor'])
-        for s in sesiones:
-            labels = {c.get('nombre'): c.get('etiqueta') for c in json_guardado(s.campos_definicion_json, list) if isinstance(c, dict)}
-            for key, value in json_guardado(s.campos_valores_json, dict).items():
-                activity.append([str(s.id), texto_excel(s.nombre), texto_excel(labels.get(key, key)), texto_excel(value)])
-        for row in activity:
-            for cell in row:
-                cell.data_type = 's'
-                cell.alignment = Alignment(wrap_text=True, vertical='top')
-        for col, width in [('A', 12), ('B', 35), ('C', 35), ('D', 90)]:
-            activity.column_dimensions[col].width = width
-        activity.freeze_panes = 'A2'
-        stream = io.BytesIO()
-        workbook.save(stream)
-        response = HttpResponse(stream.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = 'Asistencias'
+    sheet.append(headers + ['Imagen recepción', 'Imagen devolución', 'Imagen docente'])
+    from openpyxl.utils import get_column_letter
+    for index, row in enumerate(rows, start=2):
+        for col, value in enumerate(row, start=1):
+            cell = sheet.cell(index, col, texto_excel(value))
+            cell.data_type = 's'
+            if col in (5, 6, 16, 18, 19, 20) and value:
+                cell.value = datetime.fromisoformat(str(value)).replace(tzinfo=None)
+                cell.number_format = 'dd-mm-yyyy hh:mm:ss'
+            cell.alignment = Alignment(vertical='center', wrap_text=True)
+        for offset, firma in enumerate(images[index - 2], start=len(headers) + 1):
+            if firma:
+                try:
+                    image = ExcelImage(io.BytesIO(bytes(firma.imagen)))
+                    ratio = min(180 / image.width, 85 / image.height, 1)
+                    image.width *= ratio
+                    image.height *= ratio
+                    sheet.add_image(image, f'{get_column_letter(offset)}{index}')
+                except (OSError, ValueError, SyntaxError):
+                    sheet.cell(index, offset, 'Imagen anterior ilegible: requiere revisión')
+        sheet.row_dimensions[index].height = 75 if any(images[index - 2]) else 34
+    for cell in sheet[1]:
+        cell.font = Font(bold=True, color='FFFFFF')
+        cell.fill = PatternFill('solid', fgColor='222222')
+        cell.alignment = Alignment(wrap_text=True, vertical='center')
+    sheet.row_dimensions[1].height = 34
+    for col in range(1, len(headers) + 4):
+        sheet.column_dimensions[get_column_letter(col)].width = 28 if col > 1 else 12
+    sheet.column_dimensions['U'].width = 65
+    sheet.column_dimensions['V'].width = 45
+    sheet.freeze_panes = 'H2'
+    sheet.auto_filter.ref = sheet.dimensions
+    # Hoja separada para leer campos de cada actividad sin interpretar JSON.
+    activity = workbook.create_sheet('Actividades')
+    activity.append(['ID', 'Actividad', 'Campo', 'Valor'])
+    for s in sesiones:
+        labels = {c.get('nombre'): c.get('etiqueta') for c in json_guardado(s.campos_definicion_json, list) if isinstance(c, dict)}
+        for key, value in json_guardado(s.campos_valores_json, dict).items():
+            activity.append([str(s.id), texto_excel(s.nombre), texto_excel(labels.get(key, key)), texto_excel(value)])
+    for row in activity:
+        for cell in row:
+            cell.data_type = 's'
+            cell.alignment = Alignment(wrap_text=True, vertical='top')
+    for col, width in [('A', 12), ('B', 35), ('C', 35), ('D', 90)]:
+        activity.column_dimensions[col].width = width
+    activity.freeze_panes = 'A2'
+    stream = io.BytesIO()
+    workbook.save(stream)
+    response = HttpResponse(stream.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename="registros-asistencia.{formato}"'
     response['Cache-Control'] = 'private, no-store'
     return response

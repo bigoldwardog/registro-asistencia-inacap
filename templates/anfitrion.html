@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=rojo-barra-roja">
     <link rel="stylesheet" href="{% static 'css/anfitrion.css' %}?v=estado-derecha-1?v=panel-anfitrion-5-roboto-rojo-barra-roja">
     <link rel="stylesheet" href="{% static 'css/perfil.css' %}?v=2-barra-roja">
-    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=subseccion-activa-1">
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=menu-cuenta-1">
 </head>
 
 <body class="host-shell">
@@ -141,9 +141,10 @@
         </section>
 
         <div class="session-export-actions"{% if not actor.puede_exportar %} hidden{% endif %}>
-            <button type="button" class="secondary-button" data-export-format="csv" disabled>Exportar CSV</button>
+            <button type="button" class="secondary-button" data-export-format="pdf" disabled>Exportar PDF</button>
             <button type="button" class="secondary-button" data-export-format="xlsx" disabled>Exportar Excel</button>
         </div>
+        <p id="session-export-feedback" role="status" aria-live="polite"></p>
         <section
             id="signature-section"
             class="signature-section"
@@ -235,6 +236,6 @@
     </footer>
 
 
-    <script src="{% static 'js/anfitrion.js' %}?v=estado-derecha-1" defer></script>
+    <script src="{% static 'js/anfitrion.js' %}?v=selector-solo-nombre-2" defer></script>
 </body>
 </html>
