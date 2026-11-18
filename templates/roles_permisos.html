@@ -7,8 +7,8 @@
     <title>Roles y permisos</title>
     <link rel="stylesheet" href="{% static 'css/administrador.css' %}">
     <link rel="stylesheet" href="{% static 'css/perfil.css' %}">
-    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=alcances">
-    <script src="{% static 'js/roles.js' %}?v=alcances" defer></script>
+    <link rel="stylesheet" href="{% static 'css/marca-encabezado.css' %}?v=organizacion-8">
+    <script src="{% static 'js/roles.js' %}?v=organizacion-8" defer></script>
 </head>
 <body class="admin-shell">
 <header class="site-header">
@@ -43,11 +43,27 @@
                     <input type="hidden" name="accion" value="rol">
                     <input type="hidden" name="rol_id" id="rol-id">
                     <label>Nombre del rol<input name="nombre" id="rol-nombre" maxlength="80" required></label>
-                    <p>Define qué sesiones puede consultar o gestionar este rol.</p>
+                    <label><input type="checkbox" name="superusuario" id="rol-superusuario"> Facultades de superusuario</label>
+                    <p id="descripcion-superusuario" hidden>Concede acceso completo a todas las sesiones, sedes y áreas, y permite crear cuentas y administrar roles y permisos. Prevalece sobre los límites configurados debajo.</p>
                     {% for clave, etiqueta in permisos %}
-                    <label>{{ etiqueta }}<select name="{{ clave }}" required>
+                    <fieldset class="ambito-accion"><legend>{{ etiqueta }}</legend><label>Sesiones<select name="{{ clave }}" required>
                         {% for valor, texto in alcances %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
                     </select></label>
+                    <details><summary>Sedes y áreas autorizadas</summary><label>Sedes<select name="{{ clave }}_sedes_modo" data-ambito-modo="{{ clave }}_sedes">
+                        <option value="PERFIL">Sede del perfil</option><option value="SELECCION">Seleccionadas</option><option value="TODAS">Todas las sedes</option>
+                    </select></label>
+                    <div data-ambito-lista="{{ clave }}_sedes" class="ambito-opciones" hidden>
+                        <p>Sedes permitidas</p>
+                        {% for sede in sedes %}<label><input type="checkbox" name="{{ clave }}_sedes" value="{{ sede.pk }}"> <span>{{ sede.nombre }}</span></label>{% endfor %}
+                    </div>
+                    <label>Áreas<select name="{{ clave }}_areas_modo" data-ambito-modo="{{ clave }}_areas">
+                        <option value="PERFIL">Área del perfil</option><option value="SELECCION">Seleccionadas</option><option value="TODAS">Todas las áreas</option>
+                    </select></label>
+                    <div data-ambito-lista="{{ clave }}_areas" class="ambito-opciones" hidden>
+                        <p>Áreas permitidas</p>
+                        {% for area in areas %}<label><input type="checkbox" name="{{ clave }}_areas" value="{{ area.pk }}"> <span>{{ area.nombre }}</span></label>{% endfor %}
+                    </div>
+                    </details></fieldset>
                     {% endfor %}
                     <button class="primary-button">Guardar rol</button>
                 </form>
@@ -60,6 +76,7 @@
                     <label>Nombre<input name="nombre" autocomplete="off" maxlength="150" required></label>
                     <label>Correo inicial<input type="email" name="correo" autocomplete="off" required></label>
                     <label>Contraseña inicial<input type="password" name="password" autocomplete="new-password" maxlength="256" minlength="8" required></label>
+                    {% include 'campos_organizacion.html' %}
                     <label>Rol<select name="rol" required>
                         <option value="">Selecciona un rol</option>
                         {% for rol in roles %}<option value="{{ rol.pk }}">{{ rol.nombre }}</option>{% endfor %}
@@ -84,6 +101,15 @@
                         {% for rol in roles %}<option value="{{ rol.pk }}">{{ rol.nombre }}</option>{% endfor %}
                     </select></label>
                     <button class="primary-button" id="asignar-boton">Asignar rol</button>
+                </form>
+                <hr>
+                <form method="post" id="organizacion-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="perfil">
+                    <input type="hidden" name="usuario" id="organizacion-usuario">
+                    <h3>Sede y área del usuario</h3>
+                    {% include 'campos_organizacion.html' %}
+                    <button class="primary-button">Guardar sede y área</button>
                 </form>
             </section>
         </div>

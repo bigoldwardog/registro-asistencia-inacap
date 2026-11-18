@@ -172,6 +172,7 @@ class FirmasAdicionales(models.Model):
 
 class RolAcceso(models.Model):
     nombre = models.CharField(max_length=80, unique=True)
+    superusuario = models.BooleanField(default=False)
     ALCANCES = [('NINGUNA', 'Ninguna'), ('PROPIAS', 'Propias'), ('TODAS', 'Todas')]
     consultar = models.CharField(max_length=8, choices=ALCANCES, default='PROPIAS')
     crear = models.CharField(max_length=8, choices=ALCANCES, default='NINGUNA')
@@ -188,6 +189,8 @@ class AccesoUsuario(models.Model):
                                   db_constraint=False, related_name='acceso_configurado')
     rol = models.ForeignKey(RolAcceso, models.PROTECT)
     superusuario = models.BooleanField(default=False)
+    sede = models.ForeignKey('SedeAcademica', models.PROTECT, null=True, blank=True)
+    area = models.ForeignKey('AreaAcademica', models.PROTECT, null=True, blank=True)
 
     class Meta:
         db_table = 'accesos_usuarios'
@@ -195,3 +198,31 @@ class AccesoUsuario(models.Model):
             models.UniqueConstraint(fields=['superusuario'], condition=models.Q(superusuario=True),
                                     name='un_superusuario_base')
         ]
+
+
+class SedeAcademica(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+
+class AreaAcademica(models.Model):
+    nombre = models.CharField(max_length=120, unique=True)
+
+
+class AmbitoPermiso(models.Model):
+    MODOS = [('PERFIL', 'Del perfil'), ('SELECCION', 'Seleccionadas'), ('TODAS', 'Todas')]
+    rol = models.ForeignKey(RolAcceso, models.CASCADE, related_name='ambitos')
+    accion = models.CharField(max_length=20)
+    modo_sedes = models.CharField(max_length=10, choices=MODOS, default='TODAS')
+    modo_areas = models.CharField(max_length=10, choices=MODOS, default='TODAS')
+    sedes = models.ManyToManyField(SedeAcademica, blank=True)
+    areas = models.ManyToManyField(AreaAcademica, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['rol', 'accion'], name='ambito_unico_por_accion')]
+
+
+class ContextoSesion(models.Model):
+    sesion = models.OneToOneField(Sesiones, models.CASCADE, primary_key=True,
+                                 db_constraint=False, related_name='contexto')
+    sede = models.ForeignKey(SedeAcademica, models.PROTECT)
+    area = models.ForeignKey(AreaAcademica, models.PROTECT)

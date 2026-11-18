@@ -90,3 +90,17 @@ Pruebas físicas pendientes para la entrega: dos personas desde celulares distin
 Los respaldos se guardan junto a `asistencia.db` con fecha y hora en su nombre. Para restaurar uno, detén el servidor y conserva primero una copia de la base actual antes de reemplazarla.
 
 Variables opcionales: `DJANGO_DATABASE_PATH`, `DJANGO_ALLOWED_HOSTS` (separadas por comas), `DJANGO_SECRET_KEY` y `DJANGO_DEBUG` (`1` para desarrollo, `0` para desactivarlo). El iniciador configura las IP locales sin usar un comodín en ALLOWED_HOSTS. QR y exportación funcionan sin CDN. El servidor `runserver` es para desarrollo y demostraciones; un despliegue definitivo requiere su configuración de producción.
+
+
+## Sedes y áreas académicas
+
+Cada cuenta tiene una sede y un área académica de pertenencia, asignadas exclusivamente por el superusuario. Al crear una sesión se guarda una clasificación independiente con la sede y el área del anfitrión. Cambiar el perfil después no reclasifica sesiones existentes.
+
+Cada acción del rol combina su alcance de sesiones con dos ámbitos adicionales: sede del perfil, sedes seleccionadas o todas; área del perfil, áreas seleccionadas o todas. La propiedad y ambos ámbitos se comprueban en el servidor, también en exportaciones, firmas, consultas directas y modificaciones. Por ejemplo, un coordinador puede consultar todas las sesiones de varias áreas permitidas, mientras un docente consulta solo las propias dentro de esas áreas.
+
+Las cuentas anteriores necesitan que el superusuario complete su sede y área en **Roles y permisos**. Cada sesión nueva guarda la sede y el área del anfitrión al crearla. Cambiar su perfil después no modifica esa clasificación.
+
+El catálogo inicial se almacena en `database/catalogo_organizacion.json`, revisado el 18 de noviembre de 2026 desde el [directorio de sedes](https://portal.inacap.cl/sedes) y el [selector oficial de áreas](https://widgets.inacap.cl/widgetsportalcarreras/template.php). Incluye Campus Digital y Sede Central (Vitacura). Los roles pueden agrupar varias áreas oficiales, por ejemplo una coordinación EEARTIC.
+
+
+Las facultades de superusuario también pueden delegarse mediante roles: selecciona el rol **Superusuario** o marca **Facultades de superusuario** al configurar otro rol. Este permiso otorga administración de cuentas y roles y acceso completo, sin restricciones de propiedad, sede o área. Al quitarlo del rol, se revoca para todas sus cuentas en la siguiente petición. La cuenta inicial conserva sus facultades independientemente del rol y no admite reasignación.

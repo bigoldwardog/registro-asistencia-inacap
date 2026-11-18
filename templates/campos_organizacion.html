@@ -1,0 +1,8 @@
+<label>Sede<select name="sede" required>
+    <option value="">Selecciona una sede</option>
+    {% for sede in sedes %}<option value="{{ sede.pk }}">{{ sede.nombre }}</option>{% endfor %}
+</select></label>
+<label>Área académica<select name="area" required>
+    <option value="">Selecciona un área</option>
+    {% for area in areas %}<option value="{{ area.pk }}">{{ area.nombre }}</option>{% endfor %}
+</select></label>

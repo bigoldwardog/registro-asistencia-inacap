@@ -753,6 +753,13 @@ async function loadSessionOptions() {
         const response = await apiFetch("/api/configuracion-sesiones/");
         if (!response.ok) throw new Error("No se pudieron cargar las opciones. Recarga la página para reintentar.");
         const data = await response.json();
+        const selectorAnfitrion = document.querySelector('#new-session-host');
+        const mostrarOrganizacion = () => {
+            const perfil = data.anfitriones.find(item => String(item.id) === selectorAnfitrion.value);
+            document.querySelector('#organizacion-sesion').textContent = perfil
+                ? 'Sede · ' + perfil.sede + ' / Área · ' + perfil.area : '';
+        };
+        selectorAnfitrion.addEventListener('change', mostrarOrganizacion);
         availableTemplates = data.plantillas;
         for (const [selector, items] of [["#new-session-template", data.plantillas], ["#new-session-host", data.anfitriones]]) {
             const select = document.querySelector(selector);
@@ -760,6 +767,7 @@ async function loadSessionOptions() {
             items.forEach((item) => select.add(new Option(item.nombre, item.id)));
             if (items.length === 1) select.value = String(items[0].id);
         }
+        mostrarOrganizacion();
         renderTemplateFields();
         createButton.disabled = !data.puede_crear || !data.plantillas.length || !data.anfitriones.length;
         if (!data.puede_crear) createFeedback.textContent = "Tu rol no permite crear sesiones.";

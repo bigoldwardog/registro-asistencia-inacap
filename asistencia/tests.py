@@ -39,6 +39,15 @@ class SistemaTests(TransactionTestCase):
         self.admin = Usuarios.objects.create(nombre='Administradora', correo='admin@example.com', rol='ADMINISTRADOR', activo=1, password_hash=make_password('Prueba-valida-2026!'))
         self.host = Usuarios.objects.create(nombre='Anfitrión', correo='host@example.com', rol='ANFITRION', activo=1, password_hash=make_password('Prueba-valida-2026!'))
         self.other = Usuarios.objects.create(nombre='Otro anfitrión', correo='otro@example.com', rol='ANFITRION', activo=1, password_hash=make_password('Prueba-valida-2026!'))
+        from .organizacion import cargar_catalogo as cargar_organizacion
+        from .permissions import migrar_cuentas
+        from .models import SedeAcademica, AreaAcademica, AccesoUsuario
+        cargar_organizacion()
+        migrar_cuentas()
+        self.sede = SedeAcademica.objects.order_by('id').first()
+        self.area = AreaAcademica.objects.order_by('id').first()
+        AccesoUsuario.objects.update(sede=self.sede, area=self.area)
+
         self.a = self.login(self.admin); self.h = self.login(self.host); self.o = self.login(self.other)
         self.png = firma_png()
 
@@ -200,8 +209,10 @@ class SistemaTests(TransactionTestCase):
     def test_configuracion_inicial_solo_local_y_una_vez(self):
         Usuarios.objects.update(activo=0)
         self.assertEqual(self.client.get('/configuracion-inicial/', REMOTE_ADDR='192.168.1.10').status_code, 403)
-        result = self.client.post('/configuracion-inicial/', {'nombre': 'Inicial', 'correo': 'inicial@example.com', 'password': 'Cuenta-inicial-segura-2026!', 'password2': 'Cuenta-inicial-segura-2026!'}, REMOTE_ADDR='127.0.0.1')
+        result = self.client.post('/configuracion-inicial/', {'nombre': 'Inicial', 'correo': 'inicial@example.com', 'password': 'Cuenta-inicial-segura-2026!', 'password2': 'Cuenta-inicial-segura-2026!', 'sede': self.sede.id, 'area': self.area.id}, REMOTE_ADDR='127.0.0.1')
         self.assertEqual(result.status_code, 302)
+        from .models import AccesoUsuario
+        self.assertTrue(AccesoUsuario.objects.get(usuario__correo='inicial@example.com').superusuario)
         self.assertEqual(self.client.get('/configuracion-inicial/').status_code, 302)
 
     def test_csrf_publico_y_privado(self):
@@ -320,7 +331,7 @@ class SistemaTests(TransactionTestCase):
         rol = RolAcceso.objects.get(nombre='Solo consulta')
         response = self.a.post('/roles-permisos/', {
             'accion': 'usuario', 'nombre': 'Docente nuevo', 'correo': 'nuevo@example.com',
-            'password': 'Clave-inicial-valida-2026!', 'rol': rol.id})
+            'password': 'Clave-inicial-valida-2026!', 'rol': rol.id, 'sede': self.sede.id, 'area': self.area.id})
         self.assertEqual(response.status_code, 302)
         usuario = Usuarios.objects.get(correo='nuevo@example.com')
         self.assertTrue(check_password('Clave-inicial-valida-2026!', usuario.password_hash))
@@ -361,7 +372,7 @@ class SistemaTests(TransactionTestCase):
         cantidad = Usuarios.objects.count()
         self.a.post('/roles-permisos/', {
             'accion': 'usuario', 'nombre': 'Duplicado', 'correo': self.host.correo.upper(),
-            'password': 'Clave-inicial-valida-2026!', 'rol': rol.id})
+            'password': 'Clave-inicial-valida-2026!', 'rol': rol.id, 'sede': self.sede.id, 'area': self.area.id})
         self.assertEqual(Usuarios.objects.count(), cantidad)
         self.a.post('/roles-permisos/', {
             'accion': 'rol', 'rol_id': rol.id, 'nombre': rol.nombre, 'consultar': 'PROPIAS', 'exportar': 'PROPIAS'})
@@ -416,3 +427,105 @@ class SistemaTests(TransactionTestCase):
                     'anfitrion_id': anfitrion.id, 'campos': valores}, content_type='application/json')
                 permitido = alcance == 'TODAS' or (alcance == 'PROPIAS' and anfitrion.id == self.host.id)
                 self.assertEqual(respuesta.status_code, 201 if permitido else 403, respuesta.content)
+
+
+    def test_aislamiento_organizacional_y_clasificacion_inmutable(self):
+        from .models import AccesoUsuario, AreaAcademica, SedeAcademica, AmbitoPermiso, RolAcceso
+        sesion = self.crear()
+        otra_area = AreaAcademica.objects.exclude(id=self.area.id).first()
+        otra_sede = SedeAcademica.objects.exclude(id=self.sede.id).first()
+        acceso = AccesoUsuario.objects.get(usuario=self.other)
+        acceso.area = otra_area
+        acceso.save()
+        rol = RolAcceso.objects.create(nombre='Coordinación de prueba', consultar='TODAS',
+            observaciones='TODAS', cerrar='TODAS', exportar='TODAS')
+        for accion in ('consultar', 'observaciones', 'cerrar', 'exportar'):
+            AmbitoPermiso.objects.create(rol=rol, accion=accion, modo_sedes='PERFIL', modo_areas='PERFIL')
+        acceso.rol = rol
+        acceso.save()
+        self.assertEqual(self.o.get('/api/sesiones/').json()['sesiones'], [])
+        self.assertEqual(self.o.get(f'/api/sesiones/{sesion.id}/asistencias/lista/').status_code, 403)
+        self.assertEqual(self.o.post(f'/api/sesiones/{sesion.id}/cerrar/').status_code, 403)
+        self.assertEqual(self.o.get('/api/administrador/exportar/csv/', {'sesiones': sesion.id}).status_code, 403)
+        for ambito in rol.ambitos.all():
+            ambito.modo_areas = 'SELECCION'
+            ambito.save()
+            ambito.areas.add(self.area)
+        self.assertEqual(self.o.get(f'/api/sesiones/{sesion.id}/asistencias/lista/').status_code, 200)
+        self.assertEqual(self.o.get('/api/administrador/exportar/csv/', {'sesiones': sesion.id}).status_code, 200)
+        acceso.sede = otra_sede
+        acceso.save()
+        self.assertEqual(self.o.get(f'/api/sesiones/{sesion.id}/asistencias/lista/').status_code, 403)
+        AccesoUsuario.objects.filter(usuario=self.host).update(area=otra_area)
+        sesion.refresh_from_db()
+        self.assertEqual(sesion.contexto.area_id, self.area.id)
+        self.assertEqual(sesion.contexto.sede_id, self.sede.id)
+
+    def test_no_es_posible_autocambiar_area_y_creacion_fuera_de_ambito(self):
+        from .models import AccesoUsuario, AreaAcademica, AmbitoPermiso
+        otra_area = AreaAcademica.objects.exclude(id=self.area.id).first()
+        acceso = AccesoUsuario.objects.get(usuario=self.other)
+        acceso.area = otra_area
+        acceso.save()
+        self.assertEqual(self.h.post('/roles-permisos/', {
+            'accion': 'perfil', 'usuario': self.host.id,
+            'sede': self.sede.id, 'area': otra_area.id}).status_code, 302)
+        self.assertEqual(AccesoUsuario.objects.get(usuario=self.host).area_id, self.area.id)
+        rol = AccesoUsuario.objects.get(usuario=self.host).rol
+        rol.crear = 'TODAS'
+        rol.save()
+        plantilla = PlantillasSesion.objects.get(nombre='Acta de reunión')
+        respuesta = self.h.post('/api/sesiones/crear/', {
+            'nombre': 'Fuera del área', 'plantilla_id': plantilla.id,
+            'anfitrion_id': self.other.id, 'campos': {}}, content_type='application/json')
+        self.assertEqual(respuesta.status_code, 403)
+
+    def test_guardar_varias_sedes_y_areas_de_rol(self):
+        from .models import RolAcceso, SedeAcademica, AreaAcademica
+        sedes = list(SedeAcademica.objects.values_list('pk', flat=True)[:2])
+        areas = list(AreaAcademica.objects.values_list('pk', flat=True)[:2])
+        datos = {'accion': 'rol', 'nombre': 'Coordinación múltiple', 'consultar': 'TODAS',
+                 'consultar_sedes_modo': 'SELECCION', 'consultar_areas_modo': 'SELECCION',
+                 'consultar_sedes': sedes, 'consultar_areas': areas}
+        respuesta = self.a.post('/roles-permisos/', datos)
+        rol = RolAcceso.objects.get(nombre=datos['nombre'])
+        self.assertRedirects(respuesta, '/roles-permisos/?rol=' + str(rol.pk))
+        regla = rol.ambitos.get(accion='consultar')
+        self.assertSetEqual(set(regla.sedes.values_list('pk', flat=True)), set(sedes))
+        self.assertSetEqual(set(regla.areas.values_list('pk', flat=True)), set(areas))
+        datos.update(rol_id=rol.pk, consultar_sedes=sedes[:1], consultar_areas=areas[1:])
+        self.a.post('/roles-permisos/', datos)
+        self.assertSetEqual(set(regla.sedes.values_list('pk', flat=True)), set(sedes[:1]))
+        self.assertSetEqual(set(regla.areas.values_list('pk', flat=True)), set(areas[1:]))
+
+    def test_superusuario_delegado_por_rol_y_revocacion(self):
+        from .models import RolAcceso, AccesoUsuario
+        from .permissions import tiene_permiso
+        from .organizacion import permite_contexto
+        datos = {'accion': 'rol', 'nombre': 'Docente con administración', 'superusuario': 'on'}
+        respuesta = self.a.post('/roles-permisos/', datos)
+        self.assertEqual(respuesta.status_code, 302)
+        rol = RolAcceso.objects.get(nombre=datos['nombre'])
+        self.assertTrue(rol.superusuario)
+        respuesta = self.a.post('/roles-permisos/', {'accion': 'asignar', 'usuario': self.host.pk, 'rol': rol.pk})
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertEqual(self.h.get('/roles-permisos/').status_code, 200)
+        actor = Usuarios.objects.get(pk=self.host.pk)
+        self.assertTrue(tiene_permiso(actor, 'superusuario'))
+        self.assertTrue(permite_contexto(actor, 'consultar', None, None))
+        # El administrador delegado puede crear otro rol y conceder administración.
+        self.assertEqual(self.h.post('/roles-permisos/', {
+            'accion': 'rol', 'nombre': 'Administración delegada', 'superusuario': 'on'}).status_code, 302)
+        # La cuenta inicial conserva sus facultades aunque intenten cambiarle el rol.
+        base = AccesoUsuario.objects.get(usuario=self.admin)
+        self.h.post('/roles-permisos/', {'accion': 'asignar', 'usuario': self.admin.pk, 'rol': rol.pk})
+        base.refresh_from_db()
+        self.assertTrue(base.superusuario)
+        self.assertNotEqual(base.rol_id, rol.pk)
+        datos.update(rol_id=rol.pk)
+        datos.pop('superusuario')
+        self.a.post('/roles-permisos/', datos)
+        rol.refresh_from_db()
+        self.assertFalse(rol.superusuario)
+        self.assertEqual(self.h.get('/roles-permisos/').status_code, 302)
+        self.assertFalse(tiene_permiso(Usuarios.objects.get(pk=self.host.pk), 'superusuario'))

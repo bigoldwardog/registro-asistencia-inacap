@@ -81,7 +81,7 @@ async function openSessionDetail(session){
             $('attendees-table-body').append(row);
         }
         const details=$('detail-activity-fields');details.replaceChildren();
-        for(const [label,value] of [['Inicio',formatDate(data.sesion.fecha_inicio)],['Término',formatDate(data.sesion.fecha_cierre)],...(data.sesion.campos_definicion||[]).map(f=>[f.etiqueta,data.sesion.campos[f.nombre]])]){
+        for(const [label,value] of [['Sede', data.sesion.sede], ['Área académica', data.sesion.area], ['Inicio',formatDate(data.sesion.fecha_inicio)],['Término',formatDate(data.sesion.fecha_cierre)],...(data.sesion.campos_definicion||[]).map(f=>[f.etiqueta,data.sesion.campos[f.nombre]])]){
             if(!value)continue;const group=document.createElement('div');const term=document.createElement('dt');term.textContent=label;const text=document.createElement('dd');text.textContent=value;group.append(term,text);details.append(group);
         }
         $('attendees-empty-message').hidden=data.asistencias.length>0;$('detail-feedback').hidden=true;
@@ -127,7 +127,7 @@ async function loadCurrentSessions() {
             const title = document.createElement('h3');
             title.textContent = session.nombre;
             const type = document.createElement('p');
-            type.textContent = session.plantilla;
+            type.textContent = session.plantilla + ' · ' + session.sede + ' · ' + session.area;
             const start = document.createElement('p');
             start.textContent = `${session.anfitrion} · ${formatDate(session.fecha_inicio, {dateStyle: 'short', timeStyle: 'short'})}`;
             const count = document.createElement('p');

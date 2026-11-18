@@ -76,7 +76,9 @@ from .permissions import tiene_permiso, sesiones_visibles, permisos_usuario
 
 
 def datos_sesion(sesion):
-    return dict(id=sesion.id, nombre=sesion.nombre, estado=sesion.estado,
+    contexto = getattr(sesion, 'contexto', None)
+    return dict(sede=contexto.sede.nombre if contexto else 'Sin clasificar',
+        area=contexto.area.nombre if contexto else 'Sin clasificar', id=sesion.id, nombre=sesion.nombre, estado=sesion.estado,
         fecha_inicio=fecha_chile(sesion.fecha_inicio), fecha_cierre=fecha_chile(sesion.fecha_cierre),
         fecha_local=fecha_chile(sesion.fecha_inicio, True), token_qr=sesion.token_qr,
         plantilla=sesion.plantilla.nombre, anfitrion=sesion.anfitrion.nombre,
@@ -359,7 +361,8 @@ def opciones_sesion(request):
     query = Usuarios.objects.filter(activo=1)
     if permisos_usuario(request.actor)['crear'] != 'TODAS':
         query = query.filter(id=request.actor.id)
-    anfitriones = [{'id': usuario.id, 'nombre': usuario.nombre} for usuario in query]
+    from .organizacion import datos_perfil
+    anfitriones = [{'id': usuario.id, 'nombre': usuario.nombre, **datos_perfil(usuario)} for usuario in query]
     return JsonResponse({'plantillas': [{'id': p.id, 'nombre': p.nombre, 'descripcion': p.descripcion,
         'campos': campos_por_etapa(list(p.camposplantilla_set.order_by('orden', 'id').values('nombre', 'etiqueta', 'tipo', 'obligatorio')))}
         for p in PlantillasSesion.objects.filter(activa=1).prefetch_related('camposplantilla_set').order_by('nombre')], 'anfitriones': anfitriones, 'puede_crear': tiene_permiso(request.actor, 'crear')})
@@ -407,12 +410,20 @@ def crear_sesion(request):
         raise ErrorFormulario('Selecciona una plantilla y un anfitrión activos.')
     if permisos_usuario(request.actor)['crear'] != 'TODAS' and anfitrion.id != request.actor.id:
         raise ErrorFormulario('Solo puedes crear sesiones a tu cargo.', 403)
+    from .organizacion import datos_perfil, permite_contexto
+    from .models import ContextoSesion
+    perfil = datos_perfil(anfitrion)
+    if not perfil['sede_id'] or not perfil['area_id']:
+        raise ErrorFormulario('El superusuario debe asignar sede y área al anfitrión antes de crear sesiones.')
+    if not permite_contexto(request.actor, 'crear', perfil['sede_id'], perfil['area_id']):
+        raise ErrorFormulario('No puedes crear sesiones en la sede o área del anfitrión seleccionado.', 403)
     campos = campos_por_etapa(list(plantilla.camposplantilla_set.order_by('orden', 'id').values('nombre', 'etiqueta', 'tipo', 'obligatorio', 'orden')))
     valores = validar_campos(campos, data.get('campos', {}), True)
     with transaction.atomic():
         s = Sesiones.objects.create(plantilla=plantilla, anfitrion=anfitrion, nombre=nombre.strip(), estado='ABIERTA',
             fecha_inicio=timezone.now().isoformat(), token_qr=uuid.uuid4().hex,
             campos_definicion_json=json.dumps(campos, ensure_ascii=False), campos_valores_json=json.dumps(valores, ensure_ascii=False))
+        ContextoSesion.objects.create(sesion=s, sede_id=perfil['sede_id'], area_id=perfil['area_id'])
         auditar(request, 'CREAR_SESION', 'sesion', s.id, despues=datos_sesion(s))
     return JsonResponse({'id': s.id, 'nombre': s.nombre, 'estado': s.estado}, status=201)
 

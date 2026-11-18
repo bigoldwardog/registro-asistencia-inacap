@@ -27,7 +27,7 @@ def permisos_usuario(usuario):
         return usuario._permisos
     acceso = AccesoUsuario.objects.select_related('rol').filter(usuario_id=usuario.id).first()
     if acceso:
-        superusuario = acceso.superusuario
+        superusuario = acceso.superusuario or acceso.rol.superusuario
         permisos = {clave: 'TODAS' if superusuario else getattr(acceso.rol, clave) for clave, _ in PERMISOS}
     else:
         primero = primer_administrador()
@@ -48,19 +48,28 @@ def tiene_permiso(usuario, accion, sesion=None):
     if accion == 'panel_anfitrion':
         return any(permisos[clave] != 'NINGUNA' for clave in ('crear', 'observaciones', 'cerrar'))
     alcance = permisos.get(accion, 'NINGUNA')
-    return alcance == 'TODAS' or (alcance == 'PROPIAS' and
-                                 (sesion is None or sesion.anfitrion_id == usuario.id))
+    permitido = alcance == 'TODAS' or (alcance == 'PROPIAS' and
+                                       (sesion is None or sesion.anfitrion_id == usuario.id))
+    if not permitido or sesion is None or permisos['superusuario']:
+        return permitido
+    from .organizacion import permite_contexto
+    contexto = getattr(sesion, 'contexto', None)
+    return permite_contexto(usuario, accion, contexto.sede_id if contexto else None,
+                            contexto.area_id if contexto else None)
 
 
 def sesiones_visibles(usuario, query):
     alcance = permisos_usuario(usuario)['consultar']
     if alcance == 'NINGUNA':
         return query.none()
+    from .organizacion import filtro_organizacion
+    query = query.filter(filtro_organizacion(usuario, 'consultar'))
     return query if alcance == 'TODAS' else query.filter(anfitrion_id=usuario.id)
 
 
 @transaction.atomic
 def migrar_cuentas():
+    RolAcceso.objects.get_or_create(nombre='Superusuario', defaults={'superusuario': True})
     docente, _ = RolAcceso.objects.get_or_create(
         nombre='Docente', defaults={clave: 'PROPIAS' for clave, _ in PERMISOS})
     RolAcceso.objects.get_or_create(nombre='Consulta propia')
@@ -68,6 +77,11 @@ def migrar_cuentas():
         nombre='Administración existente', defaults={
             'consultar': 'TODAS', 'crear': 'PROPIAS', 'observaciones': 'PROPIAS',
             'cerrar': 'PROPIAS', 'exportar': 'TODAS'})
+    from .models import AmbitoPermiso
+    for rol in RolAcceso.objects.all():
+        for accion, _ in PERMISOS:
+            AmbitoPermiso.objects.get_or_create(rol=rol, accion=accion, defaults={
+                'modo_sedes': 'PERFIL', 'modo_areas': 'PERFIL'})
     primero = primer_administrador()
     existe_superusuario = AccesoUsuario.objects.filter(superusuario=True).exists()
     for usuario in Usuarios.objects.all():

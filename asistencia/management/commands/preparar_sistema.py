@@ -21,6 +21,8 @@ class Command(BaseCommand):
             if 'campos_participante_json' not in {r[1] for r in c.fetchall()}:
                 c.execute("ALTER TABLE asistencias ADD COLUMN campos_participante_json TEXT NOT NULL DEFAULT '{}'")
         call_command('cargar_plantillas')
+        from asistencia.organizacion import cargar_catalogo
+        cargar_catalogo()
         Usuarios.objects.filter(password_hash='HASH_SOLO_PARA_PRUEBAS').update(activo=0)
         from asistencia.permissions import migrar_cuentas
         migrar_cuentas()

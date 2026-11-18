@@ -37,6 +37,7 @@
             </section>
             {% else %}
             <section class="attendance-card">
+                <p>Sede · {{ organizacion.sede }}<br>Área · {{ organizacion.area }}</p>
                 <h3>{% if seccion == 'password' %}Cambiar contraseña{% else %}Información de la cuenta{% endif %}</h3>
                 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
                 {% if mensaje %}<p role="status">{{ mensaje }}</p>{% endif %}
