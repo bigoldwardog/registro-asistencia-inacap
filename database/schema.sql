@@ -251,3 +251,5 @@ CREATE TABLE IF NOT EXISTS firmas_adicionales (
     fecha_creacion TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(asistencia_id, tipo)
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_correo_ci ON usuarios(lower(correo));

@@ -39,7 +39,7 @@ Al actualizar una instalación anterior, ejecuta el iniciador habitual o `python
 
 ## Flujo
 
-- Nueva sesión: seleccionar plantilla, completar contexto de apertura y crear. El servidor registra fecha y hora de inicio.
+- Nueva sesión: seleccionar plantilla, completar contexto y fecha prevista y programar. El inicio real requiere elegir al anfitrión presente y capturar su firma; solo entonces se habilita el registro de asistentes.
 - Los asistentes entran por QR sin cuenta. El formulario corresponde a la plantilla. Pueden recordar sus datos opcionalmente y confirmarlos parcialmente ocultos en otra reunión.
 - Los envíos pendientes se conservan antes de enviarse. Tras perder una respuesta y recargar, se consulta el mismo identificador para no duplicar la asistencia.
 - Si la plantilla solicita RUT, el formulario valida el dígito verificador y aplica el formato con puntos y guion. El asistente aparece como pendiente de firma hasta que confirma su firma desde su dispositivo.
@@ -50,7 +50,7 @@ Al actualizar una instalación anterior, ejecuta el iniciador habitual o `python
 
 ## Consultas y exportación
 
-Administración permite buscar por nombre, RUT, cargo o actividad y filtrar por plantilla, anfitrión y fecha de Chile. El detalle muestra campos del participante, datos de la actividad y firmas disponibles. Los botones de firma abren la imagen original.
+Administración permite buscar por nombre, RUT, cargo o actividad y filtrar por plantilla, anfitrión y fecha de Chile. El detalle muestra campos del participante, datos de la actividad y estado y fecha de firma. Las imágenes de firmas se incluyen únicamente en las exportaciones autorizadas; no existe una ruta para visualizarlas desde la lista.
 
 **PDF** es la exportación principal para archivar e imprimir. **XLSX** ofrece una versión imprimible editable, con firmas incrustadas y ajuste a una página de ancho. CSV se retiró. Los documentos distinguen las ocho plantillas generales y repiten las cabeceras de las listas cuando continúan en otra página. Registro de asistencia conserva como base el Excel original del cliente. Los diseños trasladados desde Word deben validarse con el cliente; no se declara equivalencia exacta ni firma de una autoridad institucional que el sistema no haya capturado. EPP y pañol conservan por ahora su Excel anterior; su PDF está pendiente y devuelve un aviso explícito. Selecciona estas actividades por separado. Desde Administración se puede exportar una sesión o las que coincidan con los filtros, respetando los permisos; el anfitrión puede exportar desde **Lista actual**.
 
@@ -59,8 +59,8 @@ Las imágenes se validan con Pillow antes de almacenarse. Los valores introducid
 ## Accesos
 
 - Asistente: acceso público únicamente al formulario y a la recuperación y firma de su propio registro mediante el identificador del envío.
-- Anfitrión: solo sus sesiones, participantes, notas, firmas y QR.
-- Administrador: todas las sesiones, búsquedas y exportaciones.
+- Cuentas operativas: acceso según las acciones, propiedad, sedes y áreas configuradas en su rol.
+- Superusuario base o delegado: acceso completo y gestión de cuentas y roles.
 - Salir elimina la sesión de acceso. Una cuenta desactivada pierde acceso al siguiente pedido.
 - Cambiar la contraseña propia: Mi cuenta.
 - Recuperación desde el servidor:
@@ -120,3 +120,19 @@ Desde **Gestionar sesión**, el creador o una cuenta con permiso de crear sobre 
 La cuenta del anfitrión debe estar activa y pertenecer a la sede y área de la actividad. El creador mantiene su acceso tras la sustitución, sujeto a los alcances de su rol; el anfitrión efectivo tiene acceso propio sujeto a sus permisos. La clasificación organizacional de la actividad no cambia. Administración dispone de **Programadas** además de las actividades en curso y la búsqueda.
 
 Ejecuta `python manage.py preparar_sistema` al actualizar: aplica la tabla de programación y adapta el esquema SQLite sin eliminar sesiones, asistentes ni firmas. Las sesiones anteriores conservan su estado y fechas; no se inventa para ellas un creador histórico ni una firma de anfitrión.
+
+
+## Integridad y demostración en Vercel
+
+La instalación local conserva SQLite. El despliegue preparado para Vercel exige PostgreSQL externo, secretos de entorno y un dominio público estable para los QR. No se publica la base local ni se crean cuentas de ejemplo. El formulario público de configuración inicial queda bloqueado en hosting; la primera cuenta se crea mediante un comando privado.
+
+Consulta la [guía de despliegue](docs/DESPLIEGUE_VERCEL.md) y el [registro de revisión](docs/AUDITORIA-2026-11-18.md). La configuración y las pruebas locales están preparadas. La base Neon ya fue inicializada y probada con PostgreSQL real; falta crear y desplegar el proyecto Vercel y comprobarlo desde teléfonos externos.
+
+```powershell
+.\.venv\Scripts\python.exe manage.py preparar_sistema
+.\.venv\Scripts\python.exe manage.py auditar_integridad
+```
+
+Preparar es repetible: inicializa las tablas originales, aplica migraciones y restricciones de relaciones, crea la caché compartida y carga catálogos. Auditar es de solo lectura y comprueba referencias y estados incoherentes. Cambiar o restablecer una contraseña invalida las otras sesiones abiertas. Las respuestas privadas no se almacenan en caché del navegador.
+
+Las variables de `.env.example` son una referencia: el proyecto no carga ese archivo automáticamente. En hosting se configuran en Vercel; para ejecutar comandos de preparación se establecen en el entorno local. Las firmas permanecen en la base de datos. En Vercel las exportaciones tienen un límite preventivo de 4 MB; si se supera, exporta una actividad por separado.

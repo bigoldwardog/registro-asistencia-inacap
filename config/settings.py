@@ -17,22 +17,36 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
+from django.core.exceptions import ImproperlyConfigured
+from urllib.parse import urlparse
+import dj_database_url
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-x@wmhg+!dlgckj(l(rmrphmo4m*utxh9%5hu6pami-^nbfeq4r')
+HOSTED = os.environ.get('VERCEL') == '1' or os.environ.get('DJANGO_ENV') == 'production'
+DEBUG = os.environ.get('DJANGO_DEBUG', '0' if HOSTED else '1') == '1'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '')
+if not SECRET_KEY:
+    if HOSTED or not DEBUG:
+        raise ImproperlyConfigured('Configura DJANGO_SECRET_KEY para este entorno.')
+    SECRET_KEY = 'django-insecure-solo-desarrollo-local-no-usar-en-hosting'
+if HOSTED and DEBUG:
+    raise ImproperlyConfigured('DJANGO_DEBUG debe ser 0 en el hosting.')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
-
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-    "192.168.1.7",
-    "192.168.56.1",
-    *filter(None, os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")),
-]
+PUBLIC_SITE_URL = os.environ.get('PUBLIC_SITE_URL', '').rstrip('/')
+if PUBLIC_SITE_URL and (urlparse(PUBLIC_SITE_URL).scheme not in ('https', 'http') or not urlparse(PUBLIC_SITE_URL).hostname):
+    raise ImproperlyConfigured('PUBLIC_SITE_URL debe ser una URL absoluta válida.')
+if HOSTED and PUBLIC_SITE_URL and urlparse(PUBLIC_SITE_URL).scheme != 'https':
+    raise ImproperlyConfigured('PUBLIC_SITE_URL debe usar HTTPS en el hosting.')
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] if not HOSTED else []
+ALLOWED_HOSTS += [v.strip() for v in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if v.strip()]
+for host in (urlparse(PUBLIC_SITE_URL).hostname, os.environ.get('VERCEL_URL'), os.environ.get('VERCEL_PROJECT_PRODUCTION_URL')):
+    if host and host not in ALLOWED_HOSTS: ALLOWED_HOSTS.append(host)
+CSRF_TRUSTED_ORIGINS = [v.strip() for v in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if v.strip()]
+for host in ALLOWED_HOSTS:
+    if HOSTED and host not in ('*', 'localhost', '127.0.0.1') and not host.startswith('.'):
+        origin = 'https://' + host
+        if origin not in CSRF_TRUSTED_ORIGINS: CSRF_TRUSTED_ORIGINS.append(origin)
+if HOSTED and not ALLOWED_HOSTS:
+    raise ImproperlyConfigured('Configura PUBLIC_SITE_URL o DJANGO_ALLOWED_HOSTS.')
 
 # Application definition
 
@@ -48,6 +62,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'asistencia.middleware.DatosPrivadosMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -79,14 +94,23 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "OPTIONS": {"timeout": 20},
-        "NAME": os.environ.get("DJANGO_DATABASE_PATH", str(BASE_DIR / "asistencia.db")),
-    }
-}
+database_url = os.environ.get('DATABASE_URL', '')
+if database_url:
+    database = dj_database_url.parse(database_url, conn_max_age=0, conn_health_checks=True)
+    if database['ENGINE'] != 'django.db.backends.postgresql':
+        raise ImproperlyConfigured('DATABASE_URL debe apuntar a PostgreSQL. Usa DJANGO_DATABASE_PATH para SQLite local.')
+    database.setdefault('OPTIONS', {}).update(connect_timeout=10, prepare_threshold=None)
+    if HOSTED: database['OPTIONS'].setdefault('sslmode', 'require')
+    database['DISABLE_SERVER_SIDE_CURSORS'] = True
+    DATABASES = {'default': database}
+else:
+    if HOSTED:
+        raise ImproperlyConfigured('Configura DATABASE_URL: SQLite no es almacenamiento persistente en Vercel.')
+    DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'OPTIONS': {'timeout': 20},
+        'NAME': os.environ.get('DJANGO_DATABASE_PATH', str(BASE_DIR / 'asistencia.db'))}}
 
+CACHES = {'default': {'BACKEND': 'django.core.cache.backends.db.DatabaseCache', 'LOCATION': 'asistencia_cache',
+    'OPTIONS': {'MAX_ENTRIES': 10000}}} if HOSTED else {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
@@ -122,7 +146,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
@@ -136,3 +161,15 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
+
+SESSION_COOKIE_SECURE = HOSTED
+CSRF_COOKIE_SECURE = HOSTED
+SECURE_SSL_REDIRECT = HOSTED
+SECURE_HSTS_SECONDS = 31536000 if HOSTED else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
+if HOSTED:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_AGE = 8 * 60 * 60
+DATA_UPLOAD_MAX_MEMORY_SIZE = 3 * 1024 * 1024
+MAX_EXPORT_BYTES = 4 * 1024 * 1024 if os.environ.get('VERCEL') == '1' else None

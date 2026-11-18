@@ -7,3 +7,9 @@ __pycache__/
 *.db-shm
 .env
 .pytest_cache/
+
+.env.*
+!.env.example
+.vercel/
+staticfiles/
+.neon

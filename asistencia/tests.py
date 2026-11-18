@@ -32,9 +32,11 @@ class SistemaTests(TransactionTestCase):
         from pathlib import Path
         from django.conf import settings
         connection.ensure_connection()
-        connection.connection.executescript((Path(settings.BASE_DIR) / 'database/schema.sql').read_text(encoding='utf-8-sig'))
+        if connection.vendor == 'sqlite':
+            connection.connection.executescript((Path(settings.BASE_DIR) / 'database/schema.sql').read_text(encoding='utf-8-sig'))
         for table in ['firmas_adicionales', 'firmas_devolucion', 'firmas', 'auditoria', 'asistencias', 'sesiones', 'asistentes', 'campos_plantilla', 'plantillas_sesion', 'usuarios']:
-            connection.connection.execute('DELETE FROM ' + table)
+            with connection.cursor() as cursor:
+                cursor.execute('DELETE FROM ' + connection.ops.quote_name(table))
         cargar_catalogo()
         self.admin = Usuarios.objects.create(nombre='Administradora', correo='admin@example.com', rol='ADMINISTRADOR', activo=1, password_hash=make_password('Prueba-valida-2026!'))
         self.host = Usuarios.objects.create(nombre='Anfitrión', correo='host@example.com', rol='ANFITRION', activo=1, password_hash=make_password('Prueba-valida-2026!'))
@@ -52,14 +54,14 @@ class SistemaTests(TransactionTestCase):
         self.png = firma_png()
 
     def login(self, usuario):
-        client = Client(); session = client.session; session['usuario_id'] = usuario.id; session.save(); return client
+        client = Client(); session = client.session; session['usuario_id'] = usuario.id; from .access import firma_credencial; session['credencial_firma'] = firma_credencial(usuario); session.save(); return client
 
     def crear(self, nombre='Entrevista con estudiante', client=None):
         plantilla = PlantillasSesion.objects.get(nombre=nombre)
         values = {c.nombre: {'fecha': timezone.localdate().isoformat(), 'hora': '10:00', 'email': 'test@example.com', 'numero': '1'}.get(c.tipo, 'Dato de prueba') for c in plantilla.camposplantilla_set.all()}
         response = (client or self.h).post('/api/sesiones/crear/', {'nombre': 'Actividad ' + nombre, 'plantilla_id': plantilla.id, 'anfitrion_id': self.host.id, 'fecha_programada': '2026-11-20T10:00', 'campos': values}, content_type='application/json')
         self.assertEqual(response.status_code, 201, response.content)
-        inicio = (client or self.h).post(f"/api/sesiones/{response.json()['id']}/iniciar/", {'anfitrion_id': self.host.pk, 'rut': '12345678-5', 'firma': self.png}, content_type='application/json')
+        inicio = (client or self.h).post(f"/api/sesiones/{response.json()['id']}/iniciar/", {'anfitrion_id': self.host.pk, 'rut': '11111111-1', 'firma': self.png}, content_type='application/json')
         self.assertEqual(inicio.status_code, 200, inicio.content)
         return Sesiones.objects.get(id=response.json()['id'])
 
@@ -112,7 +114,7 @@ class SistemaTests(TransactionTestCase):
         self.assertEqual(poster.status_code, 200)
         self.assertTrue(poster.content.startswith(b'%PDF'))
         self.assertEqual(self.o.get(f'/api/sesiones/{sesion.id}/afiche.pdf').status_code, 403)
-        segunda, otros = self.registrar(sesion, rut='11111111-1')
+        segunda, otros = self.registrar(sesion, rut='22222222-2')
         self.assertEqual(segunda.status_code, 201, segunda.content)
         self.h.post(f'/api/sesiones/{sesion.id}/cerrar/')
         self.assertEqual(self.client.post(url, dict(data, tipo='asistencia',
@@ -253,8 +255,8 @@ class SistemaTests(TransactionTestCase):
                 self.assertEqual(self.h.post(url, {'firma': self.png}, content_type='application/json').status_code, 409)
                 self.h.post(f'/api/sesiones/{s.id}/cerrar/')
                 self.assertEqual(self.h.post(url, {'firma': self.png}, content_type='application/json').status_code, 409)
-                self.assertEqual(self.h.get(f'/api/asistencias/{aid}/imagen/{tipo}/').status_code, 200)
-                self.assertEqual(self.o.get(f'/api/asistencias/{aid}/imagen/{tipo}/').status_code, 403)
+                self.assertEqual(self.h.get(f'/api/asistencias/{aid}/imagen/{tipo}/').status_code, 404)
+                self.assertEqual(self.o.get(f'/api/asistencias/{aid}/imagen/{tipo}/').status_code, 404)
         s = self.crear(); r, _ = self.registrar(s); aid = r.json()['asistencia_id']; self.h.post(f'/api/sesiones/{s.id}/cerrar/')
         self.assertEqual(self.h.post(f'/api/asistencias/{aid}/firma/', {'firma': self.png}, content_type='application/json').status_code, 409)
 
@@ -290,7 +292,8 @@ class SistemaTests(TransactionTestCase):
         for definition, values in [('', ''), ('null', '[]'), ('[null,3,{}]', 'malformado')]:
             Sesiones.objects.filter(id=s.id).update(campos_definicion_json=definition, campos_valores_json=values)
             self.assertEqual(self.h.get('/api/sesiones/').status_code, 200)
-        self.assertEqual(connection.connection.execute('PRAGMA foreign_key_check').fetchall(), [])
+        if connection.vendor == 'sqlite':
+            self.assertEqual(connection.connection.execute('PRAGMA foreign_key_check').fetchall(), [])
 
 
     def test_perfiles_antiguos_con_rut_equivalente_no_bloquean_altas(self):
@@ -643,7 +646,7 @@ class SistemaTests(TransactionTestCase):
         self.assertTrue(s.programacion.firma_anfitrion)
         self.assertEqual(self.h.post(f'/api/sesiones/{s.pk}/iniciar/', {'anfitrion_id':self.host.pk,'rut':'12345678-5','firma':self.png}, content_type='application/json').status_code,409)
         self.assertEqual(self.o.get(f'/api/sesiones/{s.pk}/asistencias/lista/').status_code,200)
-        respuesta,_ = self.registrar(s)
+        respuesta,_ = self.registrar(s, rut='11111111-1')
         self.assertEqual(respuesta.status_code,201)
         listado = self.h.get(f'/api/sesiones/{s.pk}/asistencias/lista/').json()['asistencias']
         self.assertTrue(listado[0]['es_anfitrion'])
@@ -656,3 +659,62 @@ class SistemaTests(TransactionTestCase):
         self.assertEqual(len(documento['asistentes']),2)
         self.assertEqual(self.h.get('/api/sesiones/exportar/pdf/',{'sesiones':s.pk}).status_code,200)
         self.assertEqual(self.h.get('/api/sesiones/exportar/xlsx/',{'sesiones':s.pk}).status_code,200)
+
+    def test_no_se_duplica_anfitrion_con_su_rut(self):
+        s = self.crear('Registro de asistencia')
+        respuesta, _ = self.registrar(s, rut='11.111.111-1')
+        self.assertEqual(respuesta.status_code,409)
+        self.assertEqual(s.asistencias_set.count(),0)
+
+    def test_cambio_password_invalida_otras_sesiones(self):
+        segunda = self.login(self.host)
+        respuesta = self.h.post('/mi-cuenta/?seccion=password', {
+            'accion':'password','actual':'Prueba-valida-2026!',
+            'password':'Otra-clave-valida-2026!','password2':'Otra-clave-valida-2026!'})
+        self.assertContains(respuesta,'Contraseña actualizada.')
+        self.assertEqual(self.h.get('/mi-cuenta/').status_code,200)
+        self.assertEqual(segunda.get('/mi-cuenta/').status_code,302)
+        self.assertNotIn('usuario_id',segunda.session)
+
+    def test_perfil_sin_acceso_no_hereda_administracion(self):
+        from .models import AccesoUsuario
+        from .permissions import permisos_usuario
+        AccesoUsuario.objects.filter(usuario=self.admin).delete()
+        permisos = permisos_usuario(Usuarios.objects.get(pk=self.admin.pk))
+        self.assertFalse(permisos['superusuario'])
+        self.assertEqual(permisos['consultar'],'NINGUNA')
+        self.assertEqual(self.a.get('/roles-permisos/').status_code,302)
+
+    def test_respuestas_privadas_y_qr_con_url_estable(self):
+        s = self.crear()
+        with override_settings(PUBLIC_SITE_URL='https://demo-ejemplo.vercel.app'):
+            from .views import url_registro
+            from django.test import RequestFactory
+            self.assertEqual(url_registro(RequestFactory().get('/'),s),'https://demo-ejemplo.vercel.app/?token='+s.token_qr)
+            self.assertEqual(self.h.get('/api/sesiones/').json()['sesiones'][0]['url_publica'],'https://demo-ejemplo.vercel.app/?token='+s.token_qr)
+        self.assertEqual(self.h.get('/mi-cuenta/')['Cache-Control'],'private, no-store')
+        with override_settings(MAX_EXPORT_BYTES=10):
+            self.assertEqual(self.h.get('/api/sesiones/exportar/pdf/',{'sesiones':s.pk}).status_code,413)
+
+    def test_preparacion_idempotente_conserva_datos_y_permisos(self):
+        from django.core.management import call_command
+        from .models import AccesoUsuario
+        s = self.crear()
+        respuesta,_ = self.registrar(s)
+        self.firmar(respuesta.json()['asistencia_id'])
+        perfil = AccesoUsuario.objects.get(usuario=self.host)
+        perfil.rol.exportar = 'NINGUNA'; perfil.rol.save()
+        original = s.programacion.firma_anfitrion
+        for _ in range(2): call_command('preparar_sistema',stdout=io.StringIO())
+        s.refresh_from_db(); perfil.rol.refresh_from_db()
+        self.assertEqual(s.programacion.firma_anfitrion,original)
+        self.assertEqual(s.asistencias_set.count(),1)
+        self.assertEqual(perfil.rol.exportar,'NINGUNA')
+        call_command('auditar_integridad',stdout=io.StringIO())
+
+    def test_configuracion_inicial_cerrada_en_hosting(self):
+        Usuarios.objects.update(activo=0)
+        with override_settings(HOSTED=True):
+            respuesta = self.client.get('/configuracion-inicial/',REMOTE_ADDR='127.0.0.1')
+        self.assertEqual(respuesta.status_code,403)
+        self.assertContains(respuesta,'crear_superusuario_inicial',status_code=403)

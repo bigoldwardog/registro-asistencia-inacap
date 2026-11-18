@@ -5,6 +5,8 @@ from django.db import connection
 class Command(BaseCommand):
     help = 'Permite actividades programadas sin anfitrión ni inicio real, conservando registros.'
     def handle(self, *args, **options):
+        if connection.vendor != 'sqlite':
+            raise CommandError('Este comando solo adapta bases SQLite antiguas. Usa preparar_sistema para PostgreSQL.')
         connection.ensure_connection()
         db = connection.connection
         original = db.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='sesiones'").fetchone()[0]

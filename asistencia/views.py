@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import IntegrityError, OperationalError, transaction
 from django.http import HttpResponse, JsonResponse
+from django.conf import settings
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
@@ -50,7 +51,7 @@ def cuerpo(request):
 def obtener_sesion(request=None, sesion_id=None, token=None, lock=False, accion='consultar'):
     query = Sesiones.objects.select_related('plantilla', 'anfitrion')
     if lock:
-        query = query.select_for_update()
+        query = query.select_for_update(of=('self',))
     try:
         sesion = query.get(token_qr=token) if token else query.get(id=sesion_id)
     except (Sesiones.DoesNotExist, ValueError, TypeError):
@@ -86,6 +87,7 @@ def datos_sesion(sesion):
         creador=programacion.creador.nombre if programacion else 'No registrado en la versión anterior',
         anfitrion_previsto=programacion.anfitrion_previsto.nombre if programacion and programacion.anfitrion_previsto else '',
         firma_anfitrion_registrada=bool(programacion and programacion.fecha_firma),
+        url_publica=settings.PUBLIC_SITE_URL + '/?token=' + sesion.token_qr if settings.PUBLIC_SITE_URL else '',
         fecha_local=fecha_chile(sesion.fecha_inicio or (programacion.fecha_programada if programacion else None), True), token_qr=sesion.token_qr,
         plantilla=sesion.plantilla.nombre, anfitrion=sesion.anfitrion.nombre if sesion.anfitrion else 'Por confirmar al iniciar',
         campos_definicion=definicion_sesion(sesion), campos=json_guardado(sesion.campos_valores_json, dict))
@@ -151,8 +153,6 @@ def listar_asistencias(request, sesion_id):
             estado='FIRMADO', fecha_registro=fecha_chile(programacion.fecha_firma), fecha_firma=fecha_chile(programacion.fecha_firma),
             tiene_firma=True, es_anfitrion=True, devolucion_firmada=False, docente_firmado=False))
     data = datos_sesion(sesion)
-    data['permisos'] = {accion: tiene_permiso(request.actor, accion, sesion)
-                        for accion in ('crear', 'observaciones', 'cerrar', 'exportar')}
     data['permisos'] = {accion: tiene_permiso(request.actor, accion, sesion)
                         for accion in ('crear', 'observaciones', 'cerrar', 'exportar')}
     data.update(es_epp=sesion.plantilla.nombre == EPP, es_panol=sesion.plantilla.nombre == PANOL,
@@ -244,8 +244,11 @@ def registrar_asistencia(request, token):
                 raise ErrorFormulario('Ese envío corresponde a otros datos. Usa Registrar a otra persona.', 409)
             return JsonResponse({'asistencia_id': previa.id, 'estado': previa.estado, 'registro_token': envio})
         if sesion.estado != 'ABIERTA':
-            raise ErrorFormulario('La sesión está cerrada.', 409)
+            raise ErrorFormulario('La actividad aún no ha iniciado.' if sesion.estado == 'PROGRAMADA' else 'La sesión está cerrada.', 409)
         rut = valores.get('rut', '')
+        programacion = getattr(sesion, 'programacion', None)
+        if rut and programacion and programacion.fecha_firma and json_guardado(programacion.datos_anfitrion_json, dict).get('rut') == rut:
+            raise ErrorFormulario('El anfitrión ya encabeza la lista con su firma de inicio.', 409)
         asistente = None
         if rut:
             for existente in Asistencias.objects.filter(sesion=sesion).exclude(rut_registrado=''):
@@ -490,25 +493,9 @@ def historial_cambios(request, sesion_id):
         nuevos=json_guardado(r.datos_nuevos_json, dict)) for r in rows]})
 
 
-@acceso()
-@require_GET
-@errores
-def imagen_firma(request, asistencia_id, tipo):
-    try:
-        a = Asistencias.objects.get(id=asistencia_id)
-    except Asistencias.DoesNotExist:
-        raise ErrorFormulario('La asistencia no existe.', 404)
-    obtener_sesion(request, a.sesion_id)
-    if tipo == 'recepcion': f = Firmas.objects.filter(asistencia=a).first()
-    elif tipo == 'devolucion': f = FirmasDevolucion.objects.filter(asistencia=a).first()
-    elif tipo == 'docente': f = FirmasAdicionales.objects.filter(asistencia=a, tipo='DOCENTE').first()
-    else: f = None
-    if not f:
-        raise ErrorFormulario('La firma no existe.', 404)
-    response = HttpResponse(bytes(f.imagen), content_type='image/png')
-    response['Cache-Control'] = 'private, no-store'
-    response['X-Content-Type-Options'] = 'nosniff'
-    return response
+def url_registro(request, sesion):
+    ruta = '/?token=' + sesion.token_qr
+    return settings.PUBLIC_SITE_URL + ruta if settings.PUBLIC_SITE_URL else request.build_absolute_uri(ruta)
 
 
 @acceso()
@@ -518,7 +505,7 @@ def codigo_qr(request, sesion_id):
     import io
     import qrcode
     s = obtener_sesion(request, sesion_id)
-    url = request.build_absolute_uri('/?token=' + s.token_qr)
+    url = url_registro(request, s)
     buffer = io.BytesIO()
     qrcode.make(url).save(buffer, format='PNG')
     return HttpResponse(buffer.getvalue(), content_type='image/png')
@@ -534,10 +521,10 @@ def afiche_qr(request, sesion_id):
     from PIL import Image, ImageDraw, ImageFont
 
     sesion = obtener_sesion(request, sesion_id)
-    url = request.build_absolute_uri('/?token=' + sesion.token_qr)
+    url = url_registro(request, sesion)
     ancho, alto = 1240, 1754
     centro = ancho // 2
-    rojo, negro, gris = '#b90030', '#151515', '#515151'
+    rojo, negro, gris = '#cc0000', '#151515', '#515151'
     pagina = Image.new('RGB', (ancho, alto), 'white')
     dibujo = ImageDraw.Draw(pagina)
 

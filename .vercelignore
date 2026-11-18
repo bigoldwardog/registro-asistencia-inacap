@@ -1,0 +1,12 @@
+.git/
+.venv/
+.vercel/
+.env*
+*.db
+*.db-*
+**/__pycache__/
+docs/
+output/
+.pytest_cache/
+
+.neon

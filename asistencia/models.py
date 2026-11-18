@@ -186,7 +186,7 @@ class RolAcceso(models.Model):
 
 class AccesoUsuario(models.Model):
     usuario = models.OneToOneField(Usuarios, models.CASCADE, primary_key=True,
-                                  db_constraint=False, related_name='acceso_configurado')
+                                  related_name='acceso_configurado')
     rol = models.ForeignKey(RolAcceso, models.PROTECT)
     superusuario = models.BooleanField(default=False)
     sede = models.ForeignKey('SedeAcademica', models.PROTECT, null=True, blank=True)
@@ -223,17 +223,17 @@ class AmbitoPermiso(models.Model):
 
 class ContextoSesion(models.Model):
     sesion = models.OneToOneField(Sesiones, models.CASCADE, primary_key=True,
-                                 db_constraint=False, related_name='contexto')
+                                 related_name='contexto')
     sede = models.ForeignKey(SedeAcademica, models.PROTECT)
     area = models.ForeignKey(AreaAcademica, models.PROTECT)
 
 
 class ProgramacionSesion(models.Model):
-    sesion = models.OneToOneField(Sesiones, models.CASCADE, primary_key=True, db_constraint=False, related_name='programacion')
-    creador = models.ForeignKey(Usuarios, models.PROTECT, db_constraint=False, related_name='+')
+    sesion = models.OneToOneField(Sesiones, models.CASCADE, primary_key=True, related_name='programacion')
+    creador = models.ForeignKey(Usuarios, models.PROTECT, related_name='+')
     fecha_programada = models.DateTimeField()
-    anfitrion_previsto = models.ForeignKey(Usuarios, models.PROTECT, null=True, blank=True, db_constraint=False, related_name='+')
-    iniciada_por = models.ForeignKey(Usuarios, models.PROTECT, null=True, blank=True, db_constraint=False, related_name='+')
+    anfitrion_previsto = models.ForeignKey(Usuarios, models.PROTECT, null=True, blank=True, related_name='+')
+    iniciada_por = models.ForeignKey(Usuarios, models.PROTECT, null=True, blank=True, related_name='+')
     firma_anfitrion = models.BinaryField(null=True, blank=True)
     datos_anfitrion_json = models.TextField(default='{}')
     fecha_firma = models.DateTimeField(null=True, blank=True)

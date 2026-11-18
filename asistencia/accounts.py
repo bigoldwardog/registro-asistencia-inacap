@@ -8,7 +8,10 @@ from django.core.cache import cache
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 from django.db import transaction
-from .access import acceso, cuenta_configurada
+from .access import acceso, cuenta_configurada, firma_credencial
+from django.conf import settings
+from django.middleware.csrf import rotate_token
+import hashlib
 from .models import Usuarios, AccesoUsuario, RolAcceso
 from .permissions import migrar_cuentas
 from .views import auditar
@@ -26,6 +29,9 @@ def password_valida(password):
 def configuracion_inicial(request):
     if cuenta_configurada():
         return redirect('login')
+    if settings.HOSTED:
+        return render(request, 'cuenta.html', {'modo': 'local', 'titulo': 'Configuración inicial',
+            'error': 'La cuenta inicial del hosting se crea desde la consola con crear_superusuario_inicial.'}, status=403)
     if request.META.get('REMOTE_ADDR') not in ('127.0.0.1', '::1'):
         return render(request, 'cuenta.html', {'modo': 'local', 'titulo': 'Configuración inicial',
             'error': 'Abre http://127.0.0.1:8000/configuracion-inicial/ desde el computador del servidor para crear la primera cuenta.'}, status=403)
@@ -52,6 +58,8 @@ def configuracion_inicial(request):
                 AccesoUsuario.objects.filter(usuario=usuario).update(sede=sede, area=area, superusuario=True)
                 request.session.flush()
                 request.session['usuario_id'] = usuario.id
+                request.session['credencial_firma'] = firma_credencial(usuario)
+                rotate_token(request)
                 request.actor = usuario
                 auditar(request, 'CREAR_ADMINISTRADOR_INICIAL', 'usuario', usuario.id)
             return redirect('administrador')
@@ -66,7 +74,7 @@ def login(request):
     error = ''
     if request.method == 'POST':
         correo = request.POST.get('correo', '').strip().lower()
-        key = 'login:' + request.META.get('REMOTE_ADDR', '')
+        key = 'login:' + hashlib.sha256(correo.encode('utf-8')).hexdigest()
         intentos = cache.get(key, 0)
         usuario = Usuarios.objects.filter(correo__iexact=correo, activo=1).first()
         if intentos >= 10:
@@ -75,6 +83,8 @@ def login(request):
             cache.delete(key)
             request.session.flush()
             request.session['usuario_id'] = usuario.id
+            request.session['credencial_firma'] = firma_credencial(usuario)
+            rotate_token(request)
             request.session.set_expiry(8 * 60 * 60)
             return redirect('administrador')
         else:
@@ -119,6 +129,8 @@ def mi_cuenta(request):
                     actor.save(update_fields=['password_hash'])
                     auditar(request, 'CAMBIAR_PASSWORD', 'usuario', actor.id)
                 request.session.cycle_key()
+                request.session['credencial_firma'] = firma_credencial(actor)
+                rotate_token(request)
                 mensaje = 'Contraseña actualizada.'
             elif seccion == 'informacion' and accion in ('ver', 'guardar'):
                 mostrar_datos = True
@@ -146,7 +158,8 @@ def mi_cuenta(request):
                         actor.save(update_fields=campos)
                         if organizacion_nueva:
                             sede, area = organizacion_nueva
-                            AccesoUsuario.objects.filter(usuario=actor).update(sede=sede, area=area)
+                            if AccesoUsuario.objects.filter(usuario=actor).update(sede=sede, area=area) != 1:
+                                raise ValidationError('La cuenta no tiene un perfil de acceso configurado. Contacta al administrador.')
                         auditar(request, 'ACTUALIZAR_CUENTA', 'usuario', actor.id,
                                 despues={'sede_id': sede.pk, 'area_id': area.pk} if organizacion_nueva else None)
                     mensaje = 'Información actualizada.'

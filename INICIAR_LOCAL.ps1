@@ -4,6 +4,8 @@ $pythonPath = Join-Path $PSScriptRoot '.venv\Scripts\python.exe'
 if (-not (Test-Path -LiteralPath $pythonPath)) {
     throw 'No se encuentra .venv\Scripts\python.exe. Debes configurar el entorno virtual del proyecto.'
 }
+& $pythonPath manage.py preparar_sistema
+if ($LASTEXITCODE -ne 0) { throw 'No se pudo preparar la base de datos. No se inicio el servidor.' }
 $addresses = @(Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
     $_.IPAddress -ne '127.0.0.1' -and $_.IPAddress -notlike '169.254.*' -and $_.AddressState -eq 'Preferred'
 } | Select-Object -ExpandProperty IPAddress -Unique)

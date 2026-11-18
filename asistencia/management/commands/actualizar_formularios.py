@@ -5,6 +5,8 @@ from django.db import connection
 class Command(BaseCommand):
     help = "Adapta la base SQLite para formularios sin RUT y para el cargo por asistencia."
     def handle(self, *args, **options):
+        if connection.vendor != 'sqlite':
+            raise CommandError('Este comando solo adapta bases SQLite antiguas. Usa preparar_sistema para PostgreSQL.')
         connection.ensure_connection()
         db = connection.connection
         if db.in_transaction:

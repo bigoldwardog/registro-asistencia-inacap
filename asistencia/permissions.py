@@ -31,12 +31,9 @@ def permisos_usuario(usuario):
         superusuario = acceso.superusuario or acceso.rol.superusuario
         permisos = {clave: 'TODAS' if superusuario else getattr(acceso.rol, clave) for clave, _ in PERMISOS}
     else:
-        primero = primer_administrador()
-        superusuario = bool(primero and primero.id == usuario.id)
-        general = usuario.rol == 'ADMINISTRADOR'
-        permisos = {clave: 'TODAS' if general else 'PROPIAS' for clave, _ in PERMISOS}
-        if general and not superusuario:
-            permisos.update(crear='PROPIAS', observaciones='PROPIAS', cerrar='PROPIAS')
+        # Un perfil incompleto no hereda los permisos del paradigma anterior.
+        superusuario = False
+        permisos = {clave: 'NINGUNA' for clave, _ in PERMISOS}
     permisos['superusuario'] = superusuario
     usuario._permisos = permisos
     return permisos
@@ -49,8 +46,9 @@ def tiene_permiso(usuario, accion, sesion=None):
     if accion == 'panel_anfitrion':
         return any(permisos[clave] != 'NINGUNA' for clave in ('crear', 'observaciones', 'cerrar'))
     alcance = permisos.get(accion, 'NINGUNA')
-    permitido = alcance == 'TODAS' or (alcance == 'PROPIAS' and
-                                       (sesion is None or ((sesion.anfitrion_id == usuario.id or (getattr(sesion, 'programacion', None) and sesion.programacion.creador_id == usuario.id)) or getattr(getattr(sesion, 'programacion', None), 'creador_id', None) == usuario.id)))
+    programacion = getattr(sesion, 'programacion', None) if sesion else None
+    propia = sesion is None or sesion.anfitrion_id == usuario.id or bool(programacion and programacion.creador_id == usuario.id)
+    permitido = alcance == 'TODAS' or (alcance == 'PROPIAS' and propia)
     if not permitido or sesion is None or permisos['superusuario']:
         return permitido
     from .organizacion import permite_contexto

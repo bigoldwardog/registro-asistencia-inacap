@@ -1,4 +1,5 @@
 from functools import wraps
+from django.utils.crypto import salted_hmac, constant_time_compare
 
 from django.contrib.auth.hashers import identify_hasher
 from django.http import JsonResponse
@@ -7,9 +8,18 @@ from django.shortcuts import redirect
 from .models import Usuarios
 
 
+def firma_credencial(usuario):
+    return salted_hmac('asistencia.sesion', usuario.password_hash).hexdigest()
+
+
 def usuario_actual(request):
     uid = request.session.get('usuario_id')
-    return Usuarios.objects.filter(id=uid, activo=1).first() if uid else None
+    usuario = Usuarios.objects.filter(id=uid, activo=1).first() if uid else None
+    if usuario and constant_time_compare(request.session.get('credencial_firma', ''), firma_credencial(usuario)):
+        return usuario
+    if uid:
+        request.session.flush()
+    return None
 
 
 def cuenta_configurada():

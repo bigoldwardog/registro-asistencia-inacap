@@ -9,18 +9,30 @@ from asistencia.domain import normalizar_rut, ErrorFormulario
 class Command(BaseCommand):
     help = 'Inicializa o actualiza el esquema conservando las sesiones existentes. No carga datos de prueba.'
     def handle(self, *args, **options):
-        call_command('migrate', interactive=False, verbosity=0)
         connection.ensure_connection()
-        connection.connection.executescript((Path(settings.BASE_DIR) / 'database/schema.sql').read_text(encoding='utf-8-sig'))
-        call_command('actualizar_formularios')
-        call_command('actualizar_programacion')
-        with connection.cursor() as c:
-            c.execute('PRAGMA table_info(usuarios)')
-            if 'telefono' not in {r[1] for r in c.fetchall()}:
-                c.execute("ALTER TABLE usuarios ADD COLUMN telefono TEXT NOT NULL DEFAULT ''")
-            c.execute('PRAGMA table_info(asistencias)')
-            if 'campos_participante_json' not in {r[1] for r in c.fetchall()}:
-                c.execute("ALTER TABLE asistencias ADD COLUMN campos_participante_json TEXT NOT NULL DEFAULT '{}'")
+        if connection.vendor == 'sqlite':
+            connection.connection.executescript((Path(settings.BASE_DIR) / 'database/schema.sql').read_text(encoding='utf-8-sig'))
+            call_command('actualizar_formularios')
+            call_command('actualizar_programacion')
+            with connection.cursor() as c:
+                c.execute('PRAGMA table_info(usuarios)')
+                if 'telefono' not in {r[1] for r in c.fetchall()}:
+                    c.execute("ALTER TABLE usuarios ADD COLUMN telefono TEXT NOT NULL DEFAULT ''")
+                c.execute('PRAGMA table_info(asistencias)')
+                if 'campos_participante_json' not in {r[1] for r in c.fetchall()}:
+                    c.execute("ALTER TABLE asistencias ADD COLUMN campos_participante_json TEXT NOT NULL DEFAULT '{}'")
+        elif connection.vendor == 'postgresql':
+            import sqlparse
+            from django.db import transaction
+            sql = (Path(settings.BASE_DIR) / 'database/schema.postgresql.sql').read_text(encoding='utf-8')
+            with transaction.atomic(), connection.cursor() as cursor:
+                for statement in sqlparse.split(sql):
+                    cursor.execute(statement)
+        else:
+            from django.core.management.base import CommandError
+            raise CommandError('Solo se admiten SQLite local y PostgreSQL.')
+        call_command('migrate', interactive=False, verbosity=0)
+        call_command('createcachetable', 'asistencia_cache', verbosity=0)
         call_command('cargar_plantillas')
         from asistencia.organizacion import cargar_catalogo
         cargar_catalogo()

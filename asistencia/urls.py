@@ -28,7 +28,6 @@ urlpatterns = [
     path('api/asistencias/<int:asistencia_id>/firma/', views.guardar_firma),
     path('api/asistencias/<int:asistencia_id>/devolucion/firma/', views.guardar_firma_devolucion),
     path('api/asistencias/<int:asistencia_id>/docente/firma/', views.guardar_firma_docente),
-    path('api/asistencias/<int:asistencia_id>/imagen/<str:tipo>/', views.imagen_firma),
     path('api/administrador/historial/', views.historial_sesiones),
     path('api/administrador/exportar/<str:formato>/', exports.exportar_administrador),
 ]

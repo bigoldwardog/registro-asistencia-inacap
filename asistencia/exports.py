@@ -3,6 +3,7 @@ import json
 import re
 from datetime import datetime
 from django.http import HttpResponse
+from django.conf import settings
 from django.views.decorators.http import require_GET
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image as ExcelImage
@@ -46,6 +47,8 @@ def exportar(request, formato):
         contenido = pdf_documentos(documentos) if formato == 'pdf' else xlsx_documentos(documentos)
         tipo = 'application/pdf' if formato == 'pdf' else 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         response = HttpResponse(contenido, content_type=tipo)
+        if settings.MAX_EXPORT_BYTES and len(contenido) > settings.MAX_EXPORT_BYTES:
+            raise ErrorFormulario('El documento supera el tamaño disponible en la demostración. Exporta una actividad por separado.', 413)
         response['Content-Disposition'] = f'attachment; filename="registros-asistencia.{formato}"'
         response['Cache-Control'] = 'private, no-store'
         return response
@@ -127,6 +130,8 @@ def exportar(request, formato):
     stream = io.BytesIO()
     workbook.save(stream)
     response = HttpResponse(stream.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    if settings.MAX_EXPORT_BYTES and len(response.content) > settings.MAX_EXPORT_BYTES:
+        raise ErrorFormulario('El documento supera el tamaño disponible en la demostración.', 413)
     response['Content-Disposition'] = f'attachment; filename="registros-asistencia.{formato}"'
     response['Cache-Control'] = 'private, no-store'
     return response

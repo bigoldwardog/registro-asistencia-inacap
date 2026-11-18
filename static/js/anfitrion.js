@@ -258,10 +258,7 @@ async function selectSession(sessionId, sessions) {
 
     renderSessionQr(session);
 
-    console.log(
-        "QR generado:",
-        sessionQr.querySelector("canvas, img") !== null
-    );
+
     
     if (session) {
         sessionTitle.textContent = session.nombre;
@@ -285,7 +282,7 @@ function renderSessionQr(session) {
     const link = document.querySelector('#session-link');
     link.parentElement.hidden = !session?.token_qr;
     if (!session?.token_qr) { sessionQr.textContent = 'Selecciona una sesión'; return; }
-    const registrationUrl = new URL('/', window.location.origin);
+    const registrationUrl = new URL(session.url_publica || '/', window.location.origin);
     registrationUrl.searchParams.set('token', session.token_qr);
     link.href = registrationUrl.toString(); link.textContent = 'Abrir formulario del asistente';
     link.title = registrationUrl.toString();
