@@ -19,6 +19,7 @@
 <nav>
     <a href="#inicio">Inicio</a>
     <a href="#pruebas">Pruebas</a>
+    <a href="#evidencias">Evidencias</a>
     <a href="#errores">Errores</a>
     <a href="#sugerencias">Sugerencias</a>
     <a href="#conclusion">Conclusión</a>
@@ -35,7 +36,7 @@
             <p><strong>Proyecto:</strong> Registro de Asistencia INACAP</p>
             <p><strong>Responsable:</strong> [Tu nombre]</p>
             <p><strong>Rol:</strong> QA Tester</p>
-            <p><strong>Versión:</strong> 1.0</p>
+            <p><strong>Versión del informe:</strong> 1.1</p>
             <p><strong>Estado:</strong> En evaluación</p>
         </div>
 
@@ -45,43 +46,362 @@
             del sistema y proponer mejoras que optimicen
             la experiencia del usuario.
         </p>
+
+        <h3>Alcance de las pruebas</h3>
+        <ul>
+            <li>Inicio y cierre de sesión.</li>
+            <li>Gestión de cuentas y contraseñas.</li>
+            <li>Validación de RUT y teléfonos.</li>
+            <li>Registro de asistencia.</li>
+            <li>Creación y cierre de sesiones.</li>
+            <li>Generación y lectura de códigos QR.</li>
+            <li>Firmas digitales.</li>
+            <li>Roles y permisos de acceso.</li>
+            <li>Exportación de archivos Excel y PDF.</li>
+        </ul>
+
+        <h3>Metodología</h3>
+        <p>
+            Se realizarán pruebas manuales funcionales,
+            negativas, de validación, seguridad y usabilidad,
+            comparando los resultados obtenidos con los
+            resultados esperados de cada caso.
+        </p>
+
+        <p>
+            Las pruebas deberán realizarse utilizando cuentas
+            y datos ficticios en un entorno de pruebas,
+            evitando afectar la información real del sistema.
+        </p>
     </section>
 
     <!-- REGISTRO DE PRUEBAS -->
     <section id="pruebas">
         <h2>01. Registro de pruebas</h2>
-        <p>Casos de prueba preparados para evaluar el sistema.</p>
+        <p>
+            Matriz de casos de prueba preparados para evaluar
+            el funcionamiento y la calidad del sistema.
+        </p>
+
+        <div class="informacion">
+            <p><strong>Total de pruebas:</strong> 21</p>
+            <p><strong>Aprobadas:</strong> 0</p>
+            <p><strong>Fallidas:</strong> 0</p>
+            <p><strong>Pendientes:</strong> 21</p>
+            <p><strong>Bloqueadas:</strong> 0</p>
+            <p><strong>Progreso de ejecución:</strong> 0%</p>
+        </div>
+
+        <h3>Matriz de casos de prueba</h3>
 
         <div class="tabla-contenedor">
             <table>
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>Módulo</th>
                         <th>Prueba</th>
                         <th>Resultado esperado</th>
+                        <th>Prioridad</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td>CP-001</td>
+                        <td>Inicio de sesión</td>
+                        <td>Ingresar credenciales correctas.</td>
+                        <td>Permitir el acceso al sistema.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-002</td>
+                        <td>Inicio de sesión</td>
+                        <td>Ingresar una contraseña incorrecta.</td>
+                        <td>Rechazar el acceso y mostrar un mensaje de error.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-003</td>
+                        <td>Inicio de sesión</td>
+                        <td>Dejar los campos obligatorios vacíos.</td>
+                        <td>Mostrar mensajes de validación e impedir el acceso.</td>
+                        <td>Media</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-004</td>
+                        <td>Cierre de sesión</td>
+                        <td>Cerrar una sesión de usuario activa.</td>
+                        <td>Finalizar la sesión e impedir el acceso sin autenticación.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-005</td>
+                        <td>Mi cuenta</td>
+                        <td>Modificar datos personales válidos.</td>
+                        <td>Guardar y mostrar correctamente los cambios realizados.</td>
+                        <td>Media</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-006</td>
+                        <td>Contraseña</td>
+                        <td>Ingresar una contraseña actual incorrecta.</td>
+                        <td>Rechazar la modificación de contraseña.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-007</td>
+                        <td>Contraseña</td>
+                        <td>Ingresar contraseñas nuevas diferentes.</td>
+                        <td>Mostrar un mensaje de error e impedir el cambio.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-008</td>
+                        <td>Validación de RUT</td>
+                        <td>Ingresar el RUT 123456785 sin puntos ni guion.</td>
+                        <td>Aplicar el formato 12.345.678-5.</td>
+                        <td>Media</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-009</td>
+                        <td>Validación de RUT</td>
+                        <td>Ingresar el RUT inválido 12.345.678-9.</td>
+                        <td>Rechazar el RUT y mostrar una validación.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-010</td>
+                        <td>Asistencia</td>
+                        <td>Registrar dos veces el mismo RUT en una sesión.</td>
+                        <td>Impedir la duplicación del registro de asistencia.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-011</td>
+                        <td>Gestión de sesiones</td>
+                        <td>Programar una sesión con datos válidos.</td>
+                        <td>Crear y almacenar correctamente la sesión.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-012</td>
+                        <td>Gestión de sesiones</td>
+                        <td>Intentar iniciar una sesión sin firma del anfitrión.</td>
+                        <td>Impedir el inicio de la sesión sin la firma requerida.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-013</td>
+                        <td>Código QR</td>
+                        <td>Escanear el código QR de una sesión activa.</td>
+                        <td>Abrir el formulario de asistencia correspondiente.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-014</td>
+                        <td>Asistencia</td>
+                        <td>Registrar asistentes desde dos celulares diferentes.</td>
+                        <td>Guardar ambos registros sin pérdida de información.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-015</td>
+                        <td>Firma digital</td>
+                        <td>Enviar un formulario con la firma vacía.</td>
+                        <td>Rechazar el registro cuando la firma sea obligatoria.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-016</td>
+                        <td>Gestión de sesiones</td>
+                        <td>Intentar registrar asistencia después del cierre.</td>
+                        <td>Bloquear nuevos registros en la sesión cerrada.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-017</td>
+                        <td>Roles y permisos</td>
+                        <td>Acceder a funciones administrativas sin autorización.</td>
+                        <td>Denegar el acceso al usuario sin permisos.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-018</td>
+                        <td>Exportación</td>
+                        <td>Descargar y abrir un archivo Excel de asistencia.</td>
+                        <td>Generar un archivo válido con los datos correspondientes.</td>
+                        <td>Media</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-019</td>
+                        <td>Exportación</td>
+                        <td>Descargar y abrir un documento PDF.</td>
+                        <td>Generar un documento válido, completo y legible.</td>
+                        <td>Media</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-020</td>
+                        <td>EPP</td>
+                        <td>Registrar firmas de recepción y devolución.</td>
+                        <td>Almacenar correctamente ambas firmas.</td>
+                        <td>Alta</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>CP-021</td>
+                        <td>Validación telefónica</td>
+                        <td>Ingresar un teléfono con el formato permitido.</td>
+                        <td>Aceptar y guardar correctamente el número telefónico.</td>
+                        <td>Media</td>
+                        <td><span class="pendiente">Pendiente</span></td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Criterios de evaluación</h3>
+
+        <div class="informacion">
+            <p>
+                <strong>Aprobado:</strong>
+                El resultado obtenido coincide con el resultado esperado.
+            </p>
+            <p>
+                <strong>Fallido:</strong>
+                El resultado obtenido no coincide con el resultado esperado.
+            </p>
+            <p>
+                <strong>Pendiente:</strong>
+                La prueba todavía no ha sido ejecutada.
+            </p>
+            <p>
+                <strong>Bloqueado:</strong>
+                Existe una condición que impide ejecutar la prueba.
+            </p>
+        </div>
+
+        <h3>Niveles de prioridad</h3>
+
+        <div class="informacion">
+            <p>
+                <strong>Alta:</strong>
+                Funciones esenciales, seguridad e integridad de los datos.
+            </p>
+            <p>
+                <strong>Media:</strong>
+                Funciones importantes que no necesariamente impiden
+                el funcionamiento general del sistema.
+            </p>
+            <p>
+                <strong>Baja:</strong>
+                Mejoras visuales o detalles de usabilidad.
+            </p>
+        </div>
+
+        <h3>Documentación complementaria</h3>
+
+        <p>
+            <a href="casos_de_prueba.md">
+                Consultar documentación de casos de prueba.
+            </a>
+        </p>
+
+        <p class="nota">
+            Los resultados esperados deberán verificarse durante
+            la ejecución de las pruebas. No se considerarán
+            aprobadas aquellas pruebas que no hayan sido ejecutadas.
+        </p>
+    </section>
+
+    <!-- REGISTRO DE EVIDENCIAS -->
+    <section id="evidencias">
+        <h2>01.1 Registro de evidencias</h2>
+
+        <p>
+            En este apartado se documentarán los resultados
+            obtenidos durante la ejecución de los casos de prueba.
+        </p>
+
+        <div class="tabla-contenedor">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID de prueba</th>
+                        <th>Fecha</th>
+                        <th>Resultado obtenido</th>
+                        <th>Evidencia</th>
                         <th>Estado</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>QA-001</td>
-                        <td>Formato de RUT</td>
-                        <td>Validar correctamente el RUT chileno.</td>
-                        <td><span class="pendiente">Pendiente</span></td>
-                    </tr>
-                    <tr>
-                        <td>QA-002</td>
-                        <td>Formato de teléfono</td>
-                        <td>Aceptar el formato telefónico permitido.</td>
-                        <td><span class="pendiente">Pendiente</span></td>
+                        <td colspan="5">
+                            No existen evidencias registradas.
+                            Las pruebas están pendientes de ejecución.
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
+        <h3>Información requerida por evidencia</h3>
+
+        <ul>
+            <li>Identificador del caso de prueba.</li>
+            <li>Fecha de ejecución.</li>
+            <li>Datos utilizados durante la prueba.</li>
+            <li>Pasos realizados.</li>
+            <li>Resultado esperado.</li>
+            <li>Resultado obtenido.</li>
+            <li>Captura de pantalla o video.</li>
+            <li>Navegador y dispositivo utilizado.</li>
+        </ul>
+
         <p class="nota">
-            Los resultados se actualizarán después de ejecutar
-            las pruebas y registrar sus evidencias.
+            Las evidencias no deben contener contraseñas,
+            datos personales reales ni información confidencial.
         </p>
     </section>
 
@@ -95,16 +415,21 @@
                 <strong>BUG-001 · Formato del RUT</strong>
                 <span class="pendiente">Por verificar</span>
             </div>
+
             <p><strong>Módulo:</strong> Registro de usuarios.</p>
+            <p><strong>Casos asociados:</strong> CP-008 y CP-009.</p>
             <p><strong>Formato reportado:</strong> xx.xxx.xxx-x</p>
+
             <p>
                 <strong>Descripción:</strong> Se reporta un problema
                 relacionado con el formato o validación del RUT.
             </p>
+
             <p>
                 <strong>Resultado esperado:</strong> Validar el RUT
                 y mostrar un mensaje claro si es incorrecto.
             </p>
+
             <p><strong>Resultado obtenido:</strong> Por documentar.</p>
             <p><strong>Evidencia:</strong> Pendiente.</p>
         </article>
@@ -114,19 +439,39 @@
                 <strong>BUG-002 · Formato telefónico</strong>
                 <span class="pendiente">Por verificar</span>
             </div>
+
             <p><strong>Módulo:</strong> Registro de usuarios.</p>
+            <p><strong>Caso asociado:</strong> CP-021.</p>
             <p><strong>Formato reportado:</strong> x xxxx xxxx</p>
+
             <p>
                 <strong>Descripción:</strong> Se reporta un problema
                 relacionado con el ingreso del número telefónico.
             </p>
+
             <p>
                 <strong>Resultado esperado:</strong> Aceptar los números
                 que cumplan el formato definido por el sistema.
             </p>
+
             <p><strong>Resultado obtenido:</strong> Por documentar.</p>
             <p><strong>Evidencia:</strong> Pendiente.</p>
         </article>
+
+        <h3>Seguimiento de errores</h3>
+
+        <p>
+            Los errores confirmados durante las pruebas deberán
+            registrarse en GitHub Issues, indicando el caso asociado,
+            los pasos para reproducir el problema, el resultado
+            esperado, el resultado obtenido y las evidencias.
+        </p>
+
+        <p>
+            Después de que el equipo de desarrollo realice una
+            corrección, se deberá ejecutar nuevamente el caso
+            de prueba para verificar la solución.
+        </p>
     </section>
 
     <!-- SUGERENCIAS -->
@@ -134,78 +479,91 @@
         <h2>03. Sugerencias de mejora</h2>
         <p>Recomendaciones propuestas para el equipo de desarrollo.</p>
 
-
         <article class="tarjeta">
             <strong>SG-001 · Formato automático del RUT</strong>
+
             <p>
                 Se recomienda implementar un formato automático
                 para el campo RUT durante el registro de usuarios.
             </p>
+
             <p>
                 Al ingresar los números, el sistema debería
                 incorporar automáticamente los puntos y el guion,
                 sin que el usuario tenga que escribirlos manualmente.
             </p>
+
             <p>
                 <strong>Ejemplo:</strong> Al escribir 123456785,
                 el formulario mostraría 12.345.678-5.
             </p>
+
             <p>
                 <strong>Beneficio:</strong> Facilitar el ingreso
                 del RUT, reducir errores de formato y mejorar
                 la experiencia del usuario.
             </p>
+
             <small>Prioridad: Media · Usabilidad</small>
         </article>
 
-
         <article class="tarjeta">
             <strong>SG-002 · Inicio de sesión</strong>
+
             <p>
                 Reemplazar las ventanas emergentes por mensajes
                 de error en rojo dentro del formulario, para
                 llamar la atención del usuario sin interrumpirlo.
             </p>
+
             <small>Prioridad: Media · Interfaz</small>
         </article>
 
         <article class="tarjeta">
             <strong>SG-003 · Cambiar contraseña</strong>
+
             <p>
                 Mover la opción "Cambiar contraseña" al apartado
                 "Información de la cuenta", evitando mantener
                 una sección independiente en el menú.
             </p>
+
             <small>Prioridad: Media · Navegación</small>
         </article>
 
         <article class="tarjeta">
             <strong>SG-004 · Errores al cambiar contraseña</strong>
+
             <p>
                 Resaltar en rojo los campos incorrectos y mostrar
                 mensajes claros cuando las contraseñas no coincidan
                 o no cumplan los requisitos.
             </p>
+
             <small>Prioridad: Media · Validaciones</small>
         </article>
 
         <article class="tarjeta">
             <strong>SG-005 · Teléfonos internacionales</strong>
+
             <p>
                 Agregar un selector de país para permitir
                 distintos prefijos y formatos telefónicos,
                 facilitando el registro de usuarios extranjeros.
             </p>
+
             <small>Prioridad: Baja · Formularios</small>
         </article>
 
         <article class="tarjeta">
             <strong>SG-006 · Firma digital</strong>
+
             <p>
                 Incorporar un botón "Deshacer" que elimine
                 solamente el último trazo realizado, manteniendo
                 el botón "Limpiar" para borrar toda la firma.
             </p>
+
             <small>Prioridad: Media · Usabilidad</small>
         </article>
     </section>
@@ -213,17 +571,45 @@
     <!-- CONCLUSIÓN -->
     <section id="conclusion">
         <h2>04. Conclusión</h2>
+
         <p>
             La revisión inicial permitió identificar seis
             oportunidades de mejora y dos posibles problemas
             relacionados con la validación de datos.
         </p>
+
+        <p>
+            Como parte del proceso de aseguramiento de calidad,
+            se incorporaron 21 casos de prueba destinados a
+            evaluar las principales funcionalidades del sistema.
+        </p>
+
+        <p>
+            La matriz permite organizar las pruebas, establecer
+            resultados esperados, asignar prioridades y mantener
+            un seguimiento de los errores y sus correcciones.
+        </p>
+
         <p>
             Se recomienda evaluar las propuestas con el equipo
-            y ejecutar las pruebas pendientes para confirmar
-            los errores antes de implementar correcciones.
+            de desarrollo y ejecutar las pruebas pendientes para
+            confirmar los errores antes de implementar correcciones.
         </p>
-        <p><strong>Estado general:</strong> Evaluación en desarrollo.</p>
+
+        <div class="informacion">
+            <p><strong>Casos de prueba definidos:</strong> 21</p>
+            <p><strong>Casos ejecutados:</strong> 0</p>
+            <p><strong>Posibles errores reportados:</strong> 2</p>
+            <p><strong>Errores confirmados en esta evaluación:</strong> 0</p>
+            <p><strong>Sugerencias de mejora:</strong> 6</p>
+            <p><strong>Estado general:</strong> Evaluación en desarrollo.</p>
+        </div>
+
+        <p class="nota">
+            Este informe corresponde a la planificación inicial
+            de las pruebas. No constituye una certificación del
+            correcto funcionamiento del sistema.
+        </p>
     </section>
 
 </main>
